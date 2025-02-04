@@ -2,8 +2,13 @@
 const nextConfig = {
   output: 'export',
   images: {
-    domains: ['maps.googleapis.com'],
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+      },
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -11,7 +16,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  basePath: '/heliosai'
+  basePath: '/heliosai',
+  assetPrefix: '/heliosai/',
+  trailingSlash: true,
 }
 
 module.exports = nextConfig 
