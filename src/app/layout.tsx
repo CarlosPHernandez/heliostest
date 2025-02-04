@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import { Roboto } from 'next/font/google'
@@ -21,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${roboto.variable} font-sans`}>
-      <body className={GeistSans.className}>
+    <html lang="en" className={roboto.variable}>
+      <body className="font-sans">
         <Header />
         <main className="min-h-screen pt-16">
           {children}

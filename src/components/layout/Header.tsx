@@ -36,9 +36,12 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              <button className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors">
+              <Link 
+                href="/order"
+                className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
+              >
                 Order
-              </button>
+              </Link>
             </nav>
 
             {/* Mobile menu button */}
@@ -105,9 +108,13 @@ const Header = () => {
               ))}
             </ul>
             <div className="mt-6 pt-6 border-t">
-              <button className="w-full bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors">
+              <Link 
+                href="/order"
+                className="block w-full bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 Order
-              </button>
+              </Link>
             </div>
           </nav>
         </div>
