@@ -21,9 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={roboto.variable}>
-      <body className="font-sans">
+      <body className="font-sans relative">
         <Header />
-        <main className="min-h-screen pt-16">
+        <main className="min-h-screen relative bg-white">
           {children}
         </main>
       </body>

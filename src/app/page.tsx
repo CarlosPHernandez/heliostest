@@ -42,66 +42,71 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative min-h-screen">
-      {/* Background image with overlay */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/Helios ai hero image.webp"
-          alt="Solar panels on a modern house"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
-      
-      {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 lg:pt-32 lg:pb-24">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl font-roboto">
-            Solar Made Simple
-          </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-100 max-w-2xl mx-auto font-roboto">
-            Start your journey to energy independence. Find out how much you could save by switching to solar power.
-          </p>
+    <>
+      {/* Hero Section */}
+      <div className="relative min-h-screen -mt-16">
+        {/* Background image with overlay */}
+        <div className="absolute inset-0">
+          <Image
+            src="/Helios ai hero image.webp"
+            alt="Solar panels on a modern house"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+        
+        {/* Hero Content */}
+        <div className="relative pt-36 pb-16 lg:pt-48 lg:pb-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto">
+              <h1 className="text-5xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl font-roboto">
+                Solar Made Simple
+              </h1>
+              <p className="mt-6 text-lg leading-8 text-gray-100 max-w-2xl mx-auto font-roboto">
+                Start your journey to energy independence. Find out how much you could save by switching to solar power.
+              </p>
 
-          {/* Monthly Bill Form */}
-          <div className="mt-10 max-w-xl mx-auto">
-            <form onSubmit={handleSubmit} className="sm:flex gap-4 justify-center">
-              <div className="w-full max-w-xs">
-                <label htmlFor="monthlyBill" className="sr-only">
-                  Average Monthly Electric Bill
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="monthlyBill"
-                    value={monthlyBill}
-                    onChange={(e) => {
-                      setError('')
-                      setMonthlyBill(formatCurrency(e.target.value))
-                    }}
-                    placeholder="Average Monthly Bill"
-                    className="block w-full rounded-lg py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm font-roboto"
-                  />
-                  {error && (
-                    <p className="absolute left-0 top-full mt-1 text-sm text-red-400 font-roboto">
-                      {error}
-                    </p>
-                  )}
-                </div>
+              {/* Monthly Bill Form */}
+              <div className="mt-10 max-w-xl mx-auto">
+                <form onSubmit={handleSubmit} className="sm:flex gap-4 justify-center">
+                  <div className="w-full max-w-xs">
+                    <label htmlFor="monthlyBill" className="sr-only">
+                      Average Monthly Electric Bill
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="monthlyBill"
+                        value={monthlyBill}
+                        onChange={(e) => {
+                          setError('')
+                          setMonthlyBill(formatCurrency(e.target.value))
+                        }}
+                        placeholder="Average Monthly Bill"
+                        className="block w-full rounded-lg py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm font-roboto"
+                      />
+                      {error && (
+                        <p className="absolute left-0 top-full mt-1 text-sm text-red-400 font-roboto">
+                          {error}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="mt-4 sm:mt-0 w-full sm:w-auto flex-none rounded-lg bg-white px-6 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white font-roboto inline-flex items-center justify-center"
+                  >
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </button>
+                </form>
               </div>
-              <button
-                type="submit"
-                className="mt-4 sm:mt-0 w-full sm:w-auto flex-none rounded-lg bg-white px-6 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white font-roboto"
-              >
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4 inline-block" />
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
