@@ -11,7 +11,7 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "var(--background)",
+        background: "#FBFBFB",
         foreground: "var(--foreground)",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -26,7 +26,7 @@ const config: Config = {
           foreground: "hsl(var(--muted-foreground))",
         },
         card: {
-          DEFAULT: "var(--background)",
+          DEFAULT: "#FBFBFB",
           foreground: "var(--foreground)",
         },
         'secondary-text': '#4f4f4f',
