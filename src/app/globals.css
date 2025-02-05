@@ -15,19 +15,33 @@
     }
   }
 
-  html {
-    @apply antialiased;
+  html,
+  body {
+    @apply antialiased h-full;
   }
 
   body {
-    @apply text-foreground bg-background;
-    font-family: var(--font-roboto), system-ui, sans-serif;
+    @apply font-sans text-foreground bg-background;
+  }
+}
+
+@layer utilities {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 
 @layer components {
-  .container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  .page-container {
+    @apply container py-8;
+  }
+
+  .page-header {
+    @apply mb-8;
+  }
+
+  .page-title {
+    @apply text-3xl font-bold tracking-tight;
   }
 }
 

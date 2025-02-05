@@ -21,12 +21,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${roboto.variable} antialiased`}>
-      <body className="font-sans relative">
+    <html lang="en" className={roboto.variable}>
+      <body className="min-h-screen bg-background">
         <Header />
-        <main className="min-h-screen relative bg-white">
-          {children}
-        </main>
+        <div className="flex flex-col min-h-screen">
+          <main className="flex-grow">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );
