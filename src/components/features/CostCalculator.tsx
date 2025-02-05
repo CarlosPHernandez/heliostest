@@ -43,9 +43,8 @@ export const CostCalculator = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center justify-center space-x-2 bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="flex items-center justify-center bg-black text-white p-3 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>Get Started</span>
               <ArrowRight className="h-5 w-5" />
             </button>
           </div>
