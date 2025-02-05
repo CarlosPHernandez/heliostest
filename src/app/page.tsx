@@ -68,8 +68,8 @@ export default function HomePage() {
 
           {/* Monthly Bill Form */}
           <div className="mt-12 w-full max-w-xl mx-auto">
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <div className="flex-1 min-w-0">
+            <form onSubmit={handleSubmit} className="flex gap-3 justify-center">
+              <div className="w-64">
                 <label htmlFor="monthlyBill" className="sr-only">
                   Average Monthly Electric Bill
                 </label>
@@ -83,7 +83,7 @@ export default function HomePage() {
                       setMonthlyBill(formatCurrency(e.target.value))
                     }}
                     placeholder="Average Monthly Bill"
-                    className="block w-full rounded-xl py-3.5 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 placeholder:text-secondary-text/70 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:ring-blue-400 animate-pulse-subtle"
+                    className="block w-full rounded-xl py-2.5 px-4 text-secondary-text ring-1 ring-inset ring-gray-200 placeholder:text-secondary-text/70 focus:ring-1 focus:ring-gray-300 sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm shadow-sm transition-all duration-300 hover:ring-gray-300"
                   />
                   {error && (
                     <p className="absolute left-0 top-full mt-1 text-sm text-red-400 bg-black/50 px-2 py-1 rounded">
@@ -94,7 +94,7 @@ export default function HomePage() {
               </div>
               <button
                 type="submit"
-                className="flex items-center justify-center px-6 py-3.5 text-sm font-semibold text-black bg-white rounded-xl shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
+                className="flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-black bg-white rounded-xl shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all duration-300"
               >
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
