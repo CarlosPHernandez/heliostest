@@ -54,11 +54,10 @@ export default function HomePage() {
           sizes="100vw"
           quality={90}
         />
-        <div className="absolute inset-0 bg-black/50" />
       </div>
       
       {/* Hero Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
+      <div className="relative z-10 flex flex-col items-center justify-start min-h-[calc(100vh-4rem)] px-4 pt-20">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-800 drop-shadow-sm">
             Solar Made Simple
