@@ -2,22 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Info } from 'lucide-react'
 import Script from 'next/script'
 import { calculateSolarProposal, NC_CONFIG } from '@/lib/solar-calculations'
-
-interface UtilityProvider {
-  id: string
-  name: string
-  rates: {
-    residential: {
-      basic: {
-        energy: number
-        fixed: number
-      }
-    }
-  }
-}
+import { NC_UTILITY_PROVIDERS, UtilityProvider, getUtilityRate } from '@/lib/utility-providers'
 
 // Extend Window interface for Google Maps
 declare global {
@@ -42,7 +30,7 @@ declare global {
 export default function AddressPage() {
   const router = useRouter()
   const [address, setAddress] = useState('')
-  const [selectedUtility, setSelectedUtility] = useState('')
+  const [selectedUtility, setSelectedUtility] = useState<UtilityProvider | null>(null)
   const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,12 +51,19 @@ export default function AddressPage() {
         return
       }
 
-      // Calculate solar proposal
-      const proposal = calculateSolarProposal(Number(monthlyBill), NC_CONFIG)
+      // Get the utility rate for the selected provider
+      const utilityRate = getUtilityRate(selectedUtility)
+
+      // Calculate solar proposal with the correct utility rate
+      const config = {
+        ...NC_CONFIG,
+        utilityRate
+      }
+      const proposal = calculateSolarProposal(Number(monthlyBill), config)
       
       // Store data in localStorage
       localStorage.setItem('address', address)
-      localStorage.setItem('selectedUtility', selectedUtility)
+      localStorage.setItem('selectedUtility', JSON.stringify(selectedUtility))
       localStorage.setItem('solarProposal', JSON.stringify(proposal))
       
       // Navigate to packages page
@@ -156,16 +151,34 @@ export default function AddressPage() {
               <select
                 id="utility"
                 name="utility"
-                value={selectedUtility}
-                onChange={(e) => setSelectedUtility(e.target.value)}
+                value={selectedUtility?.name || ''}
+                onChange={(e) => {
+                  const provider = NC_UTILITY_PROVIDERS.find(p => p.name === e.target.value)
+                  setSelectedUtility(provider || null)
+                }}
                 className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-gray-300 focus:border-gray-300"
                 required
               >
                 <option value="">Select your utility provider</option>
-                <option value="duke-energy">Duke Energy</option>
-                <option value="dominion">Dominion Energy</option>
-                <option value="other">Other</option>
+                {NC_UTILITY_PROVIDERS.map((provider) => (
+                  <option key={provider.name} value={provider.name}>
+                    {provider.name}
+                  </option>
+                ))}
               </select>
+              {selectedUtility && (
+                <div className="mt-2 flex items-start gap-2 text-sm text-gray-500">
+                  <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p>Service Area: {selectedUtility.serviceArea}</p>
+                    <p>Rate: {typeof selectedUtility.residentialRate === 'number' 
+                      ? `$${selectedUtility.residentialRate.toFixed(3)}/kWh`
+                      : `$${selectedUtility.residentialRate.min.toFixed(3)} - $${selectedUtility.residentialRate.max.toFixed(3)}/kWh`}
+                    </p>
+                    <p className="text-xs mt-1">{selectedUtility.notes}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <button
