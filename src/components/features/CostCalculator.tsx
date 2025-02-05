@@ -43,7 +43,8 @@ export const CostCalculator = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center justify-center bg-black text-white p-3 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center bg-black text-white w-12 h-12 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Calculate savings"
             >
               <ArrowRight className="h-5 w-5" />
             </button>
