@@ -60,10 +60,10 @@ export default function HomePage() {
       {/* Hero Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-800">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-800 drop-shadow-sm">
             Solar Made Simple
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-700 max-w-2xl mx-auto">
+          <p className="mt-6 text-lg leading-8 text-gray-800 max-w-2xl mx-auto drop-shadow-sm">
             Instant solar quote in seconds
           </p>
 
