@@ -28,16 +28,23 @@ export default function PackagesPage() {
   }, [])
 
   const handlePackageSelect = (packageType: 'standard' | 'premium') => {
-    // Store the selected package type
-    localStorage.setItem('selectedPackage', packageType)
-    
-    // Navigate to the next step
-    router.push('/order/proposal')
+    try {
+      // Store the complete package information
+      const selectedPackageData = packageType === 'standard' ? proposal.standard : proposal.premium
+      localStorage.setItem('selectedPackage', packageType)
+      localStorage.setItem('selectedPackageData', JSON.stringify(selectedPackageData))
+      
+      // Navigate to the next step
+      router.push('/order/proposal')
+    } catch (err) {
+      console.error('Error saving package selection:', err)
+      setError('Failed to save your package selection')
+    }
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#ececec] pt-24">
+      <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-red-600 text-center">{error}</p>
           <button
@@ -53,7 +60,7 @@ export default function PackagesPage() {
 
   if (!proposal) {
     return (
-      <div className="min-h-screen bg-[#ececec] pt-24">
+      <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-secondary-text">Loading proposal...</p>
         </div>
@@ -62,7 +69,7 @@ export default function PackagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#ececec]">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Back Button */}
         <button

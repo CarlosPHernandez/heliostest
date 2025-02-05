@@ -2,62 +2,43 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Home, Sun, Shield, Calculator, ArrowRight, Info } from 'lucide-react'
-import Image from 'next/image'
+import { ChevronLeft } from 'lucide-react'
 
-interface FinanceOption {
-  term: number
-  rate: number
-  monthlyPayment: number
-  totalCost: number
+interface SystemInfo {
+  systemSize: number
+  numberOfPanels: number
+  totalPrice: number
+  yearlyProduction: number
+  monthlyProduction: number
 }
 
 export default function ProposalPage() {
   const router = useRouter()
-  const [showFinancing, setShowFinancing] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [systemDetails, setSystemDetails] = useState<any>(null)
-  const [addressData, setAddressData] = useState<any>(null)
-  const [financeOptions, setFinanceOptions] = useState<FinanceOption[]>([])
+  const [packageType, setPackageType] = useState<'standard' | 'premium' | null>(null)
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
+  const [address, setAddress] = useState('')
 
   useEffect(() => {
-    // Get stored data
-    const packageData = localStorage.getItem('selectedPackage')
-    const addressInfo = localStorage.getItem('addressData')
-
-    if (!packageData || !addressInfo) {
-      setError('Missing system information. Please start over.')
-      return
-    }
-
     try {
-      const parsedPackage = JSON.parse(packageData)
-      const parsedAddress = JSON.parse(addressInfo)
-      setSystemDetails(parsedPackage)
-      setAddressData(parsedAddress)
+      // Load all required data from localStorage
+      const storedPackageType = localStorage.getItem('selectedPackage')
+      const storedPackageData = localStorage.getItem('selectedPackageData')
+      const storedAddress = localStorage.getItem('address')
 
-      // Calculate financing options
-      const netCost = parsedPackage.price * 0.7 // After 30% tax credit
-      const terms = [10, 15, 20, 25]
-      const rate = 0.0625 // 6.25% interest rate
+      if (!storedPackageType || !storedPackageData || !storedAddress) {
+        throw new Error('Missing required information. Please start over.')
+      }
 
-      const options = terms.map(term => {
-        const monthlyRate = rate / 12
-        const numPayments = term * 12
-        const monthlyPayment = (netCost * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
-                             (Math.pow(1 + monthlyRate, numPayments) - 1)
-        
-        return {
-          term,
-          rate: rate * 100,
-          monthlyPayment,
-          totalCost: monthlyPayment * numPayments
-        }
-      })
-
-      setFinanceOptions(options)
+      setPackageType(storedPackageType as 'standard' | 'premium')
+      setSystemInfo(JSON.parse(storedPackageData))
+      setAddress(storedAddress)
+      setLoading(false)
     } catch (err) {
-      setError('Error loading system details. Please try again.')
+      console.error('Error loading proposal data:', err)
+      setError(err instanceof Error ? err.message : 'Error loading proposal')
+      setLoading(false)
     }
   }, [])
 
@@ -65,7 +46,8 @@ export default function ProposalPage() {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 0
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount)
   }
 
@@ -73,24 +55,49 @@ export default function ProposalPage() {
     router.back()
   }
 
-  const handleOrder = () => {
-    // Navigate to account creation instead of confirmation
+  const handleContinue = () => {
     router.push('/order/account')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pt-24">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-secondary-text">Loading proposal...</p>
+        </div>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 pt-24 lg:pt-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8 text-center">
-            <div className="text-red-500 mb-4">Error loading proposal</div>
-            <p className="text-gray-600">{error}</p>
+      <div className="min-h-screen bg-background pt-24">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
             <button
               onClick={() => router.push('/')}
-              className="mt-6 inline-flex items-center text-sm font-medium text-black hover:text-gray-700"
+              className="text-secondary-text hover:text-gray-700"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Start Over
+              Return to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!systemInfo || !packageType) {
+    return (
+      <div className="min-h-screen bg-background pt-24">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">System information not found</p>
+            <button
+              onClick={() => router.push('/')}
+              className="text-secondary-text hover:text-gray-700"
+            >
+              Return to Home
             </button>
           </div>
         </div>
@@ -99,8 +106,8 @@ export default function ProposalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 lg:pt-28">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Back Button */}
         <button
           onClick={handleBack}
@@ -110,132 +117,68 @@ export default function ProposalPage() {
           Back
         </button>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - System Details */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8">
-              <h1 className="text-2xl font-bold text-gray-900 mb-6">
-                Your Solar System Proposal
-              </h1>
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-secondary-text mb-4">
+            Your Solar Proposal
+          </h1>
+          <p className="text-secondary-text max-w-2xl mx-auto">
+            Review your {packageType} solar package details below
+          </p>
+        </div>
 
-              {/* Aerial View */}
-              <div className="aspect-video relative rounded-lg overflow-hidden mb-6 bg-gray-100">
-                <Image
-                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${addressData?.lat},${addressData?.lng}&zoom=19&size=600x300&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
-                  alt="Aerial view of property"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-
-              {/* Address */}
-              <div className="flex items-start gap-3 mb-6">
-                <Home className="h-5 w-5 text-gray-400 mt-1" />
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-xl font-semibold mb-6">System Details</h2>
+              <dl className="space-y-4">
                 <div>
-                  <p className="font-medium text-gray-900">Installation Address</p>
-                  <p className="text-gray-600">{addressData?.formatted_address}</p>
+                  <dt className="text-sm text-gray-500">Installation Address</dt>
+                  <dd className="text-lg font-medium">{address}</dd>
                 </div>
-              </div>
+                <div>
+                  <dt className="text-sm text-gray-500">System Size</dt>
+                  <dd className="text-lg font-medium">{systemInfo.systemSize.toFixed(2)} kW</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-gray-500">Number of Panels</dt>
+                  <dd className="text-lg font-medium">{systemInfo.numberOfPanels} panels</dd>
+                </div>
+              </dl>
+            </div>
 
-              {/* System Details */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <span className="text-gray-600">Yearly Usage</span>
-                  <span className="font-medium text-gray-900">{systemDetails?.yearlyUsage.toLocaleString()} kWh</span>
+            <div>
+              <h2 className="text-xl font-semibold mb-6">Production & Savings</h2>
+              <dl className="space-y-4">
+                <div>
+                  <dt className="text-sm text-gray-500">Monthly Production</dt>
+                  <dd className="text-lg font-medium">
+                    {Math.round(systemInfo.monthlyProduction)} kWh
+                  </dd>
                 </div>
-                <div className="flex items-center justify-between py-3 border-b">
-                  <span className="text-gray-600">Selected Package</span>
-                  <span className="font-medium text-gray-900 capitalize">{systemDetails?.type}</span>
+                <div>
+                  <dt className="text-sm text-gray-500">Yearly Production</dt>
+                  <dd className="text-lg font-medium">
+                    {Math.round(systemInfo.yearlyProduction)} kWh
+                  </dd>
                 </div>
-                {systemDetails?.type === 'premium' && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900 mb-2">Premium Upgrades</h3>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li>• High-efficiency Premium Panels</li>
-                      <li>• Critter Guard Protection</li>
-                      <li>• Solar Edge Skirts</li>
-                      <li>• Extended Protection Plan</li>
-                      <li>• Expedited Permitting</li>
-                    </ul>
-                  </div>
-                )}
-              </div>
+                <div>
+                  <dt className="text-sm text-gray-500">Total Investment</dt>
+                  <dd className="text-lg font-medium text-black">
+                    {formatCurrency(systemInfo.totalPrice)}
+                  </dd>
+                </div>
+              </dl>
             </div>
           </div>
+        </div>
 
-          {/* Right Column - Financial Details */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Financial Summary</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <span className="text-gray-600">System Cost</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(systemDetails?.price)}</span>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b text-green-600">
-                  <span>Federal Tax Credit (30%)</span>
-                  <span className="font-medium">-{formatCurrency(systemDetails?.price * 0.3)}</span>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b">
-                  <span className="font-medium text-gray-900">Net Cost</span>
-                  <span className="font-bold text-gray-900">{formatCurrency(systemDetails?.price * 0.7)}</span>
-                </div>
-              </div>
-
-              {/* Financing Options */}
-              <button
-                onClick={() => setShowFinancing(!showFinancing)}
-                className="w-full mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-200"
-              >
-                <Calculator className="h-4 w-4" />
-                {showFinancing ? 'Hide' : 'View'} Financing Options
-              </button>
-
-              {showFinancing && (
-                <div className="mt-6 space-y-4">
-                  {financeOptions.map((option) => (
-                    <div
-                      key={option.term}
-                      className="bg-gray-50 rounded-lg p-4"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900">{option.term} Year Term</span>
-                        <span className="text-sm text-gray-600">{option.rate}% APR</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Monthly Payment</span>
-                        <span className="font-medium text-gray-900">{formatCurrency(option.monthlyPayment)}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <p className="text-xs text-gray-500 mt-2">
-                    * Rates are estimates. Final terms subject to credit approval.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Order Button */}
-            <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8">
-              <button
-                onClick={handleOrder}
-                className="w-full rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              >
-                Place Order
-                <ArrowRight className="h-4 w-4 ml-2 inline-block" />
-              </button>
-              
-              <div className="mt-4 flex items-start gap-3 text-sm text-gray-600">
-                <Info className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                <p>
-                  By placing an order, you're requesting a detailed site survey and custom design. 
-                  This is not a final commitment to purchase. Our team will contact you to schedule 
-                  a site visit and finalize your custom solar solution.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="flex justify-end">
+          <button
+            onClick={handleContinue}
+            className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Continue to Account Setup
+          </button>
         </div>
       </div>
     </div>
