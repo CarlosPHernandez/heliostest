@@ -57,17 +57,17 @@ export default function HomePage() {
       </div>
       
       {/* Hero Content */}
-      <div className="relative z-10 flex flex-col items-center justify-start min-h-[calc(100vh-4rem)] px-4 pt-20">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-800 drop-shadow-sm">
-            Solar Made Simple
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-800 drop-shadow-sm">
+            Solar Made Simple.
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-800 max-w-2xl mx-auto drop-shadow-sm">
-            Instant solar quote in seconds
+          <p className="mt-8 text-xl sm:text-2xl leading-8 text-gray-800 max-w-2xl mx-auto drop-shadow-sm">
+            Instant solar quote in seconds, no pushy salesperson needed.
           </p>
 
           {/* Monthly Bill Form */}
-          <div className="mt-10 w-full max-w-xl mx-auto">
+          <div className="mt-12 w-full max-w-xl mx-auto">
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center">
               <div className="flex-1 min-w-0">
                 <label htmlFor="monthlyBill" className="sr-only">
@@ -83,7 +83,7 @@ export default function HomePage() {
                       setMonthlyBill(formatCurrency(e.target.value))
                     }}
                     placeholder="Average Monthly Bill"
-                    className="block w-full rounded-lg py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm"
+                    className="block w-full rounded-xl py-3.5 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm shadow-lg"
                   />
                   {error && (
                     <p className="absolute left-0 top-full mt-1 text-sm text-red-400 bg-black/50 px-2 py-1 rounded">
@@ -94,7 +94,7 @@ export default function HomePage() {
               </div>
               <button
                 type="submit"
-                className="flex items-center justify-center px-6 py-3 text-sm font-semibold text-black bg-white rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+                className="flex items-center justify-center px-6 py-3.5 text-sm font-semibold text-black bg-white rounded-xl shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
               >
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
