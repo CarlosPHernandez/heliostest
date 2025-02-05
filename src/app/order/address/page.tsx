@@ -134,11 +134,10 @@ export default function AddressPage() {
               <input
                 type="text"
                 id="address"
-                name="address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-gray-300 focus:border-gray-300"
                 placeholder="Enter your address"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 placeholder:text-gray-500"
                 required
               />
             </div>

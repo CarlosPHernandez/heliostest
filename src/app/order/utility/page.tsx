@@ -163,22 +163,20 @@ export default function UtilityPage() {
 
             <div className="space-y-6">
               <div>
-                <label htmlFor="utility-provider" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="utilityProvider" className="block text-sm font-medium text-gray-700 mb-2">
                   Utility Provider
                 </label>
                 <div className="relative">
                   <select
-                    id="utility-provider"
+                    id="utilityProvider"
                     value={selectedProvider}
-                    onChange={(e) => {
-                      setSelectedProvider(e.target.value)
-                      setError('')
-                    }}
-                    className="block w-full rounded-lg py-3 px-4 text-secondary-text border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent"
+                    onChange={(e) => setSelectedProvider(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 bg-white"
+                    required
                   >
-                    <option value="">Select a provider</option>
+                    <option value="" className="text-gray-900">Select your utility provider</option>
                     {getAllProviders().map((provider) => (
-                      <option key={provider.id} value={provider.id}>
+                      <option key={provider.name} value={provider.name} className="text-gray-900">
                         {provider.name}
                       </option>
                     ))}
