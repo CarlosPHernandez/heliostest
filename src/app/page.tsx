@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
+import { calculateSolarProposal } from '@/lib/solarCalculations'
 
 export default function HomePage() {
   const router = useRouter()
@@ -19,11 +20,22 @@ export default function HomePage() {
       return
     }
 
-    // Store the monthly bill in localStorage for now
-    localStorage.setItem('monthlyBill', monthlyBill.replace('$', ''))
+    const billAmount = Number(monthlyBill.replace('$', ''))
     
-    // Navigate to address input step
-    router.push('/order/address')
+    try {
+      // Calculate solar proposal
+      const proposal = calculateSolarProposal(billAmount)
+      
+      // Store the data in localStorage
+      localStorage.setItem('monthlyBill', monthlyBill.replace('$', ''))
+      localStorage.setItem('solarProposal', JSON.stringify(proposal))
+      
+      // Navigate to address input step
+      router.push('/order/address')
+    } catch (err) {
+      setError('Error calculating solar proposal')
+      console.error('Calculation error:', err)
+    }
   }
 
   const formatCurrency = (value: string) => {

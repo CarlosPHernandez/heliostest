@@ -1,16 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, MapPin, Loader2, Info } from 'lucide-react'
 import Script from 'next/script'
-
-declare global {
-  interface Window {
-    google: any
-    initAutocomplete: () => void
-  }
-}
+import { NC_CONFIG, calculateSolarProposal } from '@/lib/solar-calculations'
 
 interface UtilityProvider {
   id: string
@@ -18,15 +12,54 @@ interface UtilityProvider {
   rates: {
     residential: {
       basic: {
-        name: string
-        facilities: number
-        energy: number
+        energy: number // per kWh
+        fixed: number // monthly fixed charge
       }
-      timeOfUse?: {
-        name: string
-        facilities: number
-        peak: number
-        offPeak: number
+    }
+  }
+}
+
+const UTILITY_PROVIDERS: UtilityProvider[] = [
+  {
+    id: 'duke-energy',
+    name: 'Duke Energy',
+    rates: {
+      residential: {
+        basic: {
+          energy: 0.11,
+          fixed: 14
+        }
+      }
+    }
+  },
+  {
+    id: 'dominion-energy',
+    name: 'Dominion Energy',
+    rates: {
+      residential: {
+        basic: {
+          energy: 0.12,
+          fixed: 12
+        }
+      }
+    }
+  }
+]
+
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        places: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            options?: {
+              componentRestrictions?: { country: string }
+              fields?: string[]
+              types?: string[]
+            }
+          ) => any
+        }
       }
     }
   }
@@ -35,126 +68,72 @@ interface UtilityProvider {
 export default function AddressPage() {
   const router = useRouter()
   const [address, setAddress] = useState('')
-  const [selectedProvider, setSelectedProvider] = useState('')
-  const [showRates, setShowRates] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [selectedUtility, setSelectedUtility] = useState<UtilityProvider | null>(null)
+  const [monthlyBill, setMonthlyBill] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [autocomplete, setAutocomplete] = useState<any>(null)
 
-  const getAllProviders = (): UtilityProvider[] => [
-    {
-      id: 'fpl',
-      name: 'Florida Power & Light',
-      rates: {
-        residential: {
-          basic: {
-            name: 'Standard Rate',
-            facilities: 25,
-            energy: 0.12
-          },
-          timeOfUse: {
-            name: 'Time of Use Rate',
-            facilities: 25,
-            peak: 0.18,
-            offPeak: 0.08
-          }
-        }
-      }
-    },
-    {
-      id: 'duke',
-      name: 'Duke Energy',
-      rates: {
-        residential: {
-          basic: {
-            name: 'Standard Rate',
-            facilities: 30,
-            energy: 0.13
-          },
-          timeOfUse: {
-            name: 'Time of Use Rate',
-            facilities: 30,
-            peak: 0.20,
-            offPeak: 0.09
-          }
-        }
-      }
-    }
-  ]
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount)
-  }
-
-  useEffect(() => {
-    // Initialize Google Places Autocomplete
-    window.initAutocomplete = () => {
-      if (!document.getElementById('address-input')) return
-
-      const autocomplete = new window.google.maps.places.Autocomplete(
-        document.getElementById('address-input') as HTMLInputElement,
-        {
-          componentRestrictions: { country: 'us' },
-          fields: ['address_components', 'geometry', 'formatted_address'],
-          types: ['address']
-        }
-      )
-
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace()
-        if (!place.geometry) {
-          setError('Please select a valid address from the dropdown')
-          return
-        }
-
-        // Store the selected address and coordinates
-        const addressData = {
-          formatted_address: place.formatted_address,
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-          components: place.address_components.reduce((acc: any, component: any) => {
-            const type = component.types[0]
-            acc[type] = component.long_name
-            return acc
-          }, {})
-        }
-
-        localStorage.setItem('addressData', JSON.stringify(addressData))
-        
-        // Navigate to utility provider selection
-        router.push('/order/utility')
-      })
-
-      setAutocomplete(autocomplete)
-    }
-  }, [router])
-
-  const handleContinue = () => {
-    if (!address || !selectedProvider) {
-      setError('Please enter your address and select a utility provider')
+    if (!monthlyBill || !selectedUtility || !address) {
+      setError('Please fill in all required fields')
       return
     }
-    
-    // Store both address and provider data
-    localStorage.setItem('selectedProvider', selectedProvider)
-    
-    // Navigate to the next step (packages)
-    router.push('/order/packages')
+
+    try {
+      setLoading(true)
+      // Calculate solar proposal
+      const proposal = calculateSolarProposal(parseFloat(monthlyBill), NC_CONFIG)
+
+      // Store data in localStorage
+      localStorage.setItem('monthlyBill', monthlyBill)
+      localStorage.setItem('utilityProvider', JSON.stringify(selectedUtility))
+      localStorage.setItem('address', address)
+      localStorage.setItem('solarProposal', JSON.stringify(proposal))
+
+      // Navigate to packages page
+      router.push('/order/packages')
+    } catch (err) {
+      console.error('Error calculating proposal:', err)
+      setError('Error calculating solar proposal. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const initAutocomplete = () => {
+    if (!window.google) return
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      document.getElementById('address-input') as HTMLInputElement,
+      {
+        componentRestrictions: { country: 'us' },
+        fields: ['formatted_address'],
+        types: ['address']
+      }
+    )
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace()
+      if (place.formatted_address) {
+        setAddress(place.formatted_address)
+        setError('')
+      }
+    })
+
+    setAutocomplete(autocomplete)
   }
 
   return (
     <div className="min-h-screen bg-[#ececec]">
       <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`}
-        strategy="afterInteractive"
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+        onLoad={initAutocomplete}
       />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 lg:pt-28">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Back Button */}
         <button
           onClick={() => router.back()}
@@ -164,143 +143,119 @@ export default function AddressPage() {
           Back
         </button>
 
-        <div className="bg-[#ececec] rounded-xl shadow-sm p-6 lg:p-8 border border-gray-200">
-          <div className="max-w-xl mx-auto">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-8">
-              <MapPin className="h-6 w-6 text-blue-600" />
-            </div>
-            
-            <h1 className="text-2xl font-semibold text-secondary-text text-center mb-2">
-              Where Would You Like Solar Panels Installed?
-            </h1>
-            <p className="text-secondary-text text-center mb-8">
-              We'll use your address to analyze your roof's solar potential and find available incentives in your area.
-            </p>
-
-            <div className="space-y-6">
-              {/* Address Input */}
-              <div>
-                <label htmlFor="address-input" className="block text-sm font-medium text-secondary-text mb-2">
-                  Property Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="address-input"
-                    value={address}
-                    onChange={(e) => {
-                      setAddress(e.target.value)
-                      setError('')
-                    }}
-                    placeholder="Enter your address"
-                    className="block w-full rounded-lg py-3 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 animate-pulse-subtle bg-white"
-                    disabled={isLoading}
-                  />
-                  {isLoading && (
-                    <div className="absolute right-3 top-3">
-                      <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Utility Provider Selection */}
-              <div>
-                <label htmlFor="utility-provider" className="block text-sm font-medium text-secondary-text mb-2">
-                  Utility Provider
-                </label>
-                <div className="relative">
-                  <select
-                    id="utility-provider"
-                    value={selectedProvider}
-                    onChange={(e) => {
-                      setSelectedProvider(e.target.value)
-                      setShowRates(false)
-                    }}
-                    className="block w-full rounded-lg py-3 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 animate-pulse-subtle bg-white"
-                  >
-                    <option value="">Select your utility provider</option>
-                    {getAllProviders().map((provider) => (
-                      <option key={provider.id} value={provider.id}>
-                        {provider.name}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedProvider && (
-                    <button
-                      type="button"
-                      onClick={() => setShowRates(!showRates)}
-                      className="absolute right-3 top-3 text-blue-500 hover:text-blue-600"
-                      title="View rate information"
-                    >
-                      <Info className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Rate Information */}
-                {showRates && selectedProvider && (
-                  <div className="mt-4 bg-white rounded-lg p-4 border border-blue-100">
-                    <h3 className="text-sm font-medium text-blue-900 mb-2">Rate Information</h3>
-                    {(() => {
-                      const provider = getAllProviders().find(p => p.id === selectedProvider)
-                      if (!provider) return null
-                      
-                      const rates = []
-                      const { residential } = provider.rates
-                      
-                      if (residential.basic) {
-                        rates.push(
-                          <div key="basic" className="text-sm text-blue-800">
-                            <span className="font-medium">{residential.basic.name}:</span>
-                            <div className="ml-2">
-                              <div>Basic Charge: {formatCurrency(residential.basic.facilities)}/month</div>
-                              <div>Energy Charge: {formatCurrency(residential.basic.energy)}/kWh</div>
-                            </div>
-                          </div>
-                        )
-                      }
-                      if (residential.timeOfUse) {
-                        rates.push(
-                          <div key="tou" className="text-sm text-blue-800 mt-2">
-                            <span className="font-medium">{residential.timeOfUse.name}:</span>
-                            <div className="ml-2">
-                              <div>Basic Charge: {formatCurrency(residential.timeOfUse.facilities)}/month</div>
-                              <div>Peak Rate: {formatCurrency(residential.timeOfUse.peak)}/kWh</div>
-                              <div>Off-Peak Rate: {formatCurrency(residential.timeOfUse.offPeak)}/kWh</div>
-                            </div>
-                          </div>
-                        )
-                      }
-                      return rates
-                    })()}
-                  </div>
-                )}
-              </div>
-
-              {error && (
-                <p className="text-sm text-red-600">
-                  {error}
-                </p>
-              )}
-
-              <div className="bg-white rounded-lg p-4 text-sm text-blue-700 border border-blue-100">
-                <p className="flex items-start">
-                  <MapPin className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
-                  Start typing your address and select from the dropdown suggestions for the most accurate results.
-                </p>
-              </div>
-
-              {/* Continue Button */}
-              <button
-                onClick={handleContinue}
-                className="w-full flex items-center justify-center px-6 py-3.5 text-sm font-semibold text-white bg-black rounded-xl shadow-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-secondary-text mb-4">
+            Let's Get Started
+          </h1>
+          <p className="text-secondary-text max-w-2xl mx-auto">
+            Please provide your address and utility information so we can calculate your solar savings.
+          </p>
         </div>
+
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+          <div className="bg-[#ececec] rounded-2xl p-8 border border-gray-200">
+            {/* Monthly Bill Input */}
+            <div className="mb-6">
+              <label htmlFor="monthly-bill" className="block text-sm font-medium text-gray-700 mb-2">
+                Average Monthly Electric Bill
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">$</span>
+                </div>
+                <input
+                  type="number"
+                  id="monthly-bill"
+                  name="monthly-bill"
+                  min="0"
+                  step="1"
+                  value={monthlyBill}
+                  onChange={(e) => setMonthlyBill(e.target.value)}
+                  className="block w-full pl-7 pr-12 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-gray-300 focus:border-gray-300"
+                  placeholder="0"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">/month</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Utility Provider Selection */}
+            <div className="mb-6">
+              <label htmlFor="utility" className="block text-sm font-medium text-gray-700 mb-2">
+                Utility Provider
+              </label>
+              <select
+                id="utility"
+                name="utility"
+                value={selectedUtility?.id || ''}
+                onChange={(e) => {
+                  const provider = UTILITY_PROVIDERS.find(p => p.id === e.target.value)
+                  setSelectedUtility(provider || null)
+                }}
+                className="block w-full py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-gray-300 focus:border-gray-300"
+              >
+                <option value="">Select your provider</option>
+                {UTILITY_PROVIDERS.map((provider) => (
+                  <option key={provider.id} value={provider.id}>
+                    {provider.name}
+                  </option>
+                ))}
+              </select>
+              {selectedUtility && (
+                <div className="mt-2 flex items-start gap-2 text-sm text-gray-500">
+                  <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <p>
+                    Current rate: ${selectedUtility.rates.residential.basic.energy.toFixed(2)}/kWh
+                    + ${selectedUtility.rates.residential.basic.fixed}/month fixed charge
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Address Input */}
+            <div className="mb-6">
+              <label htmlFor="address-input" className="block text-sm font-medium text-gray-700 mb-2">
+                Property Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  id="address-input"
+                  name="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="block w-full pl-10 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-gray-300 focus:border-gray-300"
+                  placeholder="Enter your address"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-6 text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-black rounded-lg shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                  Calculating...
+                </>
+              ) : (
+                'Get Your Solar Proposal'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
