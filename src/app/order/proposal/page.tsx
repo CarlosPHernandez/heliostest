@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Sun, DollarSign, Percent } from 'lucide-react'
 import Image from 'next/image'
+import { SavingsForecastGraph } from '@/components/features/SavingsForecastGraph'
 
 interface SystemInfo {
   systemSize: number
@@ -194,6 +195,14 @@ export default function ProposalPage() {
               <span className="text-gray-900 font-medium">{formatNumber(systemInfo.monthlyProduction)} kWh</span>
             </div>
           </div>
+        </div>
+
+        {/* Savings Forecast Graph */}
+        <div className="mt-8">
+          <SavingsForecastGraph
+            monthlyBill={Number(localStorage.getItem('monthlyBill') || 0)}
+            systemCost={systemInfo.totalPrice}
+          />
         </div>
 
         <div className="mt-8 flex justify-end">
