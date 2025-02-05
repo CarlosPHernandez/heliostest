@@ -165,7 +165,7 @@ export default function PackagesPage() {
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
             Choose Your Solar Package
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-secondary-text">
             Based on your {formatCurrency(yearlyUsage)} kWh yearly usage
           </p>
         </div>
@@ -186,7 +186,7 @@ export default function PackagesPage() {
               <p className="text-4xl font-bold text-gray-900">
                 {formatCurrency(systemPrice.standard * 0.7)}
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-secondary-text mt-1">
                 <span className="line-through">{formatCurrency(systemPrice.standard)}</span>
                 {' '}after 30% tax credit
               </p>

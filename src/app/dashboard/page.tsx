@@ -160,12 +160,12 @@ const Dashboard = () => {
                             {milestone.title}
                           </h3>
                           {milestone.date && (
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-secondary-text">
                               {new Date(milestone.date).toLocaleDateString()}
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 text-sm">{milestone.description}</p>
+                        <p className="text-secondary-text text-sm">{milestone.description}</p>
                         
                         {milestone.status === 'ready' && (
                           <button 

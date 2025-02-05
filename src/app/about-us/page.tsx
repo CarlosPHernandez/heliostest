@@ -191,15 +191,15 @@ const AboutUsPage = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
               <div className="space-y-3">
-                <p className="flex items-center text-gray-600">
+                <p className="flex items-center text-secondary-text">
                   <Mail className="h-5 w-5 mr-2" />
                   contact@heliosnexus.com
                 </p>
-                <p className="flex items-center text-gray-600">
+                <p className="flex items-center text-secondary-text">
                   <Phone className="h-5 w-5 mr-2" />
                   (336) 955-6877
                 </p>
-                <p className="flex items-center text-gray-600">
+                <p className="flex items-center text-secondary-text">
                   <MapPin className="h-5 w-5 mr-2" />
                   Raleigh, NC 27601
                 </p>
@@ -207,7 +207,7 @@ const AboutUsPage = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Office Hours</h3>
-              <div className="space-y-2 text-gray-600">
+              <div className="space-y-2 text-secondary-text">
                 <p>Monday - Friday: 9:00 AM - 5:00 PM EST</p>
                 <p>Saturday - Sunday: Closed</p>
               </div>

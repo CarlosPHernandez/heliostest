@@ -62,7 +62,7 @@ export default function HomePage() {
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 drop-shadow-sm">
             Solar Made Simple.
           </h1>
-          <p className="mt-8 text-xl sm:text-2xl leading-8 text-gray-900 max-w-2xl mx-auto drop-shadow-sm font-semibold">
+          <p className="mt-8 text-xl sm:text-2xl leading-8 text-secondary-text max-w-2xl mx-auto drop-shadow-sm font-semibold">
             Instant solar quote in seconds, no pushy salesperson needed.
           </p>
 
@@ -83,7 +83,7 @@ export default function HomePage() {
                       setMonthlyBill(formatCurrency(e.target.value))
                     }}
                     placeholder="Average Monthly Bill"
-                    className="block w-full rounded-xl py-3.5 px-4 text-gray-900 ring-1 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:ring-blue-400 animate-pulse-subtle"
+                    className="block w-full rounded-xl py-3.5 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 placeholder:text-secondary-text/70 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm shadow-lg transition-all duration-300 hover:ring-blue-400 animate-pulse-subtle"
                   />
                   {error && (
                     <p className="absolute left-0 top-full mt-1 text-sm text-red-400 bg-black/50 px-2 py-1 rounded">

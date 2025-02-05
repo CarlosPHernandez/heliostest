@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Zap, Building2, AlertCircle, Info, CheckCircle } from 'lucide-react'
+import { ChevronLeft, Zap, Building2, AlertCircle, Info, CheckCircle, ArrowRight } from 'lucide-react'
 
 // North Carolina utility providers with their rate information
 const UTILITY_PROVIDERS = {
@@ -151,135 +151,109 @@ export default function UtilityPage() {
         <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8">
           <div className="max-w-xl mx-auto">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-8">
-              <Building2 className="h-6 w-6 text-blue-600" />
+              <Zap className="h-6 w-6 text-blue-600" />
             </div>
             
             <h1 className="text-2xl font-semibold text-center mb-2">
               Select Your Utility Provider
             </h1>
-            <p className="text-gray-600 text-center mb-8">
-              Please confirm your utility provider for accurate savings calculations.
+            <p className="text-secondary-text text-center mb-8">
+              We'll use this information to calculate your potential savings with solar.
             </p>
 
-            {addressData ? (
-              <div className="space-y-6">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600">
-                    Selected Address:
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {addressData.formatted_address}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid gap-4">
-                    {getAllProviders().map((provider) => (
-                      <div key={provider.id} className="space-y-3">
-                        <label
-                          className={`relative flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors
-                            ${selectedProvider === provider.id ? 'border-black ring-1 ring-black' : 'border-gray-200'}`}
-                        >
-                          <input
-                            type="radio"
-                            name="utility"
-                            value={provider.id}
-                            checked={selectedProvider === provider.id}
-                            onChange={(e) => {
-                              setSelectedProvider(e.target.value)
-                              setError('')
-                            }}
-                            className="sr-only"
-                          />
-                          <div className="flex items-center justify-between w-full gap-4">
-                            <div className="flex items-center gap-4">
-                              <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <Zap className="h-6 w-6 text-gray-400" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">{provider.name}</p>
-                                <p className="text-sm text-gray-500">
-                                  Service areas: {provider.serviceAreas.join(', ')}
-                                </p>
-                              </div>
-                            </div>
-                            {recommendedProvider === provider.id && (
-                              <div className="flex items-center text-green-600 text-sm font-medium">
-                                <CheckCircle className="h-5 w-5 mr-1" />
-                                Recommended
-                              </div>
-                            )}
-                          </div>
-                        </label>
-                        
-                        <button
-                          onClick={() => setShowRates(showRates === provider.id ? null : provider.id)}
-                          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 ml-4"
-                        >
-                          <Info className="h-4 w-4" />
-                          {showRates === provider.id ? 'Hide rates' : 'View rates'}
-                        </button>
-
-                        {showRates === provider.id && (
-                          <div className="ml-4 p-4 bg-gray-50 rounded-lg text-sm">
-                            <h4 className="font-medium text-gray-900 mb-3">Current Rates:</h4>
-                            {Object.entries(provider.rates.residential).map(([key, rate]: [string, any]) => (
-                              <div key={key} className="mb-4 last:mb-0">
-                                <p className="font-medium text-gray-800 mb-2">{rate.name}</p>
-                                <ul className="space-y-1 text-gray-600">
-                                  <li>• Basic Facilities Charge: {formatCurrency(rate.facilities)}/month</li>
-                                  {rate.energy && (
-                                    <li>• Energy Charge: {formatCurrency(rate.energy)}/kWh</li>
-                                  )}
-                                  {rate.peak && (
-                                    <>
-                                      <li>• Peak Rate: {formatCurrency(rate.peak)}/kWh</li>
-                                      <li>• Off-Peak Rate: {formatCurrency(rate.offPeak)}/kWh</li>
-                                    </>
-                                  )}
-                                  <li className="text-xs text-gray-500 mt-2">{rate.details}</li>
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {error && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="h-4 w-4" />
-                      {error}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={handleContinue}
-                    className="w-full rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="utility-provider" className="block text-sm font-medium text-gray-700 mb-2">
+                  Utility Provider
+                </label>
+                <div className="relative">
+                  <select
+                    id="utility-provider"
+                    value={selectedProvider}
+                    onChange={(e) => {
+                      setSelectedProvider(e.target.value)
+                      setError('')
+                    }}
+                    className="block w-full rounded-lg py-3 px-4 text-secondary-text border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent"
                   >
-                    Continue
-                  </button>
+                    <option value="">Select a provider</option>
+                    {getAllProviders().map((provider) => (
+                      <option key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedProvider && (
+                    <button
+                      type="button"
+                      onClick={() => setShowRates(showRates === selectedProvider ? null : selectedProvider)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-blue-600 hover:text-blue-800"
+                      title="View rate information"
+                    >
+                      <Info className="h-5 w-5" />
+                    </button>
+                  )}
                 </div>
+                {error && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {error}
+                  </p>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Address Not Found
-                </h3>
-                <p className="text-gray-600">
-                  Please go back and enter your address to see available utility providers.
-                </p>
+
+              {/* Rate Information */}
+              {showRates && selectedProvider && (
+                <div className="mt-4 bg-blue-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-blue-900 mb-2">Rate Information</h3>
+                  {(() => {
+                    const provider = getAllProviders().find(p => p.id === selectedProvider)
+                    if (!provider) return null
+                    
+                    const rates = []
+                    const { residential } = provider.rates
+                    
+                    if (residential.basic) {
+                      rates.push(
+                        <div key="basic" className="text-sm text-blue-800">
+                          <span className="font-medium">{residential.basic.name}:</span>
+                          <div className="ml-2">
+                            <div>Basic Charge: {formatCurrency(residential.basic.facilities)}/month</div>
+                            <div>Energy Charge: {formatCurrency(residential.basic.energy)}/kWh</div>
+                          </div>
+                        </div>
+                      )
+                    }
+                    if (residential.timeOfUse) {
+                      rates.push(
+                        <div key="tou" className="text-sm text-blue-800 mt-2">
+                          <span className="font-medium">{residential.timeOfUse.name}:</span>
+                          <div className="ml-2">
+                            <div>Basic Charge: {formatCurrency(residential.timeOfUse.facilities)}/month</div>
+                            <div>Peak Rate: {formatCurrency(residential.timeOfUse.peak)}/kWh</div>
+                            <div>Off-Peak Rate: {formatCurrency(residential.timeOfUse.offPeak)}/kWh</div>
+                          </div>
+                        </div>
+                      )
+                    }
+                    return rates
+                  })()}
+                  <p className="text-xs text-blue-700 mt-2">
+                    *Rates may vary based on season and usage
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-6">
                 <button
-                  onClick={handleBack}
-                  className="mt-6 inline-flex items-center text-sm font-medium text-black hover:text-gray-700"
+                  onClick={handleContinue}
+                  disabled={!selectedProvider}
+                  className="w-full flex justify-center items-center px-6 py-3 text-white bg-black rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Back to Address Input
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

@@ -29,6 +29,7 @@ const config: Config = {
           DEFAULT: "var(--background)",
           foreground: "var(--foreground)",
         },
+        'secondary-text': '#4f4f4f',
       },
       fontFamily: {
         sans: ["var(--font-roboto)", "system-ui", "sans-serif"],
