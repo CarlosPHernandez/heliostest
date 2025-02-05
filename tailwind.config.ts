@@ -38,6 +38,15 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        'pulse-subtle': {
+          '0%, 100%': { borderColor: 'rgba(59, 130, 246, 0.3)' },
+          '50%': { borderColor: 'rgba(59, 130, 246, 0.6)' },
+        }
+      },
+      animation: {
+        'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
     },
   },
   plugins: [],
