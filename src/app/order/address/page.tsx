@@ -148,7 +148,7 @@ export default function AddressPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#ececec]">
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`}
         strategy="afterInteractive"
@@ -164,7 +164,7 @@ export default function AddressPage() {
           Back
         </button>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8">
+        <div className="bg-[#ececec] rounded-xl shadow-sm p-6 lg:p-8 border border-gray-200">
           <div className="max-w-xl mx-auto">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-8">
               <MapPin className="h-6 w-6 text-blue-600" />
@@ -193,7 +193,7 @@ export default function AddressPage() {
                       setError('')
                     }}
                     placeholder="Enter your address"
-                    className="block w-full rounded-lg py-3 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 animate-pulse-subtle"
+                    className="block w-full rounded-lg py-3 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 animate-pulse-subtle bg-white"
                     disabled={isLoading}
                   />
                   {isLoading && (
@@ -217,7 +217,7 @@ export default function AddressPage() {
                       setSelectedProvider(e.target.value)
                       setShowRates(false)
                     }}
-                    className="block w-full rounded-lg py-3 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 animate-pulse-subtle"
+                    className="block w-full rounded-lg py-3 px-4 text-secondary-text ring-1 ring-inset ring-blue-300 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 animate-pulse-subtle bg-white"
                   >
                     <option value="">Select your utility provider</option>
                     {getAllProviders().map((provider) => (
@@ -240,7 +240,7 @@ export default function AddressPage() {
 
                 {/* Rate Information */}
                 {showRates && selectedProvider && (
-                  <div className="mt-4 bg-blue-50 rounded-lg p-4">
+                  <div className="mt-4 bg-white rounded-lg p-4 border border-blue-100">
                     <h3 className="text-sm font-medium text-blue-900 mb-2">Rate Information</h3>
                     {(() => {
                       const provider = getAllProviders().find(p => p.id === selectedProvider)
@@ -284,7 +284,7 @@ export default function AddressPage() {
                 </p>
               )}
 
-              <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
+              <div className="bg-white rounded-lg p-4 text-sm text-blue-700 border border-blue-100">
                 <p className="flex items-start">
                   <MapPin className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
                   Start typing your address and select from the dropdown suggestions for the most accurate results.
