@@ -42,7 +42,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative flex flex-col min-h-[calc(100vh-4rem)]">
+    <div className="relative min-h-screen pt-16">
       {/* Background image with overlay */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -52,12 +52,13 @@ export default function HomePage() {
           className="object-cover"
           priority
           sizes="100vw"
+          quality={90}
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/50" />
       </div>
       
       {/* Hero Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-grow px-4">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
             Solar Made Simple
@@ -86,7 +87,7 @@ export default function HomePage() {
                     className="block w-full rounded-lg py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6 bg-white/90 backdrop-blur-sm"
                   />
                   {error && (
-                    <p className="absolute left-0 top-full mt-1 text-sm text-red-400">
+                    <p className="absolute left-0 top-full mt-1 text-sm text-red-400 bg-black/50 px-2 py-1 rounded">
                       {error}
                     </p>
                   )}

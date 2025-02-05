@@ -17,8 +17,8 @@ const Header = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full bg-white shadow-sm z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-[100]">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/" className="text-2xl font-bold text-black">
@@ -26,7 +26,7 @@ const Header = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-8">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
@@ -42,7 +42,7 @@ const Header = () => {
               >
                 Order
               </Link>
-            </nav>
+            </div>
 
             {/* Mobile menu button */}
             <button 
@@ -53,16 +53,16 @@ const Header = () => {
               <Menu className="h-6 w-6 text-gray-900" />
             </button>
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Mobile menu */}
       <div 
-        className={`fixed inset-0 z-50 md:hidden transition-all duration-300 ease-in-out ${
+        className={`fixed inset-0 z-[200] md:hidden transition-all duration-300 ease-in-out ${
           isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        {/* Overlay with blur effect */}
+        {/* Overlay */}
         <div 
           className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
             isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
