@@ -60,11 +60,11 @@ export default function HomePage() {
       {/* Hero Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-800">
             Solar Made Simple
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-100 max-w-2xl mx-auto">
-            Start your journey to energy independence. Find out how much you could save by switching to solar power.
+          <p className="mt-6 text-lg leading-8 text-gray-700 max-w-2xl mx-auto">
+            Instant solar quote in seconds
           </p>
 
           {/* Monthly Bill Form */}
