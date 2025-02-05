@@ -21,8 +21,22 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={roboto.variable}>
-      <body className="min-h-screen bg-background">
+    <html lang="en" className={roboto.variable} suppressHydrationWarning>
+      <body 
+        className={`
+          min-h-screen bg-background font-sans antialiased
+          [--radius:0.5rem]
+          [--primary:222.2_47.4%_11.2%]
+          [--primary-foreground:210_40%_98%]
+          [--secondary:210_40%_96.1%]
+          [--secondary-foreground:222.2_47.4%_11.2%]
+          [--muted:210_40%_96.1%]
+          [--muted-foreground:215.4_16.3%_46.9%]
+          [--border:214.3_31.8%_91.4%]
+          [--input:214.3_31.8%_91.4%]
+          [--ring:222.2_84%_4.9%]
+        `}
+      >
         <Header />
         <div className="flex flex-col min-h-screen">
           <main className="flex-grow">
