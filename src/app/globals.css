@@ -15,10 +15,19 @@
     }
   }
 
+  html {
+    @apply antialiased;
+  }
+
   body {
-    color: var(--foreground);
-    background: var(--background);
+    @apply text-foreground bg-background;
     font-family: var(--font-roboto), system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 

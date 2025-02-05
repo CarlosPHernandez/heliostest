@@ -6,6 +6,7 @@ import { Roboto } from 'next/font/google'
 const roboto = Roboto({
   subsets: ['latin'],
   weight: ['400', '500', '700'],
+  display: 'swap',
   variable: '--font-roboto',
 })
 
@@ -20,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={roboto.variable}>
+    <html lang="en" className={`${roboto.variable} antialiased`}>
       <body className="font-sans relative">
         <Header />
         <main className="min-h-screen relative bg-white">
