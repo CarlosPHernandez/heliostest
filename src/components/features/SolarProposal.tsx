@@ -98,38 +98,38 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
     <div>
       {/* Price Display Toggle */}
       <div className="max-w-xl mx-auto mb-12">
-        <div className="bg-gray-100 p-6 rounded-lg">
+        <div className="bg-gray-100 p-6 rounded-lg shadow-md">
           <div className="flex flex-col items-center gap-4">
             <h3 className="text-lg font-semibold text-gray-900">Price Display Options</h3>
             <div className="flex gap-4 w-full max-w-md">
               <button
                 onClick={() => setShowTaxCredit(true)}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all shadow-sm
                   ${showTaxCredit 
                     ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
               >
                 Potential Incentives
-                <span className="block text-xs mt-1 font-normal">
+                <span className={`block text-xs mt-1 font-normal ${showTaxCredit ? 'text-white' : 'text-gray-600'}`}>
                   {showTaxCredit && "30% tax credit applied"}
                 </span>
               </button>
               <button
                 onClick={() => setShowTaxCredit(false)}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all shadow-sm
                   ${!showTaxCredit 
                     ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
               >
                 Purchase Price
-                <span className="block text-xs mt-1 font-normal">
+                <span className={`block text-xs mt-1 font-normal ${!showTaxCredit ? 'text-white' : 'text-gray-600'}`}>
                   {!showTaxCredit && "No incentives applied"}
                 </span>
               </button>
             </div>
-            <p className="text-sm text-gray-500 text-center">
+            <p className="text-sm text-gray-700 text-center">
               {showTaxCredit 
                 ? "Showing prices with 30% federal tax credit applied" 
                 : "Showing original purchase prices without incentives"
@@ -141,14 +141,14 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Standard Package */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col border border-gray-100">
           <div className="p-6 pb-4 border-b">
-            <h3 className="text-2xl font-semibold mb-2">Standard Package</h3>
-            <p className="text-3xl font-bold mb-4">
+            <h3 className="text-2xl font-semibold mb-2 text-gray-900">Standard Package</h3>
+            <p className="text-3xl font-bold mb-4 text-gray-900">
               {formatCurrency(calculatePriceWithTaxCredit(proposal.standard.totalPrice))}
             </p>
-            <p className="text-gray-600">
-              {showTaxCredit && <span className="text-sm text-green-600 block mb-1">*Includes 30% federal tax credit</span>}
+            <p className="text-gray-700">
+              {showTaxCredit && <span className="text-sm text-green-600 block mb-1 font-medium">*Includes 30% federal tax credit</span>}
               Perfect for homeowners looking for a reliable and efficient solar solution.
             </p>
           </div>
@@ -217,7 +217,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
           <div className="p-6 pt-0">
             <button
               onClick={() => handlePackageSelect('standard')}
-              className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
+              className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors shadow-md
                 ${selectedPackage === 'standard'
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-black text-white hover:bg-gray-800'
@@ -229,20 +229,20 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
         </div>
 
         {/* Premium Package */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col relative border border-gray-100">
           <div className="absolute top-4 right-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm">
               Most Popular
             </span>
           </div>
 
           <div className="p-6 pb-4 border-b">
-            <h3 className="text-2xl font-semibold mb-2">Premium Package</h3>
-            <p className="text-3xl font-bold mb-4">
+            <h3 className="text-2xl font-semibold mb-2 text-gray-900">Premium Package</h3>
+            <p className="text-3xl font-bold mb-4 text-gray-900">
               {formatCurrency(calculatePriceWithTaxCredit(proposal.premium.totalPrice))}
             </p>
-            <p className="text-gray-600">
-              {showTaxCredit && <span className="text-sm text-green-600 block mb-1">*Includes 30% federal tax credit</span>}
+            <p className="text-gray-700">
+              {showTaxCredit && <span className="text-sm text-green-600 block mb-1 font-medium">*Includes 30% federal tax credit</span>}
               Enhanced protection and maximum efficiency for optimal performance.
             </p>
           </div>
@@ -324,7 +324,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
           <div className="p-6 pt-0">
             <button
               onClick={() => handlePackageSelect('premium')}
-              className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
+              className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors shadow-md
                 ${selectedPackage === 'premium'
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
