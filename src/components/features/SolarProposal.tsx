@@ -68,6 +68,7 @@ const FEATURES = [
 
 export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   const [selectedPackage, setSelectedPackage] = useState<'standard' | 'premium' | null>(null)
+  const [showTaxCredit, setShowTaxCredit] = useState(true)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -89,198 +90,224 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
     onSelect(packageType)
   }
 
+  const calculatePriceWithTaxCredit = (price: number) => {
+    return showTaxCredit ? price * 0.7 : price // 30% tax credit
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Standard Package */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-        <div className="p-6 pb-4 border-b">
-          <h3 className="text-2xl font-semibold mb-2">Standard Package</h3>
-          <p className="text-3xl font-bold mb-4">
-            {formatCurrency(proposal.standard.totalPrice)}
-          </p>
-          <p className="text-gray-600">
-            Perfect for homeowners looking for a reliable and efficient solar solution.
-          </p>
-        </div>
-
-        <div className="flex-1 p-6">
-          <ul className="space-y-4">
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">
-                  {proposal.standard.numberOfPanels} Solar Panels
-                </p>
-                <p className="text-gray-500 text-sm">
-                  {proposal.standard.systemSize.toFixed(1)} kW System
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">
-                  {formatProduction(proposal.standard.yearlyProduction)} kWh/year
-                </p>
-                <p className="text-gray-500 text-sm">
-                  Estimated Production
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">25-Year Warranty</p>
-                <p className="text-gray-500 text-sm">
-                  Comprehensive coverage on panels and installation
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">Professional Installation</p>
-                <p className="text-gray-500 text-sm">
-                  Expert installation by certified technicians
-                </p>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div className="p-6 pt-0">
-          <button
-            onClick={() => handlePackageSelect('standard')}
-            className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
-              ${selectedPackage === 'standard'
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-black text-white hover:bg-gray-800'
-              }`}
-          >
-            Select Standard Package
-          </button>
-        </div>
+    <div>
+      {/* Tax Credit Toggle */}
+      <div className="flex justify-center items-center gap-4 mb-8">
+        <span className="text-sm text-gray-600">Show prices:</span>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={showTaxCredit}
+            onChange={() => setShowTaxCredit(!showTaxCredit)}
+          />
+          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-black after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all">
+          </div>
+        </label>
+        <span className="text-sm text-gray-600">
+          {showTaxCredit ? "After tax credit" : "Before tax credit"}
+        </span>
       </div>
 
-      {/* Premium Package */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col relative">
-        <div className="absolute top-4 right-4">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-            Most Popular
-          </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Standard Package */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="p-6 pb-4 border-b">
+            <h3 className="text-2xl font-semibold mb-2">Standard Package</h3>
+            <p className="text-3xl font-bold mb-4">
+              {formatCurrency(calculatePriceWithTaxCredit(proposal.standard.totalPrice))}
+            </p>
+            <p className="text-gray-600">
+              {showTaxCredit && <span className="text-sm text-green-600 block mb-1">*Includes 30% federal tax credit</span>}
+              Perfect for homeowners looking for a reliable and efficient solar solution.
+            </p>
+          </div>
+
+          <div className="flex-1 p-6">
+            <ul className="space-y-4">
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">
+                    {proposal.standard.numberOfPanels} Solar Panels
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    {proposal.standard.systemSize.toFixed(1)} kW System
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">
+                    {formatProduction(proposal.standard.yearlyProduction)} kWh/year
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Estimated Production
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">25-Year Warranty</p>
+                  <p className="text-gray-500 text-sm">
+                    Comprehensive coverage on panels and installation
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">Professional Installation</p>
+                  <p className="text-gray-500 text-sm">
+                    Expert installation by certified technicians
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div className="p-6 pt-0">
+            <button
+              onClick={() => handlePackageSelect('standard')}
+              className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
+                ${selectedPackage === 'standard'
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-black text-white hover:bg-gray-800'
+                }`}
+            >
+              Select Standard Package
+            </button>
+          </div>
         </div>
 
-        <div className="p-6 pb-4 border-b">
-          <h3 className="text-2xl font-semibold mb-2">Premium Package</h3>
-          <p className="text-3xl font-bold mb-4">
-            {formatCurrency(proposal.premium.totalPrice)}
-          </p>
-          <p className="text-gray-600">
-            Enhanced protection and maximum efficiency for optimal performance.
-          </p>
-        </div>
+        {/* Premium Package */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+          <div className="absolute top-4 right-4">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+              Most Popular
+            </span>
+          </div>
 
-        <div className="flex-1 p-6">
-          <ul className="space-y-4">
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">
-                  {proposal.premium.numberOfPanels} High-Efficiency Panels
-                </p>
-                <p className="text-gray-500 text-sm">
-                  {proposal.premium.systemSize.toFixed(1)} kW System
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">
-                  {formatProduction(proposal.premium.yearlyProduction)} kWh/year
-                </p>
-                <p className="text-gray-500 text-sm">
-                  Enhanced Production Capacity
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">Premium Protection Package</p>
-                <p className="text-gray-500 text-sm">
-                  Includes Critter Guard and Solar Edge Trim
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">Extended Warranty</p>
-                <p className="text-gray-500 text-sm">
-                  30-year comprehensive coverage
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
-                  ✓
-                </span>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">Priority Service</p>
-                <p className="text-gray-500 text-sm">
-                  24/7 monitoring and premium support
-                </p>
-              </div>
-            </li>
-          </ul>
-        </div>
+          <div className="p-6 pb-4 border-b">
+            <h3 className="text-2xl font-semibold mb-2">Premium Package</h3>
+            <p className="text-3xl font-bold mb-4">
+              {formatCurrency(calculatePriceWithTaxCredit(proposal.premium.totalPrice))}
+            </p>
+            <p className="text-gray-600">
+              {showTaxCredit && <span className="text-sm text-green-600 block mb-1">*Includes 30% federal tax credit</span>}
+              Enhanced protection and maximum efficiency for optimal performance.
+            </p>
+          </div>
 
-        <div className="p-6 pt-0">
-          <button
-            onClick={() => handlePackageSelect('premium')}
-            className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
-              ${selectedPackage === 'premium'
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
-              }`}
-          >
-            Select Premium Package
-          </button>
+          <div className="flex-1 p-6">
+            <ul className="space-y-4">
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">
+                    {proposal.premium.numberOfPanels} High-Efficiency Panels
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    {proposal.premium.systemSize.toFixed(1)} kW System
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">
+                    {formatProduction(proposal.premium.yearlyProduction)} kWh/year
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Enhanced Production Capacity
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">Premium Protection Package</p>
+                  <p className="text-gray-500 text-sm">
+                    Includes Critter Guard and Solar Edge Trim
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">Extended Warranty</p>
+                  <p className="text-gray-500 text-sm">
+                    30-year comprehensive coverage
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                    ✓
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-gray-900 font-medium">Priority Service</p>
+                  <p className="text-gray-500 text-sm">
+                    24/7 monitoring and premium support
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div className="p-6 pt-0">
+            <button
+              onClick={() => handlePackageSelect('premium')}
+              className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
+                ${selectedPackage === 'premium'
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                }`}
+            >
+              Select Premium Package
+            </button>
+          </div>
         </div>
       </div>
     </div>
