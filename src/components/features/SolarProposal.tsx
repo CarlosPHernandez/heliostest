@@ -70,6 +70,16 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   const [selectedPackage, setSelectedPackage] = useState<'standard' | 'premium' | null>(null)
   const [showTaxCredit, setShowTaxCredit] = useState(true)
 
+  // Get the monthly bill from localStorage
+  const monthlyBill = Number(localStorage.getItem('monthlyBill') || '100')
+  
+  // Calculate estimated new bill based on system production
+  const standardMonthlyProduction = proposal.standard.monthlyProduction
+  const monthlyConsumption = monthlyBill / 0.14 // Assuming $0.14/kWh average rate
+  const remainingConsumption = Math.max(0, monthlyConsumption - standardMonthlyProduction)
+  const estimatedNewBill = Math.round(remainingConsumption * 0.14)
+  const monthlySavings = monthlyBill - estimatedNewBill
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -96,46 +106,103 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
   return (
     <div>
+      {/* Savings Breakdown */}
+      <div className="max-w-2xl mx-auto mb-16">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Save Est. {formatCurrency(monthlySavings)}/mo
+          </h2>
+          <p className="text-gray-600 mt-2 text-lg">
+            On Your Monthly Electric Bill With Solar
+          </p>
+        </div>
+
+        {/* Bar Chart Comparison */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="space-y-8">
+            <div className="flex items-end justify-center gap-16">
+              {/* Without Solar Bar */}
+              <div className="w-32">
+                <div className="h-64 bg-gray-100 rounded-lg relative">
+                  <div className="absolute -top-8 left-0 right-0 text-center">
+                    <span className="text-2xl font-bold text-gray-900">{formatCurrency(monthlyBill)}</span>
+                  </div>
+                </div>
+                <div className="text-center mt-4">
+                  <span className="text-gray-600 font-medium">Without Solar</span>
+                </div>
+              </div>
+
+              {/* With Solar Bar */}
+              <div className="w-32">
+                <div className="h-16 bg-blue-500 rounded-lg relative">
+                  <div className="absolute -top-8 left-0 right-0 text-center">
+                    <span className="text-2xl font-bold text-gray-900">{formatCurrency(estimatedNewBill)}</span>
+                  </div>
+                </div>
+                <div className="text-center mt-4">
+                  <span className="text-gray-600 font-medium">With Solar</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Savings Details */}
+            <div className="border-t pt-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Secure Your Electricity Costs
+              </h3>
+              <p className="text-gray-900 font-medium mb-4">
+                {formatCurrency(monthlySavings)} Avg. Monthly Savings
+              </p>
+              <div className="text-gray-600">
+                <p className="mb-3">Savings are calculated based on:</p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                    Cash payment
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                    Amount of electricity your system can produce ({Math.round(standardMonthlyProduction)} kWh/month)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                    Average price of electricity in your state, increasing 2% annually
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                    Your average monthly electric bill of {formatCurrency(monthlyBill)}/mo
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Price Display Toggle */}
       <div className="max-w-xl mx-auto mb-12">
-        <div className="bg-gray-100 p-6 rounded-lg shadow-md">
-          <div className="flex flex-col items-center gap-4">
-            <h3 className="text-lg font-semibold text-gray-900">Price Display Options</h3>
-            <div className="flex gap-4 w-full max-w-md">
-              <button
-                onClick={() => setShowTaxCredit(true)}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all shadow-sm
-                  ${showTaxCredit 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-              >
-                Potential Incentives
-                <span className={`block text-xs mt-1 font-normal ${showTaxCredit ? 'text-white' : 'text-gray-600'}`}>
-                  {showTaxCredit && "30% tax credit applied"}
-                </span>
-              </button>
-              <button
-                onClick={() => setShowTaxCredit(false)}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all shadow-sm
-                  ${!showTaxCredit 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-              >
-                Purchase Price
-                <span className={`block text-xs mt-1 font-normal ${!showTaxCredit ? 'text-white' : 'text-gray-600'}`}>
-                  {!showTaxCredit && "No incentives applied"}
-                </span>
-              </button>
-            </div>
-            <p className="text-sm text-gray-700 text-center">
-              {showTaxCredit 
-                ? "Showing prices with 30% federal tax credit applied" 
-                : "Showing original purchase prices without incentives"
-              }
-            </p>
-          </div>
+        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+          <button
+            onClick={() => setShowTaxCredit(true)}
+            className={`px-4 py-2 text-sm rounded-md transition-all ${
+              showTaxCredit
+                ? 'bg-gray-900 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Potential Incentives*
+          </button>
+          <button
+            onClick={() => setShowTaxCredit(false)}
+            className={`px-4 py-2 text-sm rounded-md transition-all ${
+              !showTaxCredit
+                ? 'bg-gray-900 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Purchase Price
+          </button>
         </div>
       </div>
 
