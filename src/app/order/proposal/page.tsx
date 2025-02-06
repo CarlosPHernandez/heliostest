@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Info } from 'lucide-react'
 import Image from 'next/image'
 import { SavingsBreakdown } from '@/components/features/SavingsBreakdown'
+import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calculations'
 
 interface SystemInfo {
   systemSize: number
@@ -13,6 +14,8 @@ interface SystemInfo {
   yearlyProduction: number
   monthlyProduction: number
 }
+
+type PaymentType = 'cash' | 'finance'
 
 export default function ProposalPage() {
   const router = useRouter()
@@ -23,6 +26,8 @@ export default function ProposalPage() {
   const [address, setAddress] = useState('')
   const [monthlyBill, setMonthlyBill] = useState<number>(0)
   const [mapUrl, setMapUrl] = useState('')
+  const [paymentType, setPaymentType] = useState<PaymentType>('cash')
+  const [selectedTerm, setSelectedTerm] = useState(AVAILABLE_TERMS[1]) // Default to 15 years
 
   useEffect(() => {
     try {
@@ -102,6 +107,7 @@ export default function ProposalPage() {
   }
 
   const { federalTaxCredit, finalPrice } = calculateIncentives(systemInfo.totalPrice)
+  const financingOptions = systemInfo ? calculateFinancingOptions(systemInfo.totalPrice, federalTaxCredit) : null
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
@@ -146,23 +152,130 @@ export default function ProposalPage() {
           </div>
         </div>
 
+        {/* Payment Type Selection */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+            <button
+              onClick={() => setPaymentType('cash')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                paymentType === 'cash'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Cash Purchase
+            </button>
+            <button
+              onClick={() => setPaymentType('finance')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                paymentType === 'finance'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Financing
+            </button>
+          </div>
+        </div>
+
         {/* Cost Breakdown */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Cost Breakdown</h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">System Cost</span>
-              <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">Federal Tax Credit (30%)</span>
-              <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-900 font-semibold">Final Cost</span>
-              <span className="text-gray-900 font-bold text-xl">{formatCurrency(finalPrice)}</span>
-            </div>
-          </div>
+          {paymentType === 'cash' ? (
+            <>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Cash Purchase</h2>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">System Cost</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                  <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-900 font-semibold">Final Cost</span>
+                  <span className="text-gray-900 font-bold text-xl">{formatCurrency(finalPrice)}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Financing Options</h2>
+              <div className="space-y-6">
+                {/* Loan Terms Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Loan Term
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {AVAILABLE_TERMS.map(term => (
+                      <button
+                        key={term}
+                        onClick={() => setSelectedTerm(term)}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          selectedTerm === term
+                            ? 'bg-black text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {term} Years
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {financingOptions && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">System Cost</span>
+                      <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">Interest Rate (APR)</span>
+                      <span className="text-gray-900 font-medium">6.25%</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-600">Monthly Payment</span>
+                        <div className="group relative">
+                          <Info className="h-4 w-4 text-gray-400" />
+                          <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 w-48 p-2 bg-gray-900 text-white text-xs rounded-md mb-2">
+                            Before applying tax credit
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-gray-900 font-medium">
+                        {formatCurrency(financingOptions[selectedTerm].monthlyPayment)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-600">Monthly Payment with Tax Credit</span>
+                        <div className="group relative">
+                          <Info className="h-4 w-4 text-gray-400" />
+                          <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 w-48 p-2 bg-gray-900 text-white text-xs rounded-md mb-2">
+                            After applying 30% tax credit to principal
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-green-600 font-medium">
+                        {formatCurrency(financingOptions[selectedTerm].monthlyPaymentAfterCredit)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-900 font-semibold">Total Cost of Financing</span>
+                      <span className="text-gray-900 font-bold text-xl">
+                        {formatCurrency(financingOptions[selectedTerm].totalCost)}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-4">
+                      Total interest paid over {selectedTerm} years: {formatCurrency(financingOptions[selectedTerm].totalInterest)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Savings Breakdown */}
