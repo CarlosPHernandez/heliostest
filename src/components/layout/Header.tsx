@@ -1,11 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Menu, X, LogOut } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 const Header = () => {
+  const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setIsAuthenticated(!!session)
+    }
+
+    checkAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   const navItems = [
     { name: 'Discover', href: '/discover' },
@@ -36,12 +64,30 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              <Link 
-                href="/login"
-                className="text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                Login
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link 
+                    href="/dashboard"
+                    className="text-gray-900 hover:text-gray-600 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-900 hover:text-gray-600 transition-colors inline-flex items-center"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  href="/login"
+                  className="text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  Login
+                </Link>
+              )}
               <Link 
                 href="/order"
                 className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
@@ -112,15 +158,43 @@ const Header = () => {
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link
-                  href="/login"
-                  className="block py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              </li>
+              {isAuthenticated ? (
+                <>
+                  <li>
+                    <Link
+                      href="/dashboard"
+                      className="block py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => {
+                        handleLogout()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="block w-full text-left py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2"
+                    >
+                      <span className="inline-flex items-center">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </span>
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <li>
+                  <Link
+                    href="/login"
+                    className="block py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </li>
+              )}
             </ul>
             <div className="mt-6 pt-6 border-t">
               <Link 
