@@ -98,40 +98,43 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
     <div>
       {/* Price Display Toggle */}
       <div className="max-w-xl mx-auto mb-12">
-        <div className="bg-gray-100 p-4 rounded-lg">
+        <div className="bg-gray-100 p-6 rounded-lg">
           <div className="flex flex-col items-center gap-4">
             <h3 className="text-lg font-semibold text-gray-900">Price Display Options</h3>
-            <div className="w-full max-w-md relative">
-              <div className="flex justify-between mb-2">
-                <span className={`text-sm font-medium ${showTaxCredit ? 'text-blue-600' : 'text-gray-500'}`}>
-                  Potential Incentives
-                </span>
-                <span className={`text-sm font-medium ${!showTaxCredit ? 'text-blue-600' : 'text-gray-500'}`}>
-                  Purchase Price
-                </span>
-              </div>
-              <div 
-                className="w-full h-2 bg-gray-200 rounded-full cursor-pointer relative"
-                onClick={() => setShowTaxCredit(!showTaxCredit)}
+            <div className="flex gap-4 w-full max-w-md">
+              <button
+                onClick={() => setShowTaxCredit(true)}
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all
+                  ${showTaxCredit 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
               >
-                <div 
-                  className={`absolute top-0 h-full rounded-full transition-all duration-300 ease-in-out ${
-                    showTaxCredit ? 'w-full bg-blue-500' : 'w-0 bg-gray-300'
+                Potential Incentives
+                <span className="block text-xs mt-1 font-normal">
+                  {showTaxCredit && "30% tax credit applied"}
+                </span>
+              </button>
+              <button
+                onClick={() => setShowTaxCredit(false)}
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all
+                  ${!showTaxCredit 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
-                />
-                <div 
-                  className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-2 shadow-md transition-all duration-300 ${
-                    showTaxCredit ? 'right-0 border-blue-500' : 'left-0 border-gray-300'
-                  }`}
-                />
-              </div>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                {showTaxCredit 
-                  ? "Showing prices with 30% federal tax credit applied" 
-                  : "Showing original purchase prices without incentives"
-                }
-              </p>
+              >
+                Purchase Price
+                <span className="block text-xs mt-1 font-normal">
+                  {!showTaxCredit && "No incentives applied"}
+                </span>
+              </button>
             </div>
+            <p className="text-sm text-gray-500 text-center">
+              {showTaxCredit 
+                ? "Showing prices with 30% federal tax credit applied" 
+                : "Showing original purchase prices without incentives"
+              }
+            </p>
           </div>
         </div>
       </div>
