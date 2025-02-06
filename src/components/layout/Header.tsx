@@ -37,6 +37,12 @@ const Header = () => {
                 </Link>
               ))}
               <Link 
+                href="/login"
+                className="text-gray-900 hover:text-gray-600 transition-colors"
+              >
+                Login
+              </Link>
+              <Link 
                 href="/order"
                 className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
               >
@@ -106,6 +112,15 @@ const Header = () => {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  href="/login"
+                  className="block py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              </li>
             </ul>
             <div className="mt-6 pt-6 border-t">
               <Link 
