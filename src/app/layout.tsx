@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import { Roboto } from 'next/font/google'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -37,8 +38,10 @@ export default function RootLayout({
           [--ring:222.2_84%_4.9%]
         `}
       >
-        <Header />
-        {children}
+        <AuthProvider>
+          <Header />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
