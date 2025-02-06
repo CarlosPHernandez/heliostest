@@ -73,13 +73,14 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 0
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount)
   }
 
   const formatProduction = (kwh: number) => {
     return new Intl.NumberFormat('en-US', {
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(kwh)
   }
 
@@ -89,146 +90,198 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Standard Package */}
-      <div
-        className={`bg-white rounded-2xl shadow-sm p-8 border-2 transition-colors ${
-          selectedPackage === 'standard' ? 'border-black' : 'border-transparent'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Standard</h2>
-          <Shield className="h-6 w-6 text-blue-600" />
-        </div>
-
-        <div className="mb-6">
-          <p className="text-4xl font-bold text-gray-900">
-            {formatCurrency(proposal.standard.totalPrice * 0.7)}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div className="p-6 pb-4 border-b">
+          <h3 className="text-2xl font-semibold mb-2">Standard Package</h3>
+          <p className="text-3xl font-bold mb-4">
+            {formatCurrency(proposal.standard.totalPrice)}
           </p>
-          <p className="text-sm text-gray-500 mt-1">
-            <span className="line-through">{formatCurrency(proposal.standard.totalPrice)}</span>
-            {' '}after 30% tax credit
+          <p className="text-gray-600">
+            Perfect for homeowners looking for a reliable and efficient solar solution.
           </p>
         </div>
 
-        <div className="space-y-4 mb-6">
-          <div>
-            <p className="text-sm text-gray-500">System Size</p>
-            <p className="text-lg font-semibold">{proposal.standard.systemSize.toFixed(2)} kW</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Number of Panels</p>
-            <p className="text-lg font-semibold">{proposal.standard.numberOfPanels} panels</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Monthly Production</p>
-            <p className="text-lg font-semibold">{formatProduction(proposal.standard.monthlyProduction)} kWh</p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => handlePackageSelect('standard')}
-          className={`w-full rounded-lg px-4 py-3 text-sm font-semibold mb-6 ${
-            selectedPackage === 'standard'
-              ? 'bg-black text-white hover:bg-gray-800'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-          }`}
-        >
-          Select Standard Package
-        </button>
-
-        <ul className="space-y-4">
-          {FEATURES.map((feature, index) => (
-            <li key={index} className="flex items-start gap-3">
-              {feature.standard ? (
-                <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              ) : (
-                <div className="h-5 w-5 flex-shrink-0" />
-              )}
-              <div>
-                <p className="text-gray-700">{feature.name}</p>
-                {feature.description && feature.standard && (
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    {feature.description.split('|')[0].trim()}
-                  </p>
-                )}
+        <div className="flex-1 p-6">
+          <ul className="space-y-4">
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">
+                  {proposal.standard.numberOfPanels} Solar Panels
+                </p>
+                <p className="text-gray-500 text-sm">
+                  {proposal.standard.systemSize.toFixed(1)} kW System
+                </p>
               </div>
             </li>
-          ))}
-        </ul>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">
+                  {formatProduction(proposal.standard.yearlyProduction)} kWh/year
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Estimated Production
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">25-Year Warranty</p>
+                <p className="text-gray-500 text-sm">
+                  Comprehensive coverage on panels and installation
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">Professional Installation</p>
+                <p className="text-gray-500 text-sm">
+                  Expert installation by certified technicians
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div className="p-6 pt-0">
+          <button
+            onClick={() => handlePackageSelect('standard')}
+            className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
+              ${selectedPackage === 'standard'
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-black text-white hover:bg-gray-800'
+              }`}
+          >
+            Select Standard Package
+          </button>
+        </div>
       </div>
 
       {/* Premium Package */}
-      <div
-        className={`bg-white rounded-2xl shadow-sm p-8 border-2 transition-colors ${
-          selectedPackage === 'premium' ? 'border-black' : 'border-transparent'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Premium</h2>
-          <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-purple-600" />
-            <Zap className="h-6 w-6 text-purple-600" />
-          </div>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+        <div className="absolute top-4 right-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+            Most Popular
+          </span>
         </div>
 
-        <div className="mb-6">
-          <p className="text-4xl font-bold text-gray-900">
-            {formatCurrency(proposal.premium.totalPrice * 0.7)}
+        <div className="p-6 pb-4 border-b">
+          <h3 className="text-2xl font-semibold mb-2">Premium Package</h3>
+          <p className="text-3xl font-bold mb-4">
+            {formatCurrency(proposal.premium.totalPrice)}
           </p>
-          <p className="text-sm text-gray-500 mt-1">
-            <span className="line-through">{formatCurrency(proposal.premium.totalPrice)}</span>
-            {' '}after 30% tax credit
+          <p className="text-gray-600">
+            Enhanced protection and maximum efficiency for optimal performance.
           </p>
         </div>
 
-        <div className="space-y-4 mb-6">
-          <div>
-            <p className="text-sm text-gray-500">System Size</p>
-            <p className="text-lg font-semibold">{proposal.premium.systemSize.toFixed(2)} kW</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Number of Panels</p>
-            <p className="text-lg font-semibold">{proposal.premium.numberOfPanels} panels</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Monthly Production</p>
-            <p className="text-lg font-semibold">{formatProduction(proposal.premium.monthlyProduction)} kWh</p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => handlePackageSelect('premium')}
-          className={`w-full rounded-lg px-4 py-3 text-sm font-semibold mb-6 ${
-            selectedPackage === 'premium'
-              ? 'bg-black text-white hover:bg-gray-800'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-          }`}
-        >
-          Select Premium Package
-        </button>
-
-        <ul className="space-y-4">
-          {FEATURES.map((feature, index) => (
-            <li key={index} className="flex items-start gap-3">
-              {feature.premium ? (
-                <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              ) : (
-                <div className="h-5 w-5 flex-shrink-0" />
-              )}
-              <div>
-                <p className="text-gray-700">{feature.name}</p>
-                {feature.description && feature.premium && (
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    {feature.description.includes('|')
-                      ? feature.description.split('|')[1].trim()
-                      : feature.description}
-                  </p>
-                )}
+        <div className="flex-1 p-6">
+          <ul className="space-y-4">
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">
+                  {proposal.premium.numberOfPanels} High-Efficiency Panels
+                </p>
+                <p className="text-gray-500 text-sm">
+                  {proposal.premium.systemSize.toFixed(1)} kW System
+                </p>
               </div>
             </li>
-          ))}
-        </ul>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">
+                  {formatProduction(proposal.premium.yearlyProduction)} kWh/year
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Enhanced Production Capacity
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">Premium Protection Package</p>
+                <p className="text-gray-500 text-sm">
+                  Includes Critter Guard and Solar Edge Trim
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">Extended Warranty</p>
+                <p className="text-gray-500 text-sm">
+                  30-year comprehensive coverage
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start">
+              <div className="flex-shrink-0">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
+                  ✓
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-900 font-medium">Priority Service</p>
+                <p className="text-gray-500 text-sm">
+                  24/7 monitoring and premium support
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div className="p-6 pt-0">
+          <button
+            onClick={() => handlePackageSelect('premium')}
+            className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors
+              ${selectedPackage === 'premium'
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+              }`}
+          >
+            Select Premium Package
+          </button>
+        </div>
       </div>
     </div>
   )
