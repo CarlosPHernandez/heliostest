@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Sun, DollarSign, Percent } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import Image from 'next/image'
-import { SavingsForecastGraph } from '@/components/features/SavingsForecastGraph'
+import { SavingsBreakdown } from '@/components/features/SavingsBreakdown'
 
 interface SystemInfo {
   systemSize: number
@@ -21,6 +21,7 @@ export default function ProposalPage() {
   const [packageType, setPackageType] = useState<'standard' | 'premium'>('standard')
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const [address, setAddress] = useState('')
+  const [monthlyBill, setMonthlyBill] = useState<number>(0)
   const [mapUrl, setMapUrl] = useState('')
 
   useEffect(() => {
@@ -29,14 +30,16 @@ export default function ProposalPage() {
       const storedPackageType = localStorage.getItem('selectedPackage')
       const storedPackageData = localStorage.getItem('selectedPackageData')
       const storedAddress = localStorage.getItem('address')
+      const storedMonthlyBill = localStorage.getItem('monthlyBill')
 
-      if (!storedPackageType || !storedPackageData || !storedAddress) {
+      if (!storedPackageType || !storedPackageData || !storedAddress || !storedMonthlyBill) {
         throw new Error('Missing required information. Please start over.')
       }
 
       setPackageType(storedPackageType as 'standard' | 'premium')
       setSystemInfo(JSON.parse(storedPackageData))
       setAddress(storedAddress)
+      setMonthlyBill(Number(storedMonthlyBill))
 
       // Generate Google Maps Static API URL for aerial view
       const encodedAddress = encodeURIComponent(storedAddress)
@@ -65,21 +68,18 @@ export default function ProposalPage() {
   }
 
   const calculateIncentives = (totalPrice: number) => {
-    const federalTaxCredit = totalPrice * 0.30 // 30% federal tax credit
-    const afterIncentives = totalPrice - federalTaxCredit
-
+    const federalTaxCredit = totalPrice * 0.3 // 30% federal tax credit
     return {
-      original: totalPrice,
-      federalCredit: federalTaxCredit,
-      final: afterIncentives
+      federalTaxCredit,
+      finalPrice: totalPrice - federalTaxCredit
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-24">
+      <div className="min-h-screen bg-gray-50 pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-gray-600">Loading your proposal...</p>
+          <p className="text-center text-gray-600">Loading proposal...</p>
         </div>
       </div>
     )
@@ -87,25 +87,26 @@ export default function ProposalPage() {
 
   if (error || !systemInfo) {
     return (
-      <div className="min-h-screen bg-background pt-24">
+      <div className="min-h-screen bg-gray-50 pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-red-600 text-center">{error}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/order')}
             className="mt-4 mx-auto block text-gray-600 hover:text-gray-800"
           >
-            Return to Home
+            Start Over
           </button>
         </div>
       </div>
     )
   }
 
-  const financials = calculateIncentives(systemInfo.totalPrice)
+  const { federalTaxCredit, finalPrice } = calculateIncentives(systemInfo.totalPrice)
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Button */}
         <button
           onClick={() => router.back()}
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-8"
@@ -114,103 +115,69 @@ export default function ProposalPage() {
           Back
         </button>
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Your Solar System Proposal
-          </h1>
-          <p className="text-gray-600">
-            {packageType === 'premium' ? 'Premium' : 'Standard'} Package for {address}
-          </p>
-        </div>
-
-        {/* Aerial View */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
-          <div className="relative aspect-[2/1] w-full">
-            <Image
-              src={mapUrl}
-              alt="Aerial view of property"
-              fill
-              className="object-cover"
-            />
-          </div>
-        </div>
-
-        {/* Financial Breakdown */}
+        {/* Property Overview */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-6 flex items-center">
-            <DollarSign className="h-6 w-6 mr-2" />
-            Financial Breakdown
-          </h2>
-          
-          <div className="space-y-6">
-            {/* Main Price Display */}
-            <div className="text-center p-6 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Price After Incentives</p>
-              <p className="text-4xl font-bold text-gray-900">{formatCurrency(financials.final)}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Property Overview</h2>
+              <p className="text-gray-600 mb-4">{address}</p>
+              <div className="space-y-2">
+                <p className="text-gray-900">
+                  <span className="font-medium">System Size:</span> {systemInfo.systemSize.toFixed(1)} kW
+                </p>
+                <p className="text-gray-900">
+                  <span className="font-medium">Number of Panels:</span> {systemInfo.numberOfPanels}
+                </p>
+                <p className="text-gray-900">
+                  <span className="font-medium">Yearly Production:</span> {formatNumber(systemInfo.yearlyProduction)} kWh
+                </p>
+              </div>
             </div>
-
-            {/* Detailed Breakdown */}
-            <div className="grid gap-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total System Cost</span>
-                <span className="text-gray-900 font-medium">{formatCurrency(financials.original)}</span>
-              </div>
-              <div className="flex justify-between items-center text-green-600">
-                <span className="flex items-center">
-                  <Percent className="h-4 w-4 mr-1" />
-                  Federal Tax Credit (30%)
-                </span>
-                <span>-{formatCurrency(financials.federalCredit)}</span>
-              </div>
-              <div className="border-t pt-4 flex justify-between items-center font-semibold">
-                <span>Final Cost</span>
-                <span>{formatCurrency(financials.final)}</span>
-              </div>
+            <div className="relative h-48 md:h-full min-h-[200px] rounded-lg overflow-hidden">
+              {mapUrl && (
+                <Image
+                  src={mapUrl}
+                  alt="Property aerial view"
+                  fill
+                  className="object-cover"
+                />
+              )}
             </div>
           </div>
         </div>
 
-        {/* System Details */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-6 flex items-center">
-            <Sun className="h-6 w-6 mr-2" />
-            System Details
-          </h2>
-          
-          <div className="grid gap-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">System Size</span>
-              <span className="text-gray-900 font-medium">{systemInfo.systemSize.toFixed(2)} kW</span>
+        {/* Cost Breakdown */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Cost Breakdown</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-gray-600">System Cost</span>
+              <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Number of Panels</span>
-              <span className="text-gray-900 font-medium">{systemInfo.numberOfPanels} panels</span>
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-gray-600">Federal Tax Credit (30%)</span>
+              <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Yearly Production</span>
-              <span className="text-gray-900 font-medium">{formatNumber(systemInfo.yearlyProduction)} kWh</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Monthly Production</span>
-              <span className="text-gray-900 font-medium">{formatNumber(systemInfo.monthlyProduction)} kWh</span>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-gray-900 font-semibold">Final Cost</span>
+              <span className="text-gray-900 font-bold text-xl">{formatCurrency(finalPrice)}</span>
             </div>
           </div>
         </div>
 
-        {/* Savings Forecast Graph */}
-        <div className="mt-8">
-          <SavingsForecastGraph
-            monthlyBill={Number(localStorage.getItem('monthlyBill') || 0)}
-            systemCost={systemInfo.totalPrice}
-          />
-        </div>
+        {/* Savings Breakdown */}
+        <SavingsBreakdown
+          monthlyBill={monthlyBill}
+          systemProduction={systemInfo.monthlyProduction}
+        />
 
-        <div className="mt-8 flex justify-end">
+        {/* Continue Button */}
+        <div className="flex justify-center mt-8">
           <button
-            onClick={() => router.push('/order/account')}
-            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            onClick={() => router.push('/order/summary')}
+            className="px-8 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
           >
-            Continue to Account Creation
+            Continue to Order Summary
           </button>
         </div>
       </div>
