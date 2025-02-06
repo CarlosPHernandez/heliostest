@@ -115,22 +115,23 @@ export default function AccountPage() {
 
       // Save proposal data
       console.log('Saving proposal data...')
+      const proposalToSave = {
+        user_id: authData.user.id,
+        proposal_data: {
+          packageType: proposalData.selectedPackage,
+          systemInfo: proposalData.selectedPackageData,
+          address: proposalData.address,
+          monthlyBill: proposalData.monthlyBill,
+          paymentType: proposalData.paymentType || 'cash',
+          financing: proposalData.financingDetails
+        },
+        status: 'pending'
+      }
+      console.log('Proposal structure to save:', JSON.stringify(proposalToSave, null, 2))
+
       const { error: proposalError } = await supabase
         .from('proposals')
-        .insert([
-          {
-            user_id: authData.user.id,
-            proposal_data: {
-              packageType: proposalData.selectedPackage,
-              systemInfo: proposalData.selectedPackageData,
-              address: proposalData.address,
-              monthlyBill: proposalData.monthlyBill,
-              paymentType: proposalData.paymentType || 'cash',
-              financing: proposalData.financingDetails
-            },
-            status: 'pending'
-          }
-        ])
+        .insert([proposalToSave])
 
       if (proposalError) {
         console.error('Error saving proposal:', proposalError)
