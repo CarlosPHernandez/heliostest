@@ -317,13 +317,13 @@ export default function ProposalPage() {
                     <div className="flex justify-between items-center py-2 border-b">
                       <span className="text-gray-600">Monthly Payment</span>
                       <span className="text-gray-900 font-medium">
-                        {formatCurrency(financingOptions[selectedTerm].monthlyPaymentWithDownPayment)}
+                        {formatCurrency(financingOptions[selectedTerm]?.monthlyPaymentWithDownPayment || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-900 font-semibold">Monthly Payment with Tax Credit</span>
                       <span className="text-green-600 font-bold text-xl">
-                        {formatCurrency(financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit)}
+                        {formatCurrency(financingOptions[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit || 0)}
                       </span>
                     </div>
                   </div>

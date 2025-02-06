@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Zap, Building2, AlertCircle, Info, CheckCircle, ArrowRight } from 'lucide-react'
+import { UtilityProvider } from '@/lib/utility-providers'
 
 // North Carolina utility providers with their rate information
 const UTILITY_PROVIDERS = {
@@ -68,7 +69,7 @@ const UTILITY_PROVIDERS = {
 export default function UtilityPage() {
   const router = useRouter()
   const [addressData, setAddressData] = useState<any>(null)
-  const [selectedProvider, setSelectedProvider] = useState<string>('')
+  const [selectedProvider, setSelectedProvider] = useState<UtilityProvider | null>(null)
   const [error, setError] = useState('')
   const [showRates, setShowRates] = useState<string | null>(null)
   const [recommendedProvider, setRecommendedProvider] = useState<string | null>(null)
@@ -116,7 +117,7 @@ export default function UtilityPage() {
     }
 
     // Store the selected utility provider and its rate information
-    const provider = getAllProviders().find(p => p.id === selectedProvider)
+    const provider = getAllProviders().find(p => p.id === selectedProvider.id)
     localStorage.setItem('utilityProvider', JSON.stringify({
       id: provider?.id,
       name: provider?.name,
@@ -169,9 +170,12 @@ export default function UtilityPage() {
                 <div className="relative">
                   <select
                     id="utilityProvider"
-                    value={selectedProvider}
-                    onChange={(e) => setSelectedProvider(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 bg-white"
+                    value={selectedProvider?.name || ''}
+                    onChange={(e) => {
+                      const provider = getAllProviders().find(p => p.name === e.target.value)
+                      setSelectedProvider(provider || null)
+                    }}
+                    className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 bg-white/90 backdrop-blur-sm shadow-sm"
                     required
                   >
                     <option value="" className="text-gray-900">Select your utility provider</option>
@@ -184,7 +188,7 @@ export default function UtilityPage() {
                   {selectedProvider && (
                     <button
                       type="button"
-                      onClick={() => setShowRates(showRates === selectedProvider ? null : selectedProvider)}
+                      onClick={() => setShowRates(showRates === selectedProvider.id ? null : selectedProvider.id)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-blue-600 hover:text-blue-800"
                       title="View rate information"
                     >
@@ -204,7 +208,7 @@ export default function UtilityPage() {
                 <div className="mt-4 bg-blue-50 rounded-lg p-4">
                   <h3 className="text-sm font-medium text-blue-900 mb-2">Rate Information</h3>
                   {(() => {
-                    const provider = getAllProviders().find(p => p.id === selectedProvider)
+                    const provider = getAllProviders().find(p => p.id === selectedProvider.id)
                     if (!provider) return null
                     
                     const rates = []
