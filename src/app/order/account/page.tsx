@@ -129,13 +129,35 @@ export default function AccountPage() {
       }
       console.log('Proposal structure to save:', JSON.stringify(proposalToSave, null, 2))
 
+      // Get the session to ensure we have valid authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        throw new Error('Authentication error while saving proposal')
+      }
+
+      if (!session) {
+        console.error('No active session found')
+        // Store proposal data temporarily
+        localStorage.setItem('pendingProposal', JSON.stringify(proposalToSave))
+        router.push('/login?message=Please check your email to verify your account')
+        return
+      }
+
       const { error: proposalError } = await supabase
         .from('proposals')
         .insert([proposalToSave])
 
       if (proposalError) {
         console.error('Error saving proposal:', proposalError)
-        throw new Error('Failed to save proposal data')
+        if (proposalError.code === '42501') {
+          throw new Error('Permission denied: Unable to save proposal. Please verify your email first.')
+        } else if (proposalError.code === '23505') {
+          throw new Error('A proposal already exists for this account')
+        } else {
+          throw new Error(`Failed to save proposal data: ${proposalError.message}`)
+        }
       }
 
       console.log('Proposal saved successfully')

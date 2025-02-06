@@ -50,10 +50,29 @@ export default function LoginForm() {
 
       if (error) throw error
 
-      if (data?.session) {
-        console.log('Sign in successful')
-        const redirectTo = searchParams?.get('redirect') || '/dashboard'
-        router.replace(redirectTo)
+      if (data?.user) {
+        // Check for any pending proposals
+        const pendingProposal = localStorage.getItem('pendingProposal')
+        if (pendingProposal) {
+          try {
+            const proposalData = JSON.parse(pendingProposal)
+            const { error: proposalError } = await supabase
+              .from('proposals')
+              .insert([proposalData])
+
+            if (proposalError) {
+              console.error('Error saving pending proposal:', proposalError)
+            } else {
+              console.log('Successfully saved pending proposal')
+              localStorage.removeItem('pendingProposal')
+            }
+          } catch (err) {
+            console.error('Error processing pending proposal:', err)
+          }
+        }
+
+        router.push('/dashboard')
+        router.refresh()
       } else {
         console.log('No session returned after sign in')
         setError('Failed to sign in')
