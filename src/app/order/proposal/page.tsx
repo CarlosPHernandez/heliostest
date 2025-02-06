@@ -266,9 +266,9 @@ export default function ProposalPage() {
                     <input
                       type="number"
                       id="downPayment"
-                      value={downPayment}
+                      value={downPayment || ''}
                       onChange={(e) => setDownPayment(Math.max(0, Number(e.target.value)))}
-                      className="pl-8 w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                      className="pl-8 pr-4 py-3 w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
                       placeholder="Enter amount"
                       min="0"
                       max={systemInfo.totalPrice}
@@ -288,7 +288,7 @@ export default function ProposalPage() {
                     id="loanTerm"
                     value={selectedTerm}
                     onChange={(e) => setSelectedTerm(Number(e.target.value))}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                    className="w-full px-4 py-3 border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
                   >
                     {AVAILABLE_TERMS.map(term => (
                       <option key={term} value={term}>{term} Years</option>
