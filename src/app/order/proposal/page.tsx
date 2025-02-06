@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Info } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import Image from 'next/image'
 import { SavingsBreakdown } from '@/components/features/SavingsBreakdown'
 import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calculations'
@@ -28,6 +28,8 @@ export default function ProposalPage() {
   const [mapUrl, setMapUrl] = useState('')
   const [paymentType, setPaymentType] = useState<PaymentType>('cash')
   const [selectedTerm, setSelectedTerm] = useState(AVAILABLE_TERMS[1]) // Default to 15 years
+  const [downPayment, setDownPayment] = useState<number>(0)
+  const [financingOptions, setFinancingOptions] = useState<any>(null)
 
   useEffect(() => {
     try {
@@ -41,10 +43,21 @@ export default function ProposalPage() {
         throw new Error('Missing required information. Please start over.')
       }
 
+      const parsedPackageData = JSON.parse(storedPackageData)
       setPackageType(storedPackageType as 'standard' | 'premium')
-      setSystemInfo(JSON.parse(storedPackageData))
+      setSystemInfo(parsedPackageData)
       setAddress(storedAddress)
       setMonthlyBill(Number(storedMonthlyBill))
+
+      // Calculate financing options
+      const federalTaxCredit = parsedPackageData.totalPrice * 0.3
+      const options = calculateFinancingOptions(
+        parsedPackageData.totalPrice,
+        federalTaxCredit,
+        downPayment,
+        Number(storedMonthlyBill)
+      )
+      setFinancingOptions(options)
 
       // Generate Google Maps Static API URL for aerial view
       const encodedAddress = encodeURIComponent(storedAddress)
@@ -57,7 +70,7 @@ export default function ProposalPage() {
       setError(err instanceof Error ? err.message : 'Error loading proposal')
       setLoading(false)
     }
-  }, [])
+  }, [downPayment])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -80,9 +93,33 @@ export default function ProposalPage() {
     }
   }
 
+  const handlePlaceOrder = () => {
+    try {
+      // Save proposal data including payment type and financing details
+      const proposalData = {
+        packageType,
+        systemInfo,
+        address,
+        monthlyBill,
+        paymentType,
+        financing: paymentType === 'finance' ? {
+          term: selectedTerm,
+          downPayment,
+          monthlyPayment: financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit
+        } : null
+      }
+      
+      localStorage.setItem('proposalData', JSON.stringify(proposalData))
+      router.push('/order/summary')
+    } catch (err) {
+      console.error('Error saving proposal:', err)
+      setError('Failed to save proposal data')
+    }
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
+      <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-gray-600">Loading proposal...</p>
         </div>
@@ -92,7 +129,7 @@ export default function ProposalPage() {
 
   if (error || !systemInfo) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
+      <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-red-600 text-center">{error}</p>
           <button
@@ -107,11 +144,13 @@ export default function ProposalPage() {
   }
 
   const { federalTaxCredit, finalPrice } = calculateIncentives(systemInfo.totalPrice)
-  const financingOptions = systemInfo ? calculateFinancingOptions(systemInfo.totalPrice, federalTaxCredit) : null
+  const currentMonthlyPayment = paymentType === 'finance' && financingOptions
+    ? financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit
+    : null
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Back Button */}
         <button
           onClick={() => router.back()}
@@ -121,43 +160,59 @@ export default function ProposalPage() {
           Back
         </button>
 
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Your Solar Proposal
+          </h1>
+          <p className="text-gray-600">
+            Review your customized solar solution and choose your preferred payment option.
+          </p>
+        </div>
+
         {/* Property Overview */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Property Overview</h2>
-              <p className="text-gray-600 mb-4">{address}</p>
-              <div className="space-y-2">
-                <p className="text-gray-900">
-                  <span className="font-medium">System Size:</span> {systemInfo.systemSize.toFixed(1)} kW
+              <h2 className="text-xl font-semibold mb-4">Property Overview</h2>
+              <div className="space-y-3">
+                <p className="text-gray-600">
+                  <span className="font-medium text-gray-900">Address:</span><br />
+                  {address}
                 </p>
-                <p className="text-gray-900">
-                  <span className="font-medium">Number of Panels:</span> {systemInfo.numberOfPanels}
+                <p className="text-gray-600">
+                  <span className="font-medium text-gray-900">System Size:</span><br />
+                  {systemInfo.systemSize.toFixed(1)} kW
                 </p>
-                <p className="text-gray-900">
-                  <span className="font-medium">Yearly Production:</span> {formatNumber(systemInfo.yearlyProduction)} kWh
+                <p className="text-gray-600">
+                  <span className="font-medium text-gray-900">Number of Panels:</span><br />
+                  {systemInfo.numberOfPanels} panels
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium text-gray-900">Estimated Production:</span><br />
+                  {formatNumber(systemInfo.yearlyProduction)} kWh/year
                 </p>
               </div>
             </div>
-            <div className="relative h-48 md:h-full min-h-[200px] rounded-lg overflow-hidden">
-              {mapUrl && (
-                <Image
-                  src={mapUrl}
-                  alt="Property aerial view"
-                  fill
-                  className="object-cover"
-                />
-              )}
+            <div className="relative aspect-video rounded-lg overflow-hidden">
+              <Image
+                src={mapUrl}
+                alt="Property aerial view"
+                fill
+                className="object-cover"
+              />
             </div>
           </div>
         </div>
 
-        {/* Payment Type Selection */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+        {/* Payment Options */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-6">Payment Options</h2>
+          
+          {/* Payment Type Toggle */}
+          <div className="flex gap-4 p-1 bg-gray-100 rounded-lg w-fit mb-8">
             <button
               onClick={() => setPaymentType('cash')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 paymentType === 'cash'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -167,131 +222,118 @@ export default function ProposalPage() {
             </button>
             <button
               onClick={() => setPaymentType('finance')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 paymentType === 'finance'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Financing
+              Finance
             </button>
           </div>
-        </div>
 
-        {/* Cost Breakdown */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           {paymentType === 'cash' ? (
-            <>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Cash Purchase</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">System Cost</span>
-                  <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">System Price</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(systemInfo.totalPrice)}</p>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Federal Tax Credit (30%)</span>
-                  <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-900 font-semibold">Final Cost</span>
-                  <span className="text-gray-900 font-bold text-xl">{formatCurrency(finalPrice)}</span>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-600 mb-1">Federal Tax Credit (30%)</p>
+                  <p className="text-2xl font-bold text-green-600">-{formatCurrency(federalTaxCredit)}</p>
                 </div>
               </div>
-            </>
+              <div className="border-t pt-6">
+                <p className="text-lg font-medium text-gray-600 mb-2">Final Price</p>
+                <p className="text-3xl font-bold text-gray-900">{formatCurrency(finalPrice)}</p>
+              </div>
+            </div>
           ) : (
-            <>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Financing Options</h2>
-              <div className="space-y-6">
-                {/* Loan Terms Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Loan Term
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {AVAILABLE_TERMS.map(term => (
-                      <button
-                        key={term}
-                        onClick={() => setSelectedTerm(term)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          selectedTerm === term
-                            ? 'bg-black text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {term} Years
-                      </button>
-                    ))}
-                  </div>
+            <div className="space-y-6">
+              {/* Down Payment Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Down Payment (Optional)
+                </label>
+                <div className="flex gap-4 items-center">
+                  <input
+                    type="number"
+                    value={downPayment}
+                    onChange={(e) => setDownPayment(Math.max(0, Number(e.target.value)))}
+                    className="w-48 px-3 py-2 border rounded-md focus:ring-black focus:border-black"
+                    placeholder="0"
+                    min="0"
+                    max={systemInfo.totalPrice}
+                  />
+                  <span className="text-sm text-gray-500">
+                    {((downPayment / systemInfo.totalPrice) * 100).toFixed(1)}% of total cost
+                  </span>
                 </div>
-
-                {financingOptions && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-gray-600">System Cost</span>
-                      <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-gray-600">Interest Rate (APR)</span>
-                      <span className="text-gray-900 font-medium">6.25%</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-600">Monthly Payment</span>
-                        <div className="group relative">
-                          <Info className="h-4 w-4 text-gray-400" />
-                          <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 w-48 p-2 bg-gray-900 text-white text-xs rounded-md mb-2">
-                            Before applying tax credit
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-gray-900 font-medium">
-                        {formatCurrency(financingOptions[selectedTerm].monthlyPayment)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-600">Monthly Payment with Tax Credit</span>
-                        <div className="group relative">
-                          <Info className="h-4 w-4 text-gray-400" />
-                          <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 w-48 p-2 bg-gray-900 text-white text-xs rounded-md mb-2">
-                            After applying 30% tax credit to principal
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-green-600 font-medium">
-                        {formatCurrency(financingOptions[selectedTerm].monthlyPaymentAfterCredit)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-900 font-semibold">Total Cost of Financing</span>
-                      <span className="text-gray-900 font-bold text-xl">
-                        {formatCurrency(financingOptions[selectedTerm].totalCost)}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-4">
-                      Total interest paid over {selectedTerm} years: {formatCurrency(financingOptions[selectedTerm].totalInterest)}
-                    </div>
-                  </div>
-                )}
               </div>
-            </>
+
+              {/* Loan Term Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Loan Term
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {AVAILABLE_TERMS.map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => setSelectedTerm(term)}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        selectedTerm === term
+                          ? 'bg-black text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {term} Years
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Financing Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Interest Rate (APR)</p>
+                  <p className="text-2xl font-bold text-gray-900">6.25%</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Monthly Payment</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">After tax credit</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
         {/* Savings Breakdown */}
-        <SavingsBreakdown
-          monthlyBill={monthlyBill}
-          systemProduction={systemInfo.monthlyProduction}
-        />
+        <div className="mb-8">
+          <SavingsBreakdown
+            monthlyBill={monthlyBill}
+            systemProduction={systemInfo.monthlyProduction}
+            showFinancingComparison={paymentType === 'finance'}
+            financingPayment={currentMonthlyPayment}
+            loanTerm={paymentType === 'finance' ? selectedTerm : undefined}
+          />
+        </div>
 
-        {/* Continue Button */}
-        <div className="flex justify-center mt-8">
+        {/* Place Order Button */}
+        <div className="text-center">
           <button
-            onClick={() => router.push('/order/summary')}
-            className="px-8 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            onClick={handlePlaceOrder}
+            className="inline-flex justify-center px-6 py-3 text-lg font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Continue to Order Summary
+            Place Order
           </button>
+          <p className="mt-4 text-sm text-gray-500">
+            By placing your order, you agree to our terms and conditions. A refundable deposit may be required.
+          </p>
         </div>
       </div>
     </div>
