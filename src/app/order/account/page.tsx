@@ -38,44 +38,59 @@ export default function AccountPage() {
 
   const validateForm = () => {
     if (!formData.fullName || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
-      setError('All fields are required')
-      return false
+      return 'All fields are required'
     }
 
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Please enter a valid email address')
-      return false
+      return 'Please enter a valid email address'
     }
 
     if (!formData.phone.match(/^\+?[\d\s-]{10,}$/)) {
-      setError('Please enter a valid phone number')
-      return false
+      return 'Please enter a valid phone number'
     }
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long')
-      return false
+      return 'Password must be at least 8 characters long'
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return false
+      return 'Passwords do not match'
     }
 
-    return true
+    return ''
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
     setError('')
 
-    if (!validateForm()) return
-
-    setIsLoading(true)
-
     try {
+      console.log('Starting registration process...')
+      
+      // Validate form
+      const validationError = validateForm()
+      if (validationError) {
+        setError(validationError)
+        setIsLoading(false)
+        return
+      }
+
+      // Load proposal data
+      console.log('Loading proposal data...')
+      const proposalData = {
+        selectedPackage: localStorage.getItem('selectedPackage'),
+        selectedPackageData: JSON.parse(localStorage.getItem('selectedPackageData') || '{}'),
+        address: localStorage.getItem('address'),
+        monthlyBill: localStorage.getItem('monthlyBill'),
+        paymentType: localStorage.getItem('paymentType'),
+        financingDetails: localStorage.getItem('financingDetails')
+      }
+      console.log('Proposal data:', proposalData)
+
       // Register user with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      console.log('Registering user with Supabase...')
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -86,41 +101,54 @@ export default function AccountPage() {
         }
       })
 
-      if (authError) throw authError
-
-      if (authData.user) {
-        // Get proposal data from localStorage
-        const proposalData = {
-          packageType: localStorage.getItem('selectedPackage'),
-          systemInfo: JSON.parse(localStorage.getItem('selectedPackageData') || '{}'),
-          address: localStorage.getItem('address'),
-          monthlyBill: localStorage.getItem('monthlyBill'),
-          paymentType: localStorage.getItem('paymentType') || 'cash',
-          financing: JSON.parse(localStorage.getItem('financingDetails') || '{}')
-        }
-
-        // Save proposal to database
-        const { error: proposalError } = await supabase
-          .from('proposals')
-          .insert([{
-            user_id: authData.user.id,
-            proposal_data: proposalData,
-            status: 'pending'
-          }])
-
-        if (proposalError) throw proposalError
-
-        // Clear localStorage
-        localStorage.removeItem('selectedPackage')
-        localStorage.removeItem('selectedPackageData')
-        localStorage.removeItem('address')
-        localStorage.removeItem('monthlyBill')
-        localStorage.removeItem('paymentType')
-        localStorage.removeItem('financingDetails')
-
-        // Redirect to dashboard
-        router.push('/dashboard')
+      if (signUpError) {
+        console.error('Supabase signup error:', signUpError)
+        throw new Error(signUpError.message)
       }
+
+      if (!authData.user) {
+        console.error('No user data returned from Supabase')
+        throw new Error('Failed to create account')
+      }
+
+      console.log('User registered successfully:', authData.user.id)
+
+      // Save proposal data
+      console.log('Saving proposal data...')
+      const { error: proposalError } = await supabase
+        .from('proposals')
+        .insert([
+          {
+            user_id: authData.user.id,
+            proposal_data: {
+              packageType: proposalData.selectedPackage,
+              systemInfo: proposalData.selectedPackageData,
+              address: proposalData.address,
+              monthlyBill: proposalData.monthlyBill,
+              paymentType: proposalData.paymentType || 'cash',
+              financing: proposalData.financingDetails
+            },
+            status: 'pending'
+          }
+        ])
+
+      if (proposalError) {
+        console.error('Error saving proposal:', proposalError)
+        throw new Error('Failed to save proposal data')
+      }
+
+      console.log('Proposal saved successfully')
+
+      // Clear localStorage
+      localStorage.removeItem('selectedPackage')
+      localStorage.removeItem('selectedPackageData')
+      localStorage.removeItem('address')
+      localStorage.removeItem('monthlyBill')
+      localStorage.removeItem('paymentType')
+      localStorage.removeItem('financingDetails')
+
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (err) {
       console.error('Registration error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred during registration')
