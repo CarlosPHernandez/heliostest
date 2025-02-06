@@ -42,40 +42,46 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      console.log('Attempting to sign in...')
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // First, try to sign in
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (signInError) throw signInError
 
       if (data?.user) {
-        // Check for any pending proposals
-        const pendingProposal = localStorage.getItem('pendingProposal')
-        if (pendingProposal) {
-          try {
-            const proposalData = JSON.parse(pendingProposal)
-            const { error: proposalError } = await supabase
-              .from('proposals')
-              .insert([proposalData])
+        // After successful sign in, get the session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) throw sessionError
+        
+        if (session) {
+          // Check for any pending proposals
+          const pendingProposal = localStorage.getItem('pendingProposal')
+          if (pendingProposal) {
+            try {
+              const proposalData = JSON.parse(pendingProposal)
+              const { error: proposalError } = await supabase
+                .from('proposals')
+                .insert([proposalData])
 
-            if (proposalError) {
-              console.error('Error saving pending proposal:', proposalError)
-            } else {
-              console.log('Successfully saved pending proposal')
-              localStorage.removeItem('pendingProposal')
+              if (proposalError) {
+                console.error('Error saving pending proposal:', proposalError)
+              } else {
+                localStorage.removeItem('pendingProposal')
+              }
+            } catch (err) {
+              console.error('Error processing pending proposal:', err)
             }
-          } catch (err) {
-            console.error('Error processing pending proposal:', err)
           }
-        }
 
-        router.push('/dashboard')
-        router.refresh()
-      } else {
-        console.log('No session returned after sign in')
-        setError('Failed to sign in')
+          // Get the redirect URL from search params or default to dashboard
+          const redirectTo = searchParams?.get('redirect') || '/dashboard'
+          router.push(redirectTo)
+        } else {
+          setError('Failed to establish session')
+        }
       }
     } catch (err) {
       console.error('Sign in error:', err)
