@@ -96,22 +96,44 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
   return (
     <div>
-      {/* Tax Credit Toggle */}
-      <div className="flex justify-center items-center gap-4 mb-8">
-        <span className="text-sm text-gray-600">Show prices:</span>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            className="sr-only peer"
-            checked={showTaxCredit}
-            onChange={() => setShowTaxCredit(!showTaxCredit)}
-          />
-          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-black after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all">
+      {/* Price Display Toggle */}
+      <div className="max-w-xl mx-auto mb-12">
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <div className="flex flex-col items-center gap-4">
+            <h3 className="text-lg font-semibold text-gray-900">Price Display Options</h3>
+            <div className="w-full max-w-md relative">
+              <div className="flex justify-between mb-2">
+                <span className={`text-sm font-medium ${showTaxCredit ? 'text-blue-600' : 'text-gray-500'}`}>
+                  Potential Incentives
+                </span>
+                <span className={`text-sm font-medium ${!showTaxCredit ? 'text-blue-600' : 'text-gray-500'}`}>
+                  Purchase Price
+                </span>
+              </div>
+              <div 
+                className="w-full h-2 bg-gray-200 rounded-full cursor-pointer relative"
+                onClick={() => setShowTaxCredit(!showTaxCredit)}
+              >
+                <div 
+                  className={`absolute top-0 h-full rounded-full transition-all duration-300 ease-in-out ${
+                    showTaxCredit ? 'w-full bg-blue-500' : 'w-0 bg-gray-300'
+                  }`}
+                />
+                <div 
+                  className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-2 shadow-md transition-all duration-300 ${
+                    showTaxCredit ? 'right-0 border-blue-500' : 'left-0 border-gray-300'
+                  }`}
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-500 text-center">
+                {showTaxCredit 
+                  ? "Showing prices with 30% federal tax credit applied" 
+                  : "Showing original purchase prices without incentives"
+                }
+              </p>
+            </div>
           </div>
-        </label>
-        <span className="text-sm text-gray-600">
-          {showTaxCredit ? "After tax credit" : "Before tax credit"}
-        </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
