@@ -110,7 +110,7 @@ export default function ProposalPage() {
       }
       
       localStorage.setItem('proposalData', JSON.stringify(proposalData))
-      router.push('/order/summary')
+      router.push('/order/account')
     } catch (err) {
       console.error('Error saving proposal:', err)
       setError('Failed to save proposal data')
@@ -206,109 +206,130 @@ export default function ProposalPage() {
 
         {/* Payment Options */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-6">Payment Options</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Payment Options</h2>
           
           {/* Payment Type Toggle */}
-          <div className="flex gap-4 p-1 bg-gray-100 rounded-lg w-fit mb-8">
-            <button
-              onClick={() => setPaymentType('cash')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                paymentType === 'cash'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Cash Purchase
-            </button>
-            <button
-              onClick={() => setPaymentType('finance')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                paymentType === 'finance'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Finance
-            </button>
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+              <button
+                onClick={() => setPaymentType('cash')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  paymentType === 'cash'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Cash Purchase
+              </button>
+              <button
+                onClick={() => setPaymentType('finance')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  paymentType === 'finance'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Financing
+              </button>
+            </div>
           </div>
 
           {paymentType === 'cash' ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">System Price</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(systemInfo.totalPrice)}</p>
+            <>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Cash Purchase</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">System Price</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
                 </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-600 mb-1">Federal Tax Credit (30%)</p>
-                  <p className="text-2xl font-bold text-green-600">-{formatCurrency(federalTaxCredit)}</p>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                  <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-900 font-semibold">Final Cost</span>
+                  <span className="text-gray-900 font-bold text-xl">{formatCurrency(finalPrice)}</span>
                 </div>
               </div>
-              <div className="border-t pt-6">
-                <p className="text-lg font-medium text-gray-600 mb-2">Final Price</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(finalPrice)}</p>
-              </div>
-            </div>
+            </>
           ) : (
-            <div className="space-y-6">
-              {/* Down Payment Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Down Payment (Optional)
-                </label>
-                <div className="flex gap-4 items-center">
-                  <input
-                    type="number"
-                    value={downPayment}
-                    onChange={(e) => setDownPayment(Math.max(0, Number(e.target.value)))}
-                    className="w-48 px-3 py-2 border rounded-md focus:ring-black focus:border-black"
-                    placeholder="0"
-                    min="0"
-                    max={systemInfo.totalPrice}
-                  />
-                  <span className="text-sm text-gray-500">
+            <>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Financing Options</h3>
+              <div className="space-y-6">
+                {/* Down Payment Input */}
+                <div>
+                  <label htmlFor="downPayment" className="block text-sm font-medium text-gray-700 mb-2">
+                    Down Payment (Optional)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      id="downPayment"
+                      value={downPayment}
+                      onChange={(e) => setDownPayment(Math.max(0, Number(e.target.value)))}
+                      className="pl-8 w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                      placeholder="Enter amount"
+                      min="0"
+                      max={systemInfo.totalPrice}
+                    />
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
                     {((downPayment / systemInfo.totalPrice) * 100).toFixed(1)}% of total cost
-                  </span>
-                </div>
-              </div>
-
-              {/* Loan Term Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loan Term
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  {AVAILABLE_TERMS.map((term) => (
-                    <button
-                      key={term}
-                      onClick={() => setSelectedTerm(term)}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        selectedTerm === term
-                          ? 'bg-black text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {term} Years
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Financing Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Interest Rate (APR)</p>
-                  <p className="text-2xl font-bold text-gray-900">6.25%</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Monthly Payment</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">After tax credit</p>
                 </div>
+
+                {/* Loan Term Selection */}
+                <div>
+                  <label htmlFor="loanTerm" className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Loan Term
+                  </label>
+                  <select
+                    id="loanTerm"
+                    value={selectedTerm}
+                    onChange={(e) => setSelectedTerm(Number(e.target.value))}
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                  >
+                    {AVAILABLE_TERMS.map(term => (
+                      <option key={term} value={term}>{term} Years</option>
+                    ))}
+                  </select>
+                </div>
+
+                {financingOptions && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">System Price</span>
+                      <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">Down Payment</span>
+                      <span className="text-gray-900 font-medium">{formatCurrency(downPayment)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                      <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">Interest Rate (APR)</span>
+                      <span className="text-gray-900 font-medium">6.25%</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-gray-600">Monthly Payment</span>
+                      <span className="text-gray-900 font-medium">
+                        {formatCurrency(financingOptions[selectedTerm].monthlyPaymentWithDownPayment)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-900 font-semibold">Monthly Payment with Tax Credit</span>
+                      <span className="text-green-600 font-bold text-xl">
+                        {formatCurrency(financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            </>
           )}
         </div>
 
@@ -324,15 +345,21 @@ export default function ProposalPage() {
         </div>
 
         {/* Place Order Button */}
-        <div className="text-center">
+        <div className="flex flex-col items-center mt-8">
           <button
             onClick={handlePlaceOrder}
-            className="inline-flex justify-center px-6 py-3 text-lg font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
+            className="px-8 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
           >
             Place Order
           </button>
-          <p className="mt-4 text-sm text-gray-500">
-            By placing your order, you agree to our terms and conditions. A refundable deposit may be required.
+          <p className="mt-4 text-sm text-gray-500 text-center max-w-xl">
+            Refundable deposit until you accept your design. Quoted price is subject to change based on installation complexity.
+          </p>
+          <p className="mt-2 text-sm text-gray-500 text-center max-w-xl">
+            By submitting this order, you are agreeing to our{' '}
+            <a href="/terms" className="underline hover:text-gray-700">Order Terms</a>,{' '}
+            <a href="/payment-terms" className="underline hover:text-gray-700">Payment Terms</a>, and{' '}
+            <a href="/privacy" className="underline hover:text-gray-700">Privacy Policy</a>.
           </p>
         </div>
       </div>
