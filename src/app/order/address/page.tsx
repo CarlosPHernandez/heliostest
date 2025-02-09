@@ -111,10 +111,10 @@ export default function AddressPage() {
 
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-secondary-text mb-4">
-            Let's Get Started
+            Enter Your Home Address
           </h1>
           <p className="text-secondary-text max-w-2xl mx-auto">
-            Please provide your address and utility information so we can calculate your solar savings.
+            We use your address to locate your home via aerial imagery and determine the total usable space on your roof.
           </p>
         </div>
 

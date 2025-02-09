@@ -1,34 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Menu, X, LogOut } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 const Header = () => {
   const router = useRouter()
+  const { user, signOut } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setIsAuthenticated(!!session)
-    }
-
-    checkAuth()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut()
+      await signOut()
       router.push('/')
     } catch (error) {
       console.error('Error signing out:', error)
@@ -64,7 +49,7 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              {isAuthenticated ? (
+              {user ? (
                 <>
                   <Link 
                     href="/dashboard"
@@ -158,7 +143,7 @@ const Header = () => {
                   </Link>
                 </li>
               ))}
-              {isAuthenticated ? (
+              {user ? (
                 <>
                   <li>
                     <Link

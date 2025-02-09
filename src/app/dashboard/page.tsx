@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, FileText, Calendar, Phone, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Proposal {
   id: string
@@ -29,6 +30,7 @@ interface Proposal {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [proposal, setProposal] = useState<Proposal | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -36,8 +38,6 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchProposal = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        
         if (!user) {
           router.push('/login')
           return
@@ -59,8 +59,19 @@ export default function DashboardPage() {
       }
     }
 
-    fetchProposal()
-  }, [router])
+    if (user) {
+      fetchProposal()
+    } else {
+      setLoading(false)
+    }
+  }, [router, user])
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login')
+    }
+  }, [loading, user, router])
 
   if (loading) {
     return (

@@ -9,13 +9,28 @@ const authConfig = {
   persistSession: true,
   detectSessionInUrl: true,
   flowType: 'pkce',
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
 } as const
+
+// Get the redirect URL with the intended destination
+const getRedirectTo = () => {
+  if (typeof window === 'undefined') return `${siteUrl}/auth/callback`
+  
+  // Get the redirect parameter from the current URL
+  const params = new URLSearchParams(window.location.search)
+  const redirectPath = params.get('redirect') || '/dashboard'
+  
+  // Create the callback URL with the redirect parameter
+  const callbackUrl = new URL('/auth/callback', siteUrl)
+  callbackUrl.searchParams.set('next', redirectPath)
+  
+  return callbackUrl.toString()
+}
 
 // Add redirectTo to auth config at runtime
 const fullAuthConfig = {
   ...authConfig,
-  redirectTo: `${siteUrl}/auth/callback`
+  redirectTo: getRedirectTo()
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
