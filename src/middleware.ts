@@ -21,7 +21,6 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          // Ensure cookies are set with proper options for cross-domain
           response.cookies.set({
             name,
             value,
@@ -49,7 +48,8 @@ export async function middleware(request: NextRequest) {
     if (sessionError) {
       console.error('Session error in middleware:', sessionError)
       // Clear any invalid session cookies
-      response.cookies.delete('sb-auth-token')
+      response.cookies.delete('sb-access-token')
+      response.cookies.delete('sb-refresh-token')
       return response
     }
 
@@ -81,8 +81,9 @@ export async function middleware(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Middleware error:', error)
-    // Clear any problematic session cookies on error
-    response.cookies.delete('sb-auth-token')
+    // Clear any problematic session cookies
+    response.cookies.delete('sb-access-token')
+    response.cookies.delete('sb-refresh-token')
     return response
   }
 }

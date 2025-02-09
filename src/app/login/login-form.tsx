@@ -34,7 +34,7 @@ export default function LoginForm() {
         
         if (session) {
           const redirectTo = searchParams?.get('redirect') || '/dashboard'
-          router.replace(redirectTo)
+          window.location.href = redirectTo
         } else {
           setIsCheckingSession(false)
         }
@@ -45,7 +45,7 @@ export default function LoginForm() {
     }
 
     checkSession()
-  }, [searchParams, router])
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,9 +80,12 @@ export default function LoginForm() {
           }
         }
 
+        // Wait briefly for session to be established
+        await new Promise(resolve => setTimeout(resolve, 500))
+
         // Get the redirect URL from search params or default to dashboard
         const redirectTo = searchParams?.get('redirect') || '/dashboard'
-        router.replace(redirectTo)
+        window.location.href = redirectTo
       }
     } catch (err) {
       console.error('Sign in error:', err)
