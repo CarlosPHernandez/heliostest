@@ -1,95 +1,78 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Define public routes that should always be accessible
-const PUBLIC_ROUTES = ['/', '/auth/callback', '/login', '/register']
-const PUBLIC_PREFIXES = ['/discover', '/shop', '/investors', '/careers', '/about-us', '/order']
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password']
+const publicPrefixes = ['/api/auth']
 
 export async function middleware(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-
-  // Create a response object that we can modify
-  let response = NextResponse.next()
-
-  // Create a Supabase client with cookie handling
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          response.cookies.delete({
-            name,
-            ...options,
-            path: '/',
-          })
-        },
-      },
-    }
-  )
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-url', request.url)
 
   try {
-    // Get the session
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            requestHeaders.set('Set-Cookie', `${name}=${value}; Path=/; HttpOnly; SameSite=Lax`)
+          },
+          remove(name: string, options: any) {
+            requestHeaders.set('Set-Cookie', `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
+          },
+        },
+      }
+    )
+
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
     if (sessionError) {
-      console.error('Session error in middleware:', sessionError)
-      // Clear any invalid session cookies
-      response.cookies.delete('sb-access-token')
-      response.cookies.delete('sb-refresh-token')
-      return response
+      console.error('Session error:', sessionError)
+      // Clear problematic session cookies
+      requestHeaders.set('Set-Cookie', 'sb-access-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
+      requestHeaders.set('Set-Cookie', 'sb-refresh-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
+      return NextResponse.redirect(new URL('/login', request.url), {
+        headers: requestHeaders,
+      })
     }
 
-    // Special handling for auth callback
-    if (requestUrl.pathname === '/auth/callback') {
-      return response
+    const isPublicRoute = publicRoutes.includes(new URL(request.url).pathname) ||
+      publicPrefixes.some(prefix => new URL(request.url).pathname.startsWith(prefix))
+
+    // If user is signed in and trying to access public route, redirect to dashboard
+    if (session && isPublicRoute) {
+      return NextResponse.redirect(new URL('/dashboard', request.url), {
+        headers: requestHeaders,
+      })
     }
 
-    // If user is logged in
-    if (session) {
-      // Allow access to dashboard
-      if (requestUrl.pathname.startsWith('/dashboard')) {
-        return response
-      }
-
-      // Redirect to dashboard if trying to access auth routes
-      if (requestUrl.pathname === '/login' || requestUrl.pathname === '/register') {
-        return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
-      }
-    } else {
-      // If not logged in and trying to access dashboard
-      if (requestUrl.pathname.startsWith('/dashboard')) {
-        const redirectUrl = new URL('/login', requestUrl.origin)
-        redirectUrl.searchParams.set('redirect', requestUrl.pathname)
-        return NextResponse.redirect(redirectUrl)
-      }
+    // If user is not signed in and trying to access protected route, redirect to login
+    if (!session && !isPublicRoute) {
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('redirect', request.url)
+      return NextResponse.redirect(redirectUrl, {
+        headers: requestHeaders,
+      })
     }
 
-    return response
+    // For all other cases, continue with the request
+    return NextResponse.next({
+      headers: requestHeaders,
+    })
   } catch (error) {
     console.error('Middleware error:', error)
-    // Clear any problematic session cookies
-    response.cookies.delete('sb-access-token')
-    response.cookies.delete('sb-refresh-token')
-    return response
+    // Clear problematic session cookies
+    requestHeaders.set('Set-Cookie', 'sb-access-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
+    requestHeaders.set('Set-Cookie', 'sb-refresh-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
+    return NextResponse.redirect(new URL('/login', request.url), {
+      headers: requestHeaders,
+    })
   }
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ]
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

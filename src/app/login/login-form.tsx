@@ -1,51 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [isCheckingSession, setIsCheckingSession] = useState(true)
-
-  useEffect(() => {
-    const urlMessage = searchParams?.get('message')
-    if (urlMessage) {
-      setMessage(urlMessage)
-    }
-
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError) {
-          console.error('Error checking session:', sessionError)
-          setIsCheckingSession(false)
-          return
-        }
-        
-        if (session) {
-          const redirectTo = searchParams?.get('redirect') || '/dashboard'
-          window.location.href = redirectTo
-        } else {
-          setIsCheckingSession(false)
-        }
-      } catch (error) {
-        console.error('Error checking session:', error)
-        setIsCheckingSession(false)
-      }
-    }
-
-    checkSession()
-  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,54 +23,14 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) throw signInError
-
-      if (data?.user) {
-        // Process any pending proposals
-        const pendingProposal = localStorage.getItem('pendingProposal')
-        if (pendingProposal) {
-          try {
-            const proposalData = JSON.parse(pendingProposal)
-            const { error: insertError } = await supabase
-              .from('proposals')
-              .insert([{ ...proposalData, user_id: data.user.id }])
-            
-            if (insertError) {
-              console.error('Error saving proposal:', insertError)
-            } else {
-              localStorage.removeItem('pendingProposal')
-            }
-          } catch (err) {
-            console.error('Error processing pending proposal:', err)
-          }
-        }
-
-        // Wait briefly for session to be established
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // Get the redirect URL from search params or default to dashboard
-        const redirectTo = searchParams?.get('redirect') || '/dashboard'
-        window.location.href = redirectTo
-      }
+      await signIn(email, password)
+      const redirectTo = searchParams?.get('redirect') || '/dashboard'
+      window.location.href = redirectTo
     } catch (err) {
       console.error('Sign in error:', err)
       setError(err instanceof Error ? err.message : 'Invalid email or password')
-    } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isCheckingSession) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
   }
 
   return (
