@@ -78,7 +78,12 @@ export function SavingsBreakdown({
             {/* With Solar Bar */}
             <div className="w-32">
               <div 
-                className={`h-16 ${showFinancingComparison ? 'bg-green-500' : 'bg-blue-500'} rounded-lg relative`}
+                className={`${showFinancingComparison ? 'bg-green-500' : 'bg-blue-500'} rounded-lg relative`}
+                style={{
+                  height: showFinancingComparison 
+                    ? `${Math.min(100, (financingPayment || 0) / projectedBill * 64)}rem`
+                    : `${Math.min(100, estimatedNewBill / monthlyBill * 64)}rem`
+                }}
               >
                 <div className="absolute -top-8 left-0 right-0 text-center">
                   <span className="text-2xl font-bold text-gray-900">

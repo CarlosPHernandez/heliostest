@@ -103,7 +103,7 @@ export default function HomePage() {
                 type="submit"
                 className="flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-black bg-white rounded-xl shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all duration-300"
               >
-                Get Started
+                Get Quote
                 <ArrowRight className="ml-2 h-4 w-4" />
               </button>
             </form>
