@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
+    // Exchange the code for a session
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (error) {
@@ -24,29 +25,8 @@ export async function GET(request: Request) {
       )
     }
 
-    // Get the session to ensure it's properly set
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) {
-      console.error('No session after code exchange')
-      return NextResponse.redirect(
-        new URL('/login?error=no_session', requestUrl.origin)
-      )
-    }
-
-    // Create a response with the redirect
-    const response = NextResponse.redirect(new URL(next, requestUrl.origin))
-
-    // Set auth cookies in the response
-    const authCookies = cookieStore.getAll()
-    authCookies.forEach(cookie => {
-      response.cookies.set(cookie.name, cookie.value, {
-        path: '/',
-        ...cookie,
-      })
-    })
-
-    return response
+    // Redirect to the intended destination
+    return NextResponse.redirect(new URL(next, requestUrl.origin))
   } catch (error) {
     console.error('Callback route error:', error)
     return NextResponse.redirect(
