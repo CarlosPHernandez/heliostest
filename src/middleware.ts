@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   try {
     // Create a response object that we can modify
-    const response = NextResponse.next()
+    let response = NextResponse.next()
 
     // Create a Supabase client with cookie handling
     const supabase = createServerClient(
@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
             return request.cookies.get(name)?.value
           },
           set(name: string, value: string, options: CookieOptions) {
+            // Update the response cookies
             response.cookies.set({
               name,
               value,
@@ -33,11 +34,13 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    // Refresh the session if needed
-    await supabase.auth.getSession()
-
-    // Get the latest session state
+    // Get the session and handle cookie setting
     const { data: { session } } = await supabase.auth.getSession()
+
+    // Special handling for auth callback
+    if (request.nextUrl.pathname === '/auth/callback') {
+      return response
+    }
 
     // If accessing protected routes while not authenticated
     if (request.nextUrl.pathname.startsWith('/dashboard')) {
@@ -72,5 +75,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register']
+  matcher: ['/dashboard/:path*', '/login', '/register', '/auth/callback']
 }

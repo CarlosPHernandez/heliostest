@@ -129,7 +129,7 @@ export default function AddressPage() {
             {/* Address Input */}
             <div className="mb-6">
               <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                Installation Address
+                Home Address
               </label>
               <input
                 type="text"
