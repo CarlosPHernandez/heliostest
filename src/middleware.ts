@@ -1,8 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Define public routes that don't require authentication
 const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password']
 const publicPrefixes = ['/api/auth']
+
+// Define protected routes that require authentication
+const protectedRoutes = ['/dashboard', '/order', '/profile', '/documents']
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
@@ -39,18 +43,17 @@ export async function middleware(request: NextRequest) {
       })
     }
 
-    const isPublicRoute = publicRoutes.includes(new URL(request.url).pathname) ||
-      publicPrefixes.some(prefix => new URL(request.url).pathname.startsWith(prefix))
+    const pathname = new URL(request.url).pathname
 
-    // If user is signed in and trying to access public route, redirect to dashboard
-    if (session && isPublicRoute) {
+    // If user is authenticated and trying to access public routes (like login), redirect to dashboard
+    if (session && publicRoutes.includes(pathname)) {
       return NextResponse.redirect(new URL('/dashboard', request.url), {
         headers: requestHeaders,
       })
     }
 
-    // If user is not signed in and trying to access protected route, redirect to login
-    if (!session && !isPublicRoute) {
+    // If user is not authenticated and trying to access protected routes, redirect to login
+    if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.url)
       return NextResponse.redirect(redirectUrl, {

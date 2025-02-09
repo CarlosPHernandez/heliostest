@@ -1,21 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signIn } = useAuth()
+  const { user, signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      const redirectTo = searchParams?.get('redirect') || '/dashboard'
+      router.replace(redirectTo)
+    }
+  }, [user, router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,13 +31,24 @@ export default function LoginForm() {
 
     try {
       await signIn(email, password)
-      const redirectTo = searchParams?.get('redirect') || '/dashboard'
-      window.location.href = redirectTo
+      // The useEffect above will handle the redirect once the user is set
     } catch (err) {
       console.error('Sign in error:', err)
       setError(err instanceof Error ? err.message : 'Invalid email or password')
       setIsLoading(false)
     }
+  }
+
+  // If already authenticated, show loading state
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 text-black animate-spin mx-auto" />
+          <p className="mt-2 text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
