@@ -23,10 +23,17 @@ export default function LoginForm() {
 
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) {
+          console.error('Error checking session:', sessionError)
+          return
+        }
+        
         if (session) {
           const redirectTo = searchParams?.get('redirect') || '/dashboard'
-          router.replace(redirectTo)
+          // Use window.location for a full page reload to ensure fresh state
+          window.location.href = redirectTo
         }
       } catch (error) {
         console.error('Error checking session:', error)
@@ -34,7 +41,7 @@ export default function LoginForm() {
     }
 
     checkSession()
-  }, [searchParams, router])
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +49,10 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
+      // First, clear any existing sessions
+      await supabase.auth.signOut()
+
+      // Attempt to sign in
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -51,7 +62,7 @@ export default function LoginForm() {
 
       if (data?.user) {
         // Wait for the session to be established
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 1000))
         
         // Get the session after waiting
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -64,10 +75,15 @@ export default function LoginForm() {
           if (pendingProposal) {
             try {
               const proposalData = JSON.parse(pendingProposal)
-              await supabase
+              const { error: insertError } = await supabase
                 .from('proposals')
                 .insert([{ ...proposalData, user_id: session.user.id }])
-              localStorage.removeItem('pendingProposal')
+              
+              if (insertError) {
+                console.error('Error saving proposal:', insertError)
+              } else {
+                localStorage.removeItem('pendingProposal')
+              }
             } catch (err) {
               console.error('Error processing pending proposal:', err)
             }

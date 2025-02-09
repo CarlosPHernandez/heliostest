@@ -21,16 +21,21 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
+          // Ensure cookies are set with proper options for cross-domain
           response.cookies.set({
             name,
             value,
             ...options,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
           })
         },
         remove(name: string, options: CookieOptions) {
           response.cookies.delete({
             name,
             ...options,
+            path: '/',
           })
         },
       },
@@ -39,7 +44,14 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Get the session
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      console.error('Session error in middleware:', sessionError)
+      // Clear any invalid session cookies
+      response.cookies.delete('sb-auth-token')
+      return response
+    }
 
     // Special handling for auth callback
     if (requestUrl.pathname === '/auth/callback') {
@@ -53,11 +65,8 @@ export async function middleware(request: NextRequest) {
         return response
       }
 
-      // Redirect to dashboard if trying to access public routes
-      const isPublicRoute = PUBLIC_ROUTES.includes(requestUrl.pathname) ||
-        PUBLIC_PREFIXES.some(prefix => requestUrl.pathname.startsWith(prefix))
-
-      if (isPublicRoute) {
+      // Redirect to dashboard if trying to access auth routes
+      if (requestUrl.pathname === '/login' || requestUrl.pathname === '/register') {
         return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
       }
     } else {
@@ -72,6 +81,8 @@ export async function middleware(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Middleware error:', error)
+    // Clear any problematic session cookies on error
+    response.cookies.delete('sb-auth-token')
     return response
   }
 }
