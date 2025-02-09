@@ -42,7 +42,6 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      // First, try to sign in
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -51,26 +50,24 @@ export default function LoginForm() {
       if (signInError) throw signInError
 
       if (data?.user) {
-        // After successful sign in, get the session
+        // Wait for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Get the session after waiting
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
         if (sessionError) throw sessionError
         
         if (session) {
-          // Check for any pending proposals
+          // Process any pending proposals
           const pendingProposal = localStorage.getItem('pendingProposal')
           if (pendingProposal) {
             try {
               const proposalData = JSON.parse(pendingProposal)
-              const { error: proposalError } = await supabase
+              await supabase
                 .from('proposals')
-                .insert([proposalData])
-
-              if (proposalError) {
-                console.error('Error saving pending proposal:', proposalError)
-              } else {
-                localStorage.removeItem('pendingProposal')
-              }
+                .insert([{ ...proposalData, user_id: session.user.id }])
+              localStorage.removeItem('pendingProposal')
             } catch (err) {
               console.error('Error processing pending proposal:', err)
             }
@@ -78,9 +75,11 @@ export default function LoginForm() {
 
           // Get the redirect URL from search params or default to dashboard
           const redirectTo = searchParams?.get('redirect') || '/dashboard'
-          router.push(redirectTo)
+          
+          // Force a hard navigation to ensure fresh state
+          window.location.href = redirectTo
         } else {
-          setError('Failed to establish session')
+          setError('Failed to establish session. Please try again.')
         }
       }
     } catch (err) {
