@@ -1,6 +1,10 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Define public routes that should always be accessible
+const PUBLIC_ROUTES = ['/', '/auth/callback', '/login', '/register']
+const PUBLIC_PREFIXES = ['/discover', '/shop', '/investors', '/careers', '/about-us', '/order']
+
 export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url)
 
@@ -42,23 +46,26 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    // If accessing protected routes while not authenticated
-    if (requestUrl.pathname.startsWith('/dashboard')) {
-      if (!session) {
-        // Store the attempted URL to redirect back after login
+    // If user is logged in
+    if (session) {
+      // Allow access to dashboard
+      if (requestUrl.pathname.startsWith('/dashboard')) {
+        return response
+      }
+
+      // Redirect to dashboard if trying to access public routes
+      const isPublicRoute = PUBLIC_ROUTES.includes(requestUrl.pathname) ||
+        PUBLIC_PREFIXES.some(prefix => requestUrl.pathname.startsWith(prefix))
+
+      if (isPublicRoute) {
+        return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+      }
+    } else {
+      // If not logged in and trying to access dashboard
+      if (requestUrl.pathname.startsWith('/dashboard')) {
         const redirectUrl = new URL('/login', requestUrl.origin)
         redirectUrl.searchParams.set('redirect', requestUrl.pathname)
         return NextResponse.redirect(redirectUrl)
-      }
-      return response
-    }
-
-    // If accessing auth pages while authenticated
-    if (requestUrl.pathname.startsWith('/login') || requestUrl.pathname.startsWith('/register')) {
-      if (session) {
-        // If there's a redirect parameter, use it, otherwise go to dashboard
-        const redirectTo = requestUrl.searchParams.get('redirect') || '/dashboard'
-        return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
       }
     }
 
@@ -70,5 +77,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register', '/auth/callback']
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ]
 }
