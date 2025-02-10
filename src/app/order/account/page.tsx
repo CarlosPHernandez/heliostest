@@ -29,12 +29,47 @@ export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [financing, setFinancing] = useState(null)
+  const [proposalDetails, setProposalDetails] = useState({
+    package_type: '',
+    system_size: 0,
+    panel_count: 0,
+    monthly_production: 0,
+    address: '',
+    monthly_bill: 0,
+    payment_type: 'cash',
+    financing: null
+  })
 
-  // Load saved address from localStorage
+  // Consolidate all localStorage access into a single useEffect
   useEffect(() => {
-    const savedAddress = localStorage.getItem('address')
-    if (savedAddress) {
-      setFormData(prev => ({ ...prev, address: savedAddress }))
+    try {
+      // Load saved address
+      const savedAddress = localStorage.getItem('address')
+      if (savedAddress) {
+        setFormData(prev => ({ ...prev, address: savedAddress }))
+      }
+
+      // Load financing details
+      const storedFinancing = localStorage.getItem('financingDetails')
+      if (storedFinancing) {
+        setFinancing(JSON.parse(storedFinancing))
+      }
+
+      // Load all proposal details
+      const selectedPackageData = JSON.parse(localStorage.getItem('selectedPackageData') || '{}')
+      setProposalDetails({
+        package_type: localStorage.getItem('selectedPackage') ?? 'standard',
+        system_size: selectedPackageData.systemSize || 0,
+        panel_count: selectedPackageData.numberOfPanels || 0,
+        monthly_production: selectedPackageData.monthlyProduction || 0,
+        address: localStorage.getItem('address') ?? '',
+        monthly_bill: parseFloat(localStorage.getItem('monthlyBill') || '0'),
+        payment_type: localStorage.getItem('paymentType') ?? 'cash',
+        financing: storedFinancing ? JSON.parse(storedFinancing) : null
+      })
+    } catch (error) {
+      console.error('Error loading stored data:', error)
     }
   }, [])
 
@@ -68,7 +103,6 @@ export default function AccountPage() {
     setError('')
 
     try {
-      // Validate form
       const validationError = validateForm()
       if (validationError) {
         setError(validationError)
@@ -76,20 +110,12 @@ export default function AccountPage() {
         return
       }
 
-      // Load proposal data
+      // Use the state instead of accessing localStorage directly
       const proposalData: ProposalData = {
-        package_type: localStorage.getItem('selectedPackage') ?? 'standard',
-        system_size: JSON.parse(localStorage.getItem('selectedPackageData') || '{}').systemSize || 0,
-        panel_count: JSON.parse(localStorage.getItem('selectedPackageData') || '{}').numberOfPanels || 0,
-        monthly_production: JSON.parse(localStorage.getItem('selectedPackageData') || '{}').monthlyProduction || 0,
-        address: localStorage.getItem('address') ?? '',
-        monthly_bill: parseFloat(localStorage.getItem('monthlyBill') || '0'),
-        payment_type: localStorage.getItem('paymentType') ?? 'cash',
-        financing: localStorage.getItem('financingDetails') ? JSON.parse(localStorage.getItem('financingDetails')) : null,
+        ...proposalDetails,
         status: 'saved'
       }
 
-      // Register user with Supabase
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -103,27 +129,22 @@ export default function AccountPage() {
       })
 
       if (signUpError) throw signUpError
+      if (!authData.user) throw new Error('Failed to create account')
 
-      if (!authData.user) {
-        throw new Error('Failed to create account')
-      }
-
-      // Try to save the proposal, but don't worry if it fails
-      // It will be saved in localStorage and can be saved later after email verification
       await saveNewProposal(authData.user.id, proposalData)
 
-      // Clear localStorage except pendingProposal
-      localStorage.removeItem('selectedPackage')
-      localStorage.removeItem('selectedPackageData')
-      localStorage.removeItem('address')
-      localStorage.removeItem('monthlyBill')
-      localStorage.removeItem('paymentType')
-      localStorage.removeItem('financingDetails')
+      // Clear localStorage
+      const keysToRemove = [
+        'selectedPackage',
+        'selectedPackageData',
+        'address',
+        'monthlyBill',
+        'paymentType',
+        'financingDetails'
+      ]
+      keysToRemove.forEach(key => localStorage.removeItem(key))
 
-      // Show success message
       toast.success('Account created successfully! Please check your email to verify your account.')
-
-      // Redirect to login
       router.push('/login?message=Please check your email to verify your account')
     } catch (err) {
       console.error('Registration error:', err)
