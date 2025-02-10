@@ -26,6 +26,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
+    // Move session check earlier to catch authenticated users faster
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -44,8 +45,12 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    // Get the session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    // Immediately redirect authenticated users from home to account
+    if (session && pathname === '/') {
+      return NextResponse.redirect(new URL('/account', request.url))
+    }
 
     // Handle session errors
     if (sessionError) {
@@ -77,8 +82,8 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // If user is authenticated and trying to access public routes or home page, redirect to account
-    if (session && (publicRoutes.includes(pathname) || pathname === '/')) {
+    // If user is authenticated and trying to access public routes, redirect to account
+    if (session && publicRoutes.includes(pathname)) {
       const response = NextResponse.redirect(new URL('/account', request.url))
       // Ensure session cookies are set
       response.cookies.set('sb-access-token', session.access_token, {
