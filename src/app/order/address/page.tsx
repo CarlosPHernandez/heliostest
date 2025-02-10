@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Info } from 'lucide-react'
 import Script from 'next/script'
-import { calculateSolarProposal, NC_CONFIG } from '@/lib/solar-calculations'
-import { NC_UTILITY_PROVIDERS, UtilityProvider, getUtilityRate } from '@/lib/utility-providers'
+import { NC_CONFIG } from '@/lib/solar-calculations'
+import { NC_UTILITY_PROVIDERS, type UtilityProvider } from '@/lib/utility-providers'
+import { setCookie } from '@/lib/cookies'
 
 // Extend Window interface for Google Maps
 declare global {
@@ -85,16 +86,12 @@ export default function AddressPage() {
     }
 
     try {
-      // Get the monthly bill from localStorage
-      const monthlyBill = localStorage.getItem('monthlyBill')
-      if (!monthlyBill) {
-        setError('Monthly bill information not found')
-        return
-      }
-
-      // Store data in localStorage
+      // Store data in localStorage and cookies
       localStorage.setItem('address', address)
       localStorage.setItem('selectedUtility', JSON.stringify(selectedUtility))
+      
+      setCookie('address', address)
+      setCookie('selectedUtility', JSON.stringify(selectedUtility))
 
       // Show loading screen
       router.push('/order/loading?next=packages')

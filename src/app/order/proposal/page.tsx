@@ -6,6 +6,7 @@ import { ChevronLeft, Check } from 'lucide-react'
 import Image from 'next/image'
 import { SavingsBreakdown } from '@/components/features/SavingsBreakdown'
 import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calculations'
+import { setCookie } from '@/lib/cookies'
 
 interface SystemInfo {
   systemSize: number
@@ -53,8 +54,6 @@ const warrantyOptions = {
 
 export default function ProposalPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState('')
   const [packageType, setPackageType] = useState<'standard' | 'premium'>('standard')
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
@@ -66,24 +65,6 @@ export default function ProposalPage() {
   const [downPayment, setDownPayment] = useState<number>(0)
   const [financingOptions, setFinancingOptions] = useState<any>(null)
   const [selectedWarranty, setSelectedWarranty] = useState<WarrantyPackage>('basic')
-
-  const loadingSteps = [
-    "Analyzing your roof dimensions...",
-    "Calculating solar exposure...",
-    "Determining optimal panel layout...",
-    "Estimating energy production...",
-    "Generating your custom packages..."
-  ]
-
-  useEffect(() => {
-    let stepInterval: NodeJS.Timeout
-    if (loading) {
-      stepInterval = setInterval(() => {
-        setLoadingStep((prev) => (prev + 1) % loadingSteps.length)
-      }, 1200)
-    }
-    return () => clearInterval(stepInterval)
-  }, [loading])
 
   useEffect(() => {
     try {
@@ -117,15 +98,9 @@ export default function ProposalPage() {
       const encodedAddress = encodeURIComponent(storedAddress)
       const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=19&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       setMapUrl(mapUrl)
-      
-      // Add a minimum loading time of 3.5 seconds
-      setTimeout(() => {
-        setLoading(false)
-      }, 3500)
     } catch (err) {
       console.error('Error loading proposal data:', err)
       setError(err instanceof Error ? err.message : 'Error loading proposal')
-      setLoading(false)
     }
   }, [downPayment])
 
@@ -167,58 +142,19 @@ export default function ProposalPage() {
         } : null
       }
       
+      // Store in localStorage
       localStorage.setItem('proposalData', JSON.stringify(proposalData))
       localStorage.setItem('warrantyPackage', selectedWarranty)
+      
+      // Store in cookies
+      setCookie('proposalData', JSON.stringify(proposalData))
+      setCookie('warrantyPackage', selectedWarranty)
+      
       router.push('/order/summary')
     } catch (err) {
       console.error('Error saving proposal:', err)
       setError('Failed to save proposal data')
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background pt-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-center">
-            {/* Modern minimalistic loading animation */}
-            <div className="relative w-40 h-40 mb-8">
-              {/* Central sun ring */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-24 h-24 rounded-full border-4 border-blue-600/30"></div>
-              </div>
-              {/* Pulsing sun core */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-blue-600/20 animate-pulse-glow"></div>
-              </div>
-              {/* Energy ring */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full border-2 border-blue-400/20 border-dashed animate-spin-slow"></div>
-              </div>
-              {/* Orbiting Earth */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative w-full h-full animate-orbit">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4">
-                    <div className="w-full h-full rounded-full bg-blue-600 shadow-lg shadow-blue-600/50"></div>
-                  </div>
-                </div>
-              </div>
-              {/* Energy beams */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-40 h-40 rounded-full border border-blue-400/10 animate-pulse-subtle"></div>
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Analyzing Your Property</h2>
-            <p className="text-gray-600 text-center max-w-sm mb-8 h-6 animate-fade">
-              {loadingSteps[loadingStep]}
-            </p>
-            <div className="w-full max-w-md bg-gray-100 rounded-full h-1.5">
-              <div className="bg-blue-600 h-1.5 rounded-full animate-progress origin-left"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   if (error || !systemInfo) {

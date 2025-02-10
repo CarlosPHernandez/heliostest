@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { SolarProposal } from '@/components/features/SolarProposal'
+import { setCookie } from '@/lib/cookies'
 
 export default function PackagesPage() {
   const router = useRouter()
@@ -31,8 +32,14 @@ export default function PackagesPage() {
     try {
       // Store the complete package information
       const selectedPackageData = packageType === 'standard' ? proposal.standard : proposal.premium
+      
+      // Store in localStorage
       localStorage.setItem('selectedPackage', packageType)
       localStorage.setItem('selectedPackageData', JSON.stringify(selectedPackageData))
+      
+      // Store in cookies
+      setCookie('selectedPackage', packageType)
+      setCookie('selectedPackageData', JSON.stringify(selectedPackageData))
       
       // Navigate to the next step
       router.push('/order/proposal')

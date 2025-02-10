@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Home, Zap, Calendar, Upload, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+import { setCookie, clearOrderCookies } from '@/lib/cookies'
 
 interface OrderFormData {
   // Personal Information
@@ -46,8 +48,11 @@ const initialFormData: OrderFormData = {
 }
 
 export default function OrderPage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<OrderFormData>(initialFormData)
+  const [monthlyBill, setMonthlyBill] = useState<string>('')
+  const [error, setError] = useState('')
 
   const updateFormData = (field: keyof OrderFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -67,10 +72,30 @@ export default function OrderPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here we'll handle the form submission and create a new project
-    console.log('Form submitted:', formData)
+    setError('')
+
+    const bill = parseFloat(monthlyBill)
+    if (isNaN(bill) || bill <= 0) {
+      setError('Please enter a valid monthly bill amount')
+      return
+    }
+
+    try {
+      // Clear any existing order data
+      localStorage.clear()
+      clearOrderCookies()
+
+      // Store the monthly bill
+      localStorage.setItem('monthlyBill', monthlyBill)
+      setCookie('monthlyBill', monthlyBill)
+
+      router.push('/order/address')
+    } catch (err) {
+      console.error('Error:', err)
+      setError('An error occurred while saving your information')
+    }
   }
 
   const renderStep = () => {
