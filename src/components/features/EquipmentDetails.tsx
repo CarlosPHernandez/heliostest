@@ -1,39 +1,8 @@
-import { Sun, Battery, Shield } from 'lucide-react'
+import { Sun, Battery } from 'lucide-react'
 import Image from 'next/image'
 
 interface EquipmentDetailsProps {
   packageType: 'standard' | 'premium'
-  warrantyPackage: 'basic' | 'extended' | 'comprehensive'
-}
-
-const warrantyDetails = {
-  basic: {
-    title: 'Basic Warranty',
-    coverage: [
-      '25-year panel performance warranty',
-      '10-year inverter warranty',
-      '10-year workmanship warranty',
-    ]
-  },
-  extended: {
-    title: 'Extended Warranty',
-    coverage: [
-      '25-year panel performance warranty',
-      '15-year inverter warranty',
-      '15-year workmanship warranty',
-      'Extended parts coverage',
-    ]
-  },
-  comprehensive: {
-    title: 'Comprehensive Warranty',
-    coverage: [
-      '25-year panel performance warranty',
-      '25-year inverter warranty',
-      '25-year workmanship warranty',
-      'Full system coverage',
-      'Annual maintenance included',
-    ]
-  }
 }
 
 const equipmentDetails = {
@@ -81,14 +50,13 @@ const equipmentDetails = {
   }
 }
 
-export function EquipmentDetails({ packageType, warrantyPackage }: EquipmentDetailsProps) {
+export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
   const equipment = equipmentDetails[packageType]
-  const warranty = warrantyDetails[warrantyPackage]
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Equipment</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Solar Panels */}
         <div>
           <div className="flex items-center gap-3 mb-4">
@@ -152,23 +120,6 @@ export function EquipmentDetails({ packageType, warrantyPackage }: EquipmentDeta
                 />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Warranty */}
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-blue-500" />
-            </div>
-            <h3 className="font-semibold text-gray-900">{warranty.title}</h3>
-          </div>
-          <div className="space-y-4">
-            <ul className="space-y-2">
-              {warranty.coverage.map((detail, index) => (
-                <li key={index} className="text-sm text-gray-600">• {detail}</li>
-              ))}
-            </ul>
           </div>
         </div>
       </div>

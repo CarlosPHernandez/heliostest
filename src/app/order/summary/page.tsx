@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, Check, Shield, Zap } from 'lucide-react'
 import { EquipmentDetails } from '@/components/features/EquipmentDetails'
 import { InstallationRoadmap } from '@/components/features/InstallationRoadmap'
+import { WarrantySelection } from '@/components/features/WarrantySelection'
+import { UtilityCostProjection } from '@/components/features/UtilityCostProjection'
 
 interface PackageData {
   systemSize: number
@@ -20,6 +22,7 @@ export default function OrderSummaryPage() {
   const [packageType, setPackageType] = useState<'standard' | 'premium' | null>(null)
   const [warrantyPackage, setWarrantyPackage] = useState<'basic' | 'extended' | 'comprehensive'>('basic')
   const [monthlyBill, setMonthlyBill] = useState<number>(0)
+  const [utilityName, setUtilityName] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -27,17 +30,23 @@ export default function OrderSummaryPage() {
     const savedPackageType = localStorage.getItem('selectedPackage')
     const savedPackageData = localStorage.getItem('selectedPackageData')
     const savedMonthlyBill = localStorage.getItem('monthlyBill')
-    const savedWarrantyPackage = localStorage.getItem('warrantyPackage')
+    const savedUtility = localStorage.getItem('selectedUtility')
 
-    if (!savedPackageType || !savedPackageData || !savedMonthlyBill) {
+    if (!savedPackageType || !savedPackageData || !savedMonthlyBill || !savedUtility) {
       router.push('/order/packages')
       return
     }
 
-    setPackageType(savedPackageType as 'standard' | 'premium')
-    setPackageData(JSON.parse(savedPackageData))
-    setMonthlyBill(Number(savedMonthlyBill))
-    setWarrantyPackage((savedWarrantyPackage as 'basic' | 'extended' | 'comprehensive') || 'basic')
+    try {
+      setPackageType(savedPackageType as 'standard' | 'premium')
+      setPackageData(JSON.parse(savedPackageData))
+      setMonthlyBill(Number(savedMonthlyBill))
+      const utilityData = JSON.parse(savedUtility)
+      setUtilityName(utilityData.name)
+    } catch (err) {
+      console.error('Error parsing data:', err)
+      router.push('/order/packages')
+    }
   }, [router])
 
   const formatCurrency = (amount: number) => {
@@ -145,9 +154,18 @@ export default function OrderSummaryPage() {
           </div>
 
           {/* Equipment Details */}
-          <EquipmentDetails 
-            packageType={packageType} 
-            warrantyPackage={warrantyPackage}
+          <EquipmentDetails packageType={packageType} />
+
+          {/* Utility Cost Projection */}
+          <UtilityCostProjection
+            monthlyBill={monthlyBill}
+            utilityName={utilityName}
+          />
+
+          {/* Warranty Selection */}
+          <WarrantySelection
+            selectedWarranty={warrantyPackage}
+            onSelect={setWarrantyPackage}
           />
 
           {/* Installation Process */}
