@@ -96,7 +96,7 @@ export default function ProposalPage() {
 
       // Generate Google Maps Static API URL for aerial view
       const encodedAddress = encodeURIComponent(storedAddress)
-      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=19&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=21&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       setMapUrl(mapUrl)
       
       setLoading(false)
@@ -158,7 +158,24 @@ export default function ProposalPage() {
     return (
       <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-gray-600">Loading proposal...</p>
+          <div className="flex flex-col items-center justify-center">
+            <div className="relative w-24 h-24 mb-8">
+              {/* Animated sun icon */}
+              <div className="absolute inset-0">
+                <div className="w-full h-full rounded-full bg-yellow-100 animate-sun-fill" />
+              </div>
+              <div className="absolute inset-0">
+                <div className="w-full h-full rounded-full border-4 border-yellow-400 border-t-transparent animate-sun-rotate" />
+              </div>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Preparing Your Solar Proposal</h2>
+            <p className="text-gray-600 text-center max-w-sm mb-8">
+              We're analyzing your utility data and designing your custom solar solution...
+            </p>
+            <div className="w-full max-w-md bg-gray-100 rounded-full h-2 mb-2">
+              <div className="bg-yellow-400 h-2 rounded-full animate-progress origin-left"></div>
+            </div>
+          </div>
         </div>
       </div>
     )
