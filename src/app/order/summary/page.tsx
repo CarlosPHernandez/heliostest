@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Check, Shield, Zap } from 'lucide-react'
+import { ChevronLeft, Check, Shield, Zap, Battery } from 'lucide-react'
 import { EquipmentDetails } from '@/components/features/EquipmentDetails'
 import { InstallationRoadmap } from '@/components/features/InstallationRoadmap'
 import { WarrantySelection } from '@/components/features/WarrantySelection'
@@ -151,12 +151,14 @@ export default function OrderSummaryPage() {
   const router = useRouter()
   const [packageData, setPackageData] = useState<PackageData | null>(null)
   const [packageType, setPackageType] = useState<'standard' | 'premium' | null>(null)
-  const [warrantyPackage, setWarrantyPackage] = useState<'basic' | 'extended' | 'comprehensive'>('basic')
+  const [warrantyPackage, setWarrantyPackage] = useState<'standard' | 'extended'>('standard')
   const [monthlyBill, setMonthlyBill] = useState<number>(0)
   const [utilityName, setUtilityName] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [includeBattery, setIncludeBattery] = useState(false)
   const [selectedBattery, setSelectedBattery] = useState<'franklin' | 'qcell'>('franklin')
+  const [paymentType, setPaymentType] = useState<'cash' | 'finance'>('finance')
+  const [selectedTerm, setSelectedTerm] = useState(25) // Default to 25 years
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -204,10 +206,9 @@ export default function OrderSummaryPage() {
     let total = packageData.totalPrice
     
     // Add warranty cost if not basic
-    if (warrantyPackage !== 'basic') {
+    if (warrantyPackage !== 'standard') {
       const warrantyCosts = {
         extended: 1500,
-        comprehensive: 2000
       }
       total += warrantyCosts[warrantyPackage]
     }
@@ -261,154 +262,222 @@ export default function OrderSummaryPage() {
 
         {/* Main Content */}
         <div className="space-y-8">
+          {/* Equipment Section */}
+          {packageType && <EquipmentDetails packageType={packageType} />}
+
+          {/* Battery Option */}
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Battery className="w-6 h-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Add Battery Storage</h3>
+                  <p className="text-sm text-gray-600">Include a battery system for backup power and energy independence</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  {formatCurrency(batteryOptions[selectedBattery].price)}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={includeBattery}
+                    onChange={() => setIncludeBattery(!includeBattery)}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Warranty Options */}
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Warranty Coverage</h3>
+                <p className="text-sm text-gray-600">Choose your preferred warranty package</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Standard Warranty */}
+              <div
+                onClick={() => setWarrantyPackage('standard')}
+                className={`border rounded-lg p-6 cursor-pointer transition-all ${
+                  warrantyPackage === 'standard'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-200'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Standard Warranty</h4>
+                    <p className="text-sm text-gray-600 mt-1">Included with your system</p>
+                  </div>
+                  <div className={`flex items-center justify-center w-5 h-5 border-2 rounded-full ${
+                    warrantyPackage === 'standard' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                  }`}>
+                    {warrantyPackage === 'standard' && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    25-year panel performance warranty
+                  </li>
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    10-year inverter warranty
+                  </li>
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    10-year workmanship warranty
+                  </li>
+                </ul>
+                <p className="mt-4 text-lg font-bold text-gray-900">Included</p>
+              </div>
+
+              {/* Extended Warranty */}
+              <div
+                onClick={() => setWarrantyPackage('extended')}
+                className={`border rounded-lg p-6 cursor-pointer transition-all ${
+                  warrantyPackage === 'extended'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-200'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Extended Warranty</h4>
+                    <p className="text-sm text-gray-600 mt-1">Maximum protection and peace of mind</p>
+                  </div>
+                  <div className={`flex items-center justify-center w-5 h-5 border-2 rounded-full ${
+                    warrantyPackage === 'extended' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                  }`}>
+                    {warrantyPackage === 'extended' && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    25-year panel performance warranty
+                  </li>
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    25-year inverter warranty
+                  </li>
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    25-year workmanship warranty
+                  </li>
+                  <li className="text-sm text-gray-600 flex items-start gap-2">
+                    <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    Annual maintenance included
+                  </li>
+                </ul>
+                <p className="mt-4 text-lg font-bold text-gray-900">{formatCurrency(1500)}</p>
+              </div>
+            </div>
+          </div>
+
           {/* Financial Summary */}
           <div className="bg-white rounded-xl shadow-sm p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Financial Summary</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">System Cost</span>
-                <span className="text-gray-900 font-medium">{formatCurrency(packageData?.totalPrice || 0)}</span>
-              </div>
-              {warrantyPackage !== 'basic' && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">{warrantyPackage === 'comprehensive' ? 'Comprehensive' : 'Extended'} Warranty</span>
-                  <span className="text-gray-900 font-medium">
-                    {formatCurrency(warrantyPackage === 'comprehensive' ? 2000 : 1500)}
-                  </span>
-                </div>
-              )}
-              {includeBattery && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Battery Storage ({batteryOptions[selectedBattery].name})</span>
-                  <span className="text-gray-900 font-medium">
-                    {formatCurrency(batteryOptions[selectedBattery].price)}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Federal Tax Credit (30%)</span>
-                <span className="text-green-600 font-medium">
-                  -{formatCurrency(calculateTotalCost() * 0.3)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-900 font-semibold">Final Cost</span>
-                <span className="text-gray-900 font-bold text-xl">
-                  {formatCurrency(calculateTotalCost() * 0.7)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Equipment Details */}
-          <div className="bg-white rounded-xl shadow-sm p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Equipment</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Payment Options</h2>
             
-            {/* Battery Toggle Section */}
-            <div className="mb-8 border-b pb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Battery Backup System</h3>
-                  <p className="text-sm text-gray-600 mt-1">Add energy storage to power your essential appliances during outages</p>
+            {/* Payment Type Toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+                <button
+                  onClick={() => setPaymentType('cash')}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                    paymentType === 'cash'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Cash Purchase
+                </button>
+                <button
+                  onClick={() => setPaymentType('finance')}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                    paymentType === 'finance'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Financing
+                </button>
+              </div>
+            </div>
+
+            {paymentType === 'cash' ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">System Cost</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalCost())}</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-600">Add Battery Storage</span>
-                  <button
-                    onClick={() => setIncludeBattery(!includeBattery)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      includeBattery ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        includeBattery ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                  <span className="text-green-600 font-medium">-{formatCurrency(calculateTotalCost() * 0.3)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-900 font-semibold">Final Cost</span>
+                  <span className="text-gray-900 font-bold text-xl">{formatCurrency(calculateTotalCost() * 0.7)}</span>
                 </div>
               </div>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <label htmlFor="loanTerm" className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Loan Term
+                  </label>
+                  <select
+                    id="loanTerm"
+                    value={selectedTerm}
+                    onChange={(e) => setSelectedTerm(Number(e.target.value))}
+                    className="w-full px-4 py-3 border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                  >
+                    <option value={10}>10 Years</option>
+                    <option value={15}>15 Years</option>
+                    <option value={20}>20 Years</option>
+                    <option value={25}>25 Years</option>
+                  </select>
+                </div>
 
-              {includeBattery && (
-                <div className="mt-6 space-y-6">
-                  <div className="flex gap-4">
-                    {(['franklin', 'qcell'] as const).map((battery) => (
-                      <div
-                        key={battery}
-                        onClick={() => setSelectedBattery(battery)}
-                        className={`flex-1 border rounded-lg p-4 cursor-pointer transition-all ${
-                          selectedBattery === battery
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-blue-200'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{batteryOptions[battery].name}</h4>
-                            <p className="text-sm text-gray-600">{batteryOptions[battery].capacity} Capacity</p>
-                          </div>
-                          <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full ${
-                            selectedBattery === battery ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                          }`}>
-                            {selectedBattery === battery && (
-                              <div className="w-2 h-2 bg-white rounded-full" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-900 mb-2">Backup Power Capabilities:</h5>
-                          <ul className="space-y-1">
-                            {batteryOptions[battery].backupCapabilities.map((capability, index) => (
-                              <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                                <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                                {capability}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <p className="mt-4 text-lg font-bold text-gray-900">
-                          {formatCurrency(batteryOptions[battery].price)}
-                        </p>
-                      </div>
-                    ))}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-600">System Cost</span>
+                    <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalCost())}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                    <span className="text-green-600 font-medium">-{formatCurrency(calculateTotalCost() * 0.3)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-600">Interest Rate (APR)</span>
+                    <span className="text-gray-900 font-medium">6.25%</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-900 font-semibold">Monthly Payment</span>
+                    <span className="text-gray-900 font-bold text-xl">
+                      {formatCurrency((calculateTotalCost() * 0.7) / (selectedTerm * 12))}
+                    </span>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* System Components */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {Object.entries(packageType === 'premium' ? packageFeatures.premium : packageFeatures.standard)
-                .map(([key, component]) => (
-                  <div key={key} className="border rounded-lg p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">{component.name}</h3>
-                    <ul className="space-y-2">
-                      {component.features.map((feature, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                          <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))
-              }
-            </div>
+              </div>
+            )}
           </div>
-
-          {/* Utility Cost Projection */}
-          <UtilityCostProjection
-            monthlyBill={monthlyBill}
-            utilityName={utilityName}
-          />
-
-          {/* Warranty Selection */}
-          <WarrantySelection
-            selectedWarranty={warrantyPackage}
-            onSelect={setWarrantyPackage}
-          />
-
-          {/* Installation Process */}
-          <InstallationRoadmap />
 
           {/* Submit Order Button */}
           <div className="flex flex-col items-center mt-8">
