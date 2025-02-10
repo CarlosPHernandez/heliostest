@@ -1,4 +1,5 @@
 import { Sun, Battery, Shield } from 'lucide-react'
+import Image from 'next/image'
 
 interface EquipmentDetailsProps {
   packageType: 'standard' | 'premium'
@@ -98,6 +99,16 @@ export function EquipmentDetails({ packageType, warrantyPackage }: EquipmentDeta
           </div>
           <div className="space-y-4">
             <p className="font-medium text-gray-900">{equipment.panels.name}</p>
+            {packageType === 'premium' && (
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-4">
+                <Image
+                  src="/RecPanel.png"
+                  alt="REC Alpha Pure-R Panel"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
             <ul className="space-y-2">
               {equipment.panels.details.map((detail, index) => (
                 <li key={index} className="text-sm text-gray-600">• {detail}</li>
@@ -116,6 +127,14 @@ export function EquipmentDetails({ packageType, warrantyPackage }: EquipmentDeta
           </div>
           <div className="space-y-4">
             <p className="font-medium text-gray-900">{equipment.inverter.name}</p>
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-4">
+              <Image
+                src="/enphase.webp"
+                alt="Enphase IQ8 Inverter"
+                fill
+                className="object-cover"
+              />
+            </div>
             <ul className="space-y-2">
               {equipment.inverter.details.map((detail, index) => (
                 <li key={index} className="text-sm text-gray-600">• {detail}</li>
