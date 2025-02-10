@@ -191,10 +191,11 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
               </div>
               <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden mb-6">
                 <Image
-                  src="/RecPanel.png"
+                  src="/images/battery.jpg"
                   alt="Franklin Home Power Battery"
                   fill
-                  className="object-contain"
+                  style={{ objectFit: 'contain', padding: '16px' }}
+                  priority
                 />
               </div>
             </div>
@@ -311,7 +312,7 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
                     alt={equipment.panels.name}
                     fill
                     sizes="(max-width: 768px) 100vw, 192px"
-                    style={{ objectFit: 'cover' }}
+                    style={{ objectFit: 'contain', padding: '8px' }}
                     priority
                     onError={() => handleImageError('panels')}
                   />
@@ -349,7 +350,7 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
                     alt={equipment.inverter.name}
                     fill
                     sizes="(max-width: 768px) 100vw, 192px"
-                    style={{ objectFit: 'cover' }}
+                    style={{ objectFit: 'contain', padding: '8px' }}
                     priority
                     onError={() => handleImageError('inverter')}
                   />
