@@ -30,30 +30,37 @@ interface Proposal {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [proposal, setProposal] = useState<Proposal | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Don't fetch proposal until auth state is confirmed
+    if (authLoading) return
+
+    // If no user after auth loading is done, redirect to login
+    if (!user) {
+      router.replace('/login')
+      return
+    }
+
     const fetchProposal = async () => {
       try {
-        if (!user) {
-          router.push('/login')
-          return
-        }
-
         const { data, error } = await supabase
           .from('proposals')
           .select('*')
           .eq('user_id', user.id)
           .single()
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
-          throw error
-        }
-        
-        if (data) {
+        if (error) {
+          // Only throw if it's not a "no rows" error
+          if (error.code !== 'PGRST116') {
+            throw error
+          }
+          // For no rows, just set proposal to null
+          setProposal(null)
+        } else {
           setProposal(data)
         }
       } catch (err) {
@@ -64,26 +71,21 @@ export default function DashboardPage() {
       }
     }
 
-    if (user) {
-      fetchProposal()
-    } else {
-      setLoading(false)
-    }
-  }, [router, user])
+    fetchProposal()
+  }, [user, authLoading, router])
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [loading, user, router])
-
-  if (loading) {
+  // Show loading state while auth is being checked
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background pt-24 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
       </div>
     )
+  }
+
+  // If no user after auth check, don't render anything (redirect will happen)
+  if (!user) {
+    return null
   }
 
   if (error) {
@@ -149,6 +151,11 @@ export default function DashboardPage() {
     )
   }
 
+  // TypeScript type guard to ensure proposal is not null
+  const proposalData = proposal.proposal_data
+  const systemInfo = proposalData.systemInfo
+  const financing = proposalData.paymentType === 'financing' ? proposalData.financing : null
+
   const installationSteps = [
     { title: 'Site Survey', description: 'Our team will visit your property to assess installation requirements', status: 'pending' },
     { title: 'Design Review', description: 'Review and approve your custom solar system design', status: 'pending' },
@@ -185,15 +192,15 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-gray-500">System Size</p>
-              <p className="text-lg font-medium text-gray-900">{proposal.proposal_data.systemInfo.systemSize} kW</p>
+              <p className="text-lg font-medium text-gray-900">{systemInfo.systemSize} kW</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Solar Panels</p>
-              <p className="text-lg font-medium text-gray-900">{proposal.proposal_data.systemInfo.panelCount} Panels</p>
+              <p className="text-lg font-medium text-gray-900">{systemInfo.panelCount} Panels</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Monthly Production</p>
-              <p className="text-lg font-medium text-gray-900">{proposal.proposal_data.systemInfo.monthlyProduction} kWh</p>
+              <p className="text-lg font-medium text-gray-900">{systemInfo.monthlyProduction} kWh</p>
             </div>
           </div>
         </div>
@@ -203,25 +210,25 @@ export default function DashboardPage() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-500">Payment Type</p>
-              <p className="text-lg font-medium text-gray-900 capitalize">{proposal.proposal_data.paymentType}</p>
+              <p className="text-lg font-medium text-gray-900 capitalize">{proposalData.paymentType}</p>
             </div>
-            {proposal.proposal_data.paymentType === 'financing' && proposal.proposal_data.financing && (
+            {financing && (
               <>
                 <div>
                   <p className="text-sm text-gray-500">Monthly Payment</p>
                   <p className="text-lg font-medium text-gray-900">
-                    ${proposal.proposal_data.financing.monthlyPayment.toFixed(2)}
+                    ${financing.monthlyPayment.toFixed(2)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Down Payment</p>
                   <p className="text-lg font-medium text-gray-900">
-                    ${proposal.proposal_data.financing.downPayment.toFixed(2)}
+                    ${financing.downPayment.toFixed(2)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Loan Term</p>
-                  <p className="text-lg font-medium text-gray-900">{proposal.proposal_data.financing.loanTerm} years</p>
+                  <p className="text-lg font-medium text-gray-900">{financing.loanTerm} years</p>
                 </div>
               </>
             )}
