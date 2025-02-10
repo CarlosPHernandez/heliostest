@@ -152,7 +152,7 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
               </div>
               <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden mb-6">
                 <Image
-                  src="/franklin-battery.jpg"
+                  src="/RecPanel.png"
                   alt="Franklin Home Power Battery"
                   fill
                   className="object-contain"
