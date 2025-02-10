@@ -1,6 +1,6 @@
-import { Sun, Battery, Minus, Plus, Check } from 'lucide-react'
+import { Sun, Battery, Minus, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface EquipmentDetailsProps {
   packageType: 'standard' | 'premium'
@@ -80,6 +80,19 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
   const [imageLoadError, setImageLoadError] = useState<{[key: string]: boolean}>({})
   const [includeBattery, setIncludeBattery] = useState(false)
   const [batteryCount, setBatteryCount] = useState(1)
+  const [currentGuideSection, setCurrentGuideSection] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleImageError = (imageKey: string) => {
     setImageLoadError(prev => ({ ...prev, [imageKey]: true }))
@@ -92,13 +105,39 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
     })
   }
 
+  const guideSections = [
+    {
+      title: 'Supported',
+      items: backupGuide.supported,
+      color: 'green'
+    },
+    {
+      title: 'Partial Support',
+      items: backupGuide.partial,
+      color: 'yellow'
+    },
+    {
+      title: 'Not Supported',
+      items: backupGuide.unsupported,
+      color: 'red'
+    }
+  ]
+
+  const nextGuideSection = () => {
+    setCurrentGuideSection((prev) => (prev + 1) % guideSections.length)
+  }
+
+  const prevGuideSection = () => {
+    setCurrentGuideSection((prev) => (prev - 1 + guideSections.length) % guideSections.length)
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8">
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Equipment</h2>
       
       {/* Battery Section */}
       <div className="mb-12 border-b pb-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
               <Battery className="w-6 h-6 text-blue-500" />
@@ -124,7 +163,7 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
         {includeBattery && (
           <div className="space-y-6">
             <div className="flex flex-col gap-2">
-              <label className="font-medium text-gray-900">Number batteries</label>
+              <label className="font-medium text-gray-900">Number of batteries</label>
               <p className="text-sm text-gray-600">Maximum of three batteries per location.</p>
               <div className="flex items-center gap-4">
                 <button
@@ -160,41 +199,81 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-6">
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h4 className="font-medium text-gray-900 mb-4">Backup Guide</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h5 className="text-sm font-medium text-gray-900 mb-3">Supported</h5>
-                  <ul className="space-y-2">
-                    {backupGuide.supported.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-gray-600">
-                        <Check className="w-4 h-4 text-green-500" />
-                        {item}
-                      </li>
+              
+              {/* Desktop View */}
+              <div className="hidden md:grid md:grid-cols-3 gap-6">
+                {guideSections.map((section, index) => (
+                  <div key={index}>
+                    <h5 className="text-sm font-medium text-gray-900 mb-3">{section.title}</h5>
+                    <ul className="space-y-2">
+                      {section.items.map((item, itemIndex) => (
+                        <li key={itemIndex} className="flex items-center gap-2 text-sm text-gray-600">
+                          {section.color === 'green' ? (
+                            <Check className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <span className={`w-4 h-4 rounded-full border-2 border-${section.color}-500`} />
+                          )}
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mobile Carousel */}
+              <div className="md:hidden">
+                <div className="relative">
+                  <div className="overflow-hidden">
+                    <div className="transition-transform duration-300 ease-in-out">
+                      <div key={currentGuideSection} className="px-4">
+                        <h5 className="text-sm font-medium text-gray-900 mb-3">
+                          {guideSections[currentGuideSection].title}
+                        </h5>
+                        <ul className="space-y-2">
+                          {guideSections[currentGuideSection].items.map((item, itemIndex) => (
+                            <li key={itemIndex} className="flex items-center gap-2 text-sm text-gray-600">
+                              {guideSections[currentGuideSection].color === 'green' ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <span className={`w-4 h-4 rounded-full border-2 border-${guideSections[currentGuideSection].color}-500`} />
+                              )}
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation Dots */}
+                  <div className="flex justify-center items-center gap-2 mt-4">
+                    {guideSections.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentGuideSection(index)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          currentGuideSection === index ? 'bg-blue-500' : 'bg-gray-300'
+                        }`}
+                      />
                     ))}
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="text-sm font-medium text-gray-900 mb-3">Partial Support</h5>
-                  <ul className="space-y-2">
-                    {backupGuide.partial.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="w-4 h-4 rounded-full border-2 border-yellow-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="text-sm font-medium text-gray-900 mb-3">Not Supported</h5>
-                  <ul className="space-y-2">
-                    {backupGuide.unsupported.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="w-4 h-4 rounded-full border-2 border-red-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={prevGuideSection}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 p-1 bg-white rounded-full shadow-md"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <button
+                    onClick={nextGuideSection}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-1 bg-white rounded-full shadow-md"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
                 </div>
               </div>
             </div>
