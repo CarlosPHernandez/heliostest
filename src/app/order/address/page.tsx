@@ -33,13 +33,23 @@ export default function AddressPage() {
   const [selectedUtility, setSelectedUtility] = useState<UtilityProvider | null>(null)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    // Initialize autocomplete when component mounts
+    initAutocomplete()
+  }, []) // Empty dependency array means this runs once on mount
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
     // Validate inputs
-    if (!address || !selectedUtility) {
-      setError('Please fill in all required fields')
+    if (!address.trim()) {
+      setError('Please enter your address')
+      return
+    }
+
+    if (!selectedUtility) {
+      setError('Please select your utility provider')
       return
     }
 
@@ -51,23 +61,8 @@ export default function AddressPage() {
         return
       }
 
-      // Get the utility rate for the selected provider
-      const utilityRate = getUtilityRate(selectedUtility)
-
-      // Calculate solar proposal with the correct utility rate
-      const config = {
-        ...NC_CONFIG,
-        utilityRate
-      }
-      const proposal = calculateSolarProposal(Number(monthlyBill), config)
-      
-      // Store data in localStorage
-      localStorage.setItem('address', address)
-      localStorage.setItem('selectedUtility', JSON.stringify(selectedUtility))
-      localStorage.setItem('solarProposal', JSON.stringify(proposal))
-      
-      // Navigate to packages page
-      router.push('/order/packages')
+      // Show loading screen
+      router.push('/order/loading?next=packages')
     } catch (err) {
       console.error('Error:', err)
       setError('An error occurred while processing your information')
@@ -77,6 +72,13 @@ export default function AddressPage() {
   const initAutocomplete = () => {
     const input = document.getElementById('address') as HTMLInputElement
     if (!input) return
+
+    // Clear any existing autocomplete
+    const existingAutocomplete = input.getAttribute('data-autocomplete')
+    if (existingAutocomplete) {
+      // @ts-ignore
+      google.maps.event.clearInstanceListeners(input)
+    }
 
     const autocomplete = new window.google.maps.places.Autocomplete(input, {
       componentRestrictions: { country: 'us' },
@@ -90,6 +92,9 @@ export default function AddressPage() {
         setAddress(place.formatted_address)
       }
     })
+
+    // Mark input as having autocomplete initialized
+    input.setAttribute('data-autocomplete', 'true')
   }
 
   return (
