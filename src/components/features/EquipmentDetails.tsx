@@ -1,5 +1,6 @@
 import { Sun, Battery } from 'lucide-react'
 import Image from 'next/image'
+import { useState } from 'react'
 
 interface EquipmentDetailsProps {
   packageType: 'standard' | 'premium'
@@ -9,6 +10,7 @@ const equipmentDetails = {
   standard: {
     panels: {
       name: 'Q CELLS Q.PEAK DUO BLK ML-G10+',
+      image: '/qcell panel.jpg',
       details: [
         '400W output per panel',
         'Sleek all-black design',
@@ -18,6 +20,7 @@ const equipmentDetails = {
     },
     inverter: {
       name: 'Enphase IQ8+',
+      image: '/enphase.webp',
       details: [
         'Microinverter system',
         'Per-panel optimization',
@@ -29,6 +32,7 @@ const equipmentDetails = {
   premium: {
     panels: {
       name: 'REC Alpha Pure-R',
+      image: '/RecPanel.png',
       details: [
         '430W output per panel',
         'Premium all-black design',
@@ -39,6 +43,7 @@ const equipmentDetails = {
     },
     inverter: {
       name: 'Enphase IQ8M+',
+      image: '/enphase.webp',
       details: [
         'Advanced microinverter system',
         'Higher power handling',
@@ -52,6 +57,11 @@ const equipmentDetails = {
 
 export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
   const equipment = equipmentDetails[packageType]
+  const [imageLoadError, setImageLoadError] = useState<{[key: string]: boolean}>({})
+
+  const handleImageError = (imageKey: string) => {
+    setImageLoadError(prev => ({ ...prev, [imageKey]: true }))
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-8">
@@ -75,15 +85,16 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
                   ))}
                 </ul>
               </div>
-              {packageType === 'premium' && (
-                <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0">
+              {!imageLoadError['panels'] && (
+                <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                   <Image
-                    src="/RecPanel.png"
-                    alt="REC Alpha Pure-R Panel"
+                    src={equipment.panels.image}
+                    alt={equipment.panels.name}
                     fill
                     sizes="(max-width: 768px) 100vw, 192px"
                     style={{ objectFit: 'cover' }}
                     priority
+                    onError={() => handleImageError('panels')}
                   />
                 </div>
               )}
@@ -109,16 +120,19 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
                   ))}
                 </ul>
               </div>
-              <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0">
-                <Image
-                  src="/enphase.webp"
-                  alt="Enphase IQ8 Inverter"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 192px"
-                  style={{ objectFit: 'cover' }}
-                  priority
-                />
-              </div>
+              {!imageLoadError['inverter'] && (
+                <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-100">
+                  <Image
+                    src={equipment.inverter.image}
+                    alt={equipment.inverter.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 192px"
+                    style={{ objectFit: 'cover' }}
+                    priority
+                    onError={() => handleImageError('inverter')}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
