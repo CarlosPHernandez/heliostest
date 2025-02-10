@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Info } from 'lucide-react'
+import { ChevronLeft, Info, Check } from 'lucide-react'
 import Script from 'next/script'
 import { NC_CONFIG } from '@/lib/solar-calculations'
 import { NC_UTILITY_PROVIDERS, type UtilityProvider } from '@/lib/utility-providers'
@@ -22,6 +22,7 @@ export default function AddressPage() {
   const [selectedUtility, setSelectedUtility] = useState<UtilityProvider | null>(null)
   const [error, setError] = useState('')
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false)
+  const [isValidAddress, setIsValidAddress] = useState(false)
 
   // Initialize Google Maps autocomplete
   useEffect(() => {
@@ -37,10 +38,21 @@ export default function AddressPage() {
           types: ['address']
         })
 
+        // Reset validation when user types
+        input.addEventListener('input', () => {
+          setIsValidAddress(false)
+          setError('')
+        })
+
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace()
           if (place.formatted_address) {
             setAddress(place.formatted_address)
+            setIsValidAddress(true)
+            setError('')
+          } else {
+            setIsValidAddress(false)
+            setError('Please select a valid address from the suggestions')
           }
         })
 
@@ -68,11 +80,17 @@ export default function AddressPage() {
         }
       }
     }
-  }, []) // Empty dependency array means this runs once on mount
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validate address
+    if (!isValidAddress) {
+      setError('Please select a valid address from the suggestions')
+      return
+    }
 
     // Validate inputs
     if (!address.trim()) {
@@ -144,19 +162,31 @@ export default function AddressPage() {
               <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                 Home Address
               </label>
-              <input
-                type="text"
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter your address"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 placeholder:text-gray-500"
-                required
-                disabled={!isGoogleLoaded}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Start typing your address"
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    isValidAddress ? 'border-green-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 placeholder:text-gray-500`}
+                  required
+                  disabled={!isGoogleLoaded}
+                />
+                {isValidAddress && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Check className="w-5 h-5 text-green-500" />
+                  </div>
+                )}
+              </div>
               {!isGoogleLoaded && (
                 <p className="mt-2 text-sm text-gray-500">Loading address lookup...</p>
               )}
+              <p className="mt-2 text-sm text-gray-500">
+                Please select an address from the suggestions that appear as you type
+              </p>
             </div>
 
             {/* Utility Provider Selection */}
