@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/profile', '/documents', '/proposal', '/account']
+const protectedRoutes = ['/profile', '/documents', '/proposal', '/account', '/order']
 
 // Define admin routes
 const adminRoutes = ['/admin']
@@ -26,7 +26,6 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Move session check earlier to catch authenticated users faster
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -45,68 +44,42 @@ export async function middleware(request: NextRequest) {
       }
     )
 
+    // Get the session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-    // Immediately redirect authenticated users from home to account
-    if (session && pathname === '/') {
-      return NextResponse.redirect(new URL('/account', request.url))
-    }
 
     // Handle session errors
     if (sessionError) {
       console.error('Session error:', sessionError)
-      // Clear session cookies
-      const response = NextResponse.redirect(new URL('/login', request.url))
-      response.cookies.delete('sb-access-token')
-      response.cookies.delete('sb-refresh-token')
-      return response
+      return handleAuthError(request)
     }
 
-    // Check for admin routes
-    if (pathname.startsWith('/admin')) {
-      // If not authenticated, redirect to login
-      if (!session) {
-        return NextResponse.redirect(new URL('/login', request.url))
+    // If user is authenticated and trying to access public routes or home page, redirect to account
+    if (session) {
+      if (publicRoutes.includes(pathname) || pathname === '/') {
+        const response = NextResponse.redirect(new URL('/account', request.url))
+        setAuthCookies(response, session)
+        return response
       }
 
-      // Check if user has admin role
-      const { data, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single()
+      // Check for admin routes
+      if (pathname.startsWith('/admin')) {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single()
 
-      // If no role found or not admin, redirect to home
-      if (roleError || !data || data.role !== 'admin') {
-        return NextResponse.redirect(new URL('/', request.url))
+        if (roleError || !roleData || roleData.role !== 'admin') {
+          return NextResponse.redirect(new URL('/account', request.url))
+        }
       }
-    }
-
-    // If user is authenticated and trying to access public routes, redirect to account
-    if (session && publicRoutes.includes(pathname)) {
-      const response = NextResponse.redirect(new URL('/account', request.url))
-      // Ensure session cookies are set
-      response.cookies.set('sb-access-token', session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
-      response.cookies.set('sb-refresh-token', session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
-      return response
-    }
-
-    // If user is not authenticated and trying to access protected routes, redirect to home
-    if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
-      const response = NextResponse.redirect(new URL('/', request.url))
-      response.cookies.delete('sb-access-token')
-      response.cookies.delete('sb-refresh-token')
-      return response
+    } else {
+      // If user is not authenticated and trying to access protected routes, redirect to login
+      if (protectedRoutes.some(route => pathname.startsWith(route))) {
+        const response = NextResponse.redirect(new URL('/login', request.url))
+        clearAuthCookies(response)
+        return response
+      }
     }
 
     // For all other cases, continue with the request
@@ -116,28 +89,40 @@ export async function middleware(request: NextRequest) {
 
     // Ensure session cookies are set for authenticated users
     if (session) {
-      response.cookies.set('sb-access-token', session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
-      response.cookies.set('sb-refresh-token', session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
+      setAuthCookies(response, session)
     }
 
     return response
   } catch (error) {
     console.error('Middleware error:', error)
-    const response = NextResponse.redirect(new URL('/login', request.url))
-    response.cookies.delete('sb-access-token')
-    response.cookies.delete('sb-refresh-token')
-    return response
+    return handleAuthError(request)
   }
+}
+
+function setAuthCookies(response: NextResponse, session: any) {
+  response.cookies.set('sb-access-token', session.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  })
+  response.cookies.set('sb-refresh-token', session.refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  })
+}
+
+function clearAuthCookies(response: NextResponse) {
+  response.cookies.delete('sb-access-token')
+  response.cookies.delete('sb-refresh-token')
+}
+
+function handleAuthError(request: NextRequest) {
+  const response = NextResponse.redirect(new URL('/login', request.url))
+  clearAuthCookies(response)
+  return response
 }
 
 export const config = {
