@@ -10,7 +10,7 @@ const equipmentDetails = {
   standard: {
     panels: {
       name: 'Q CELLS Q.PEAK DUO BLK ML-G10+',
-      image: '/qcell panel.jpg',
+      image: '/images/qcell-panel.jpg',
       details: [
         '400W output per panel',
         'Sleek all-black design',
@@ -20,7 +20,7 @@ const equipmentDetails = {
     },
     inverter: {
       name: 'Enphase IQ8+',
-      image: '/enphase.webp',
+      image: '/images/enphase-inverter.jpg',
       details: [
         'Microinverter system',
         'Per-panel optimization',
@@ -32,7 +32,7 @@ const equipmentDetails = {
   premium: {
     panels: {
       name: 'REC Alpha Pure-R',
-      image: '/RecPanel.png',
+      image: '/images/rec-panel.jpg',
       details: [
         '430W output per panel',
         'Premium all-black design',
@@ -43,7 +43,7 @@ const equipmentDetails = {
     },
     inverter: {
       name: 'Enphase IQ8M+',
-      image: '/enphase.webp',
+      image: '/images/enphase-inverter.jpg',
       details: [
         'Advanced microinverter system',
         'Higher power handling',
