@@ -8,6 +8,9 @@ const publicPrefixes = ['/api/auth']
 // Define protected routes that require authentication
 const protectedRoutes = ['/profile', '/documents']
 
+// Define admin routes
+const adminRoutes = ['/admin']
+
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-url', request.url)
@@ -52,6 +55,26 @@ export async function middleware(request: NextRequest) {
       response.cookies.delete('sb-access-token')
       response.cookies.delete('sb-refresh-token')
       return response
+    }
+
+    // Check for admin routes
+    if (pathname.startsWith('/admin')) {
+      // If not authenticated, redirect to login
+      if (!session) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+
+      // Check if user has admin role
+      const { data, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single()
+
+      // If no role found or not admin, redirect to home
+      if (roleError || !data || data.role !== 'admin') {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
     }
 
     // If user is authenticated and trying to access public routes, redirect to home
