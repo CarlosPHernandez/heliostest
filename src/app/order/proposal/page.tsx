@@ -167,24 +167,6 @@ export default function ProposalPage() {
           </p>
         </div>
 
-        {/* Equipment Details */}
-        <div className="mb-8">
-          <EquipmentDetails packageType={packageType} />
-        </div>
-
-        {/* Installation Roadmap */}
-        <div className="mb-8">
-          <InstallationRoadmap />
-        </div>
-
-        {/* Warranty Selection */}
-        <div className="mb-8">
-          <WarrantySelection
-            selectedWarranty={selectedWarranty}
-            onSelect={(warranty) => setSelectedWarranty(warranty)}
-          />
-        </div>
-
         {/* Property Overview */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -218,6 +200,24 @@ export default function ProposalPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Equipment Details */}
+        <div className="mb-8">
+          <EquipmentDetails packageType={packageType} />
+        </div>
+
+        {/* Installation Roadmap */}
+        <div className="mb-8">
+          <InstallationRoadmap />
+        </div>
+
+        {/* Warranty Selection */}
+        <div className="mb-8">
+          <WarrantySelection
+            selectedWarranty={selectedWarranty}
+            onSelect={(warranty) => setSelectedWarranty(warranty)}
+          />
         </div>
 
         {/* Payment Options */}
