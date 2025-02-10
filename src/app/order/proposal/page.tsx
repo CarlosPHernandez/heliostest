@@ -110,7 +110,7 @@ export default function ProposalPage() {
       }
       
       localStorage.setItem('proposalData', JSON.stringify(proposalData))
-      router.push('/order/account')
+      router.push('/order/summary')
     } catch (err) {
       console.error('Error saving proposal:', err)
       setError('Failed to save proposal data')
@@ -165,7 +165,7 @@ export default function ProposalPage() {
             Your Solar Proposal
           </h1>
           <p className="text-gray-600">
-            Review your customized solar solution and choose your preferred payment option.
+            Review your customized solar design and choose your preferred payment option.
           </p>
         </div>
 

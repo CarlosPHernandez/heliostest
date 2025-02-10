@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
 import { Loader2, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -19,27 +17,16 @@ interface Proposal {
 
 export default function ProposalPage() {
   const router = useRouter()
-  const { user } = useAuth()
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
+    // Simulate loading proposals from local storage or state management
     const loadProposals = async () => {
       try {
-        const { data, error } = await supabase
-          .from('proposals')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-
-        if (error) throw error
-
-        setProposals(data || [])
+        // For now, we'll just use an empty array
+        // In a real app, you'd want to implement proper state management
+        setProposals([])
       } catch (error) {
         console.error('Error loading proposals:', error)
       } finally {
@@ -48,7 +35,7 @@ export default function ProposalPage() {
     }
 
     loadProposals()
-  }, [user, router])
+  }, [])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -78,11 +65,11 @@ export default function ProposalPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back button */}
         <Link
-          href="/account"
+          href="/"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-6"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Account
+          Back to Home
         </Link>
 
         <div className="mb-8">
