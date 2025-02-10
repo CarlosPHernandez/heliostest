@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, Check } from 'lucide-react'
 import Image from 'next/image'
 import { SavingsBreakdown } from '@/components/features/SavingsBreakdown'
+import { EquipmentDetails } from '@/components/features/EquipmentDetails'
+import { InstallationRoadmap } from '@/components/features/InstallationRoadmap'
+import { WarrantySelection } from '@/components/features/WarrantySelection'
 import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calculations'
 import { setCookie } from '@/lib/cookies'
 
@@ -105,7 +108,8 @@ export default function ProposalPage() {
           term: selectedTerm,
           downPayment,
           monthlyPayment: financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit
-        } : null
+        } : null,
+        warranty: selectedWarranty
       }
       
       // Store in localStorage
@@ -161,6 +165,24 @@ export default function ProposalPage() {
           <p className="text-gray-600">
             Review your customized solar design and choose your preferred payment option.
           </p>
+        </div>
+
+        {/* Equipment Details */}
+        <div className="mb-8">
+          <EquipmentDetails packageType={packageType} />
+        </div>
+
+        {/* Installation Roadmap */}
+        <div className="mb-8">
+          <InstallationRoadmap />
+        </div>
+
+        {/* Warranty Selection */}
+        <div className="mb-8">
+          <WarrantySelection
+            selectedWarranty={selectedWarranty}
+            onSelect={(warranty) => setSelectedWarranty(warranty)}
+          />
         </div>
 
         {/* Property Overview */}
