@@ -182,10 +182,10 @@ export default function ProposalPage() {
             <div className="relative w-24 h-24 mb-8">
               {/* Animated sun icon */}
               <div className="absolute inset-0">
-                <div className="w-full h-full rounded-full bg-yellow-100 animate-sun-fill" />
+                <div className="w-full h-full rounded-full bg-yellow-100 animate-scale" />
               </div>
               <div className="absolute inset-0">
-                <div className="w-full h-full rounded-full border-4 border-yellow-400 border-t-transparent animate-sun-rotate" />
+                <div className="w-full h-full rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
               </div>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Preparing Your Solar Proposal</h2>

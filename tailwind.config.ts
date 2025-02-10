@@ -66,14 +66,15 @@ const config: Config = {
         },
         'progress': {
           '0%': { transform: 'scaleX(0)' },
-          '50%': { transform: 'scaleX(0.5)' },
+          '40%': { transform: 'scaleX(0.4)' },
+          '80%': { transform: 'scaleX(0.8)' },
           '100%': { transform: 'scaleX(1)' }
         },
-        'sun-rotate': {
+        'spin': {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' }
         },
-        'sun-fill': {
+        'scale': {
           '0%': { 
             opacity: '0.2',
             transform: 'scale(0.8)'
@@ -88,10 +89,10 @@ const config: Config = {
         'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
         'fade': 'fade 0.4s ease-in-out',
-        'progress-vertical': 'progress-vertical 3s ease-in-out infinite',
+        'progress-vertical': 'progress-vertical 2s ease-in-out infinite',
         'progress': 'progress 2s ease-in-out infinite',
-        'sun-rotate': 'sun-rotate 3s linear infinite',
-        'sun-fill': 'sun-fill 2s ease-out forwards'
+        'spin': 'spin 2s linear infinite',
+        'scale': 'scale 1s ease-out forwards'
       },
     },
   },
