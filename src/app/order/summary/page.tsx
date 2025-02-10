@@ -20,45 +20,97 @@ const packageFeatures = {
   standard: {
     panels: {
       name: 'Q CELLS Q.PEAK DUO BLK ML-G10+',
-      description: 'High-efficiency monocrystalline panels with sleek all-black design, optimized for maximum performance and aesthetic appeal.'
+      features: [
+        '400W high-efficiency panels',
+        'Sleek all-black design',
+        '20.4% efficiency rating',
+        'Enhanced durability',
+        '25-year performance warranty'
+      ]
     },
     inverter: {
       name: 'Enphase IQ8+',
-      description: 'Advanced microinverter system providing panel-level optimization and monitoring, with built-in rapid shutdown for enhanced safety.'
+      features: [
+        'Panel-level optimization',
+        'Built-in rapid shutdown',
+        'Real-time monitoring',
+        '25-year warranty'
+      ]
     },
     monitoring: {
       name: 'Basic System Monitoring',
-      description: 'Real-time monitoring of system performance, energy production, and basic fault detection through a user-friendly mobile app.'
+      features: [
+        'Real-time production tracking',
+        'Mobile app access',
+        'Basic fault detection',
+        'Monthly performance reports'
+      ]
     },
     installation: {
       name: 'Professional Installation',
-      description: 'Expert installation by certified technicians, including electrical work, mounting, and system configuration.'
+      features: [
+        'Certified technicians',
+        'Standard mounting hardware',
+        'Full system testing',
+        'Local permits & inspections'
+      ]
     }
   },
   premium: {
     panels: {
       name: 'REC Alpha Pure-R',
-      description: 'Premium high-power panels featuring advanced cell technology, superior low-light performance, and enhanced durability.'
+      features: [
+        '430W premium panels',
+        'Advanced cell technology',
+        '22.3% efficiency rating',
+        'Superior low-light performance',
+        '25-year premium warranty'
+      ]
     },
     inverter: {
       name: 'Enphase IQ8M+',
-      description: 'Premium microinverter system with higher power handling, enhanced performance monitoring, and future battery readiness.'
+      features: [
+        'Enhanced power handling',
+        'Advanced monitoring features',
+        'Battery-ready system',
+        '25-year premium warranty'
+      ]
     },
     monitoring: {
       name: 'Advanced System Monitoring',
-      description: 'Comprehensive monitoring with detailed performance analytics, predictive maintenance alerts, and advanced reporting features.'
+      features: [
+        'Detailed analytics dashboard',
+        'Predictive maintenance',
+        'Advanced diagnostics',
+        'Custom performance reports'
+      ]
     },
     installation: {
       name: 'Premium Installation',
-      description: 'Priority installation service with premium mounting hardware and enhanced aesthetic considerations.'
+      features: [
+        'Priority installation team',
+        'Premium mounting hardware',
+        'Enhanced aesthetics',
+        'Expedited permits'
+      ]
     },
     critterGuard: {
       name: 'Critter Guard Protection',
-      description: 'Premium mesh barrier system that prevents birds, squirrels, and other animals from nesting under your solar panels while maintaining system aesthetics.'
+      features: [
+        'Premium mesh barrier',
+        'Pest prevention',
+        'Maintains system aesthetics',
+        'Weather-resistant materials'
+      ]
     },
     edgeTrim: {
       name: 'Solar Edge Trim',
-      description: 'Professional-grade edge skirt that creates a sleek, finished look while providing additional protection against debris and pests.'
+      features: [
+        'Professional edge skirt',
+        'Enhanced aesthetics',
+        'Additional debris protection',
+        'Weather-sealed design'
+      ]
     }
   }
 }
@@ -248,14 +300,17 @@ export default function OrderSummaryPage() {
             </div>
           </div>
 
-          {/* Equipment Details with Descriptions */}
+          {/* Equipment Details */}
           <div className="bg-white rounded-xl shadow-sm p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">System Components</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Equipment</h2>
             
             {/* Battery Toggle Section */}
             <div className="mb-8 border-b pb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Battery Backup System</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Battery Backup System</h3>
+                  <p className="text-sm text-gray-600 mt-1">Add energy storage to power your essential appliances during outages</p>
+                </div>
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-gray-600">Add Battery Storage</span>
                   <button
@@ -299,7 +354,6 @@ export default function OrderSummaryPage() {
                             )}
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mb-4">{batteryOptions[battery].description}</p>
                         <div className="bg-gray-50 rounded-lg p-4">
                           <h5 className="text-sm font-medium text-gray-900 mb-2">Backup Power Capabilities:</h5>
                           <ul className="space-y-1">
@@ -321,21 +375,25 @@ export default function OrderSummaryPage() {
               )}
             </div>
 
-            {/* Rest of system components */}
-            <div className="space-y-8">
+            {/* System Components */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {Object.entries(packageType === 'premium' ? packageFeatures.premium : packageFeatures.standard)
-                .map(([key, feature]) => (
-                  <div key={key} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
-                    <h3 className="font-semibold text-gray-900 mb-2">{feature.name}</h3>
-                    <p className="text-gray-600 text-sm">{feature.description}</p>
+                .map(([key, component]) => (
+                  <div key={key} className="border rounded-lg p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4">{component.name}</h3>
+                    <ul className="space-y-2">
+                      {component.features.map((feature, index) => (
+                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                          <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ))
               }
             </div>
           </div>
-
-          {/* Equipment Details */}
-          <EquipmentDetails packageType={packageType} />
 
           {/* Utility Cost Projection */}
           <UtilityCostProjection
