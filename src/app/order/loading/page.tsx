@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUtilityRate, calculateSolarProposal, NC_CONFIG } from '@/lib/solarCalculator'
 
@@ -12,7 +12,7 @@ const loadingSteps = [
   "Generating your custom packages..."
 ]
 
-export default function LoadingPage() {
+function LoadingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState(0)
@@ -136,5 +136,22 @@ export default function LoadingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoadingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background pt-24">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-40 h-40 rounded-full border-4 border-blue-600/30 animate-pulse"></div>
+            <p className="text-lg font-medium text-gray-900 mt-8">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoadingContent />
+    </Suspense>
   )
 } 
