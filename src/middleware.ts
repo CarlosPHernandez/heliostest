@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/order', '/profile', '/documents']
+const protectedRoutes = ['/dashboard', '/profile', '/documents']
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)

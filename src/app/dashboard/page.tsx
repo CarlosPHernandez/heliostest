@@ -49,8 +49,13 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .single()
 
-        if (error) throw error
-        setProposal(data)
+        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+          throw error
+        }
+        
+        if (data) {
+          setProposal(data)
+        }
       } catch (err) {
         console.error('Error fetching proposal:', err)
         setError('Failed to load your proposal. Please try again later.')
@@ -96,18 +101,49 @@ export default function DashboardPage() {
   if (!proposal) {
     return (
       <div className="min-h-screen bg-background pt-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome to Your Dashboard</h1>
-          <p className="mt-4 text-gray-600">
-            You haven't created a solar proposal yet. Would you like to start your solar journey?
-          </p>
-          <button
-            onClick={() => router.push('/solar-calculator')}
-            className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-          >
-            Get Started
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </button>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Welcome to Your Solar Journey</h1>
+            <p className="mt-4 text-lg text-gray-600">
+              Ready to start saving with solar? Let's create your personalized proposal.
+            </p>
+            <div className="mt-8 space-y-4">
+              <button
+                onClick={() => router.push('/')}
+                className="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+              >
+                Get Your Solar Proposal
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
+              <p className="text-sm text-gray-500">
+                Takes only a few minutes to get a customized solar solution for your home.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <FileText className="h-8 w-8 text-black mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">Custom Design</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Get a solar system designed specifically for your home and energy needs.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <Calendar className="h-8 w-8 text-black mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">Easy Process</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Simple steps from proposal to installation with expert guidance.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <Phone className="h-8 w-8 text-black mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">Expert Support</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Our team is here to help you every step of the way.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     )
