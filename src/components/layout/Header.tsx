@@ -37,6 +37,11 @@ const Header = () => {
     { name: 'About Us', href: '/about-us' },
   ]
 
+  const userNavItems = [
+    { name: 'My Proposals', href: '/proposal', icon: HomeIcon },
+    { name: 'Documents', href: '/documents', icon: User },
+  ]
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-[100]">
@@ -52,14 +57,24 @@ const Header = () => {
               {!loading && (
                 <>
                   {user ? (
-                    // Logged in: Only show dashboard and logout
+                    // Logged in: Show user navigation
                     <div className="flex items-center space-x-6">
+                      {userNavItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className="text-gray-900 hover:text-gray-600 transition-colors flex items-center"
+                        >
+                          <item.icon className="h-4 w-4 mr-2" />
+                          {item.name}
+                        </Link>
+                      ))}
                       <Link
-                        href="/dashboard"
+                        href="/profile"
                         className="text-gray-900 hover:text-gray-600 transition-colors flex items-center"
                       >
                         <User className="h-4 w-4 mr-2" />
-                        Dashboard
+                        Profile
                       </Link>
                       <button
                         onClick={handleLogout}
@@ -152,16 +167,28 @@ const Header = () => {
             {!loading && (
               <>
                 {user ? (
-                  // Logged in: Only show dashboard and logout
+                  // Logged in: Show user navigation
                   <ul className="space-y-4">
+                    {userNavItems.map((item) => (
+                      <li key={item.name}>
+                        <Link
+                          href={item.href}
+                          className="block py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2 flex items-center"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <item.icon className="h-4 w-4 mr-2" />
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
                     <li>
                       <Link
-                        href="/dashboard"
+                        href="/profile"
                         className="block py-2 text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors hover:pl-2 flex items-center"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <User className="h-4 w-4 mr-2" />
-                        Dashboard
+                        Profile
                       </Link>
                     </li>
                     <li>
