@@ -22,18 +22,17 @@ export function LoginForm() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // If user is already authenticated, redirect to account page
-    if (user) {
-      router.push('/account')
-    }
-  }, [user, router])
-
-  useEffect(() => {
     const message = searchParams.get('message')
     if (message) {
       toast.info(message)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push('/account')
+    }
+  }, [user, isLoading, router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -42,13 +41,16 @@ export function LoginForm() {
 
     try {
       await signIn(email, password)
-      // After successful sign in, the auth state will update and trigger the useEffect above
+      // Wait a short period for the session to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      router.refresh();
+      router.push('/account');
     } catch (err) {
-      console.error('Login error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to sign in')
-      toast.error('Failed to sign in. Please check your credentials.')
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      toast.error('Failed to sign in. Please check your credentials.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 

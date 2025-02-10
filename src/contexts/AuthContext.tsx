@@ -47,12 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
-
-      if (event === 'SIGNED_IN') {
-        router.push('/account')
-      } else if (event === 'SIGNED_OUT') {
-        router.push('/login')
-      }
     })
 
     return () => {
@@ -74,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -83,6 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) {
       throw error
     }
+
+    // Explicitly fetch session after sign in to update user state
+    const { data: { session } } = await supabase.auth.getSession()
+    setUser(session?.user ?? null)
   }
 
   const signOut = async () => {
