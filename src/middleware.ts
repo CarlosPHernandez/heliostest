@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/profile', '/documents', '/proposal', '/account', '/order']
+const protectedRoutes = ['/profile', '/documents', '/proposal', '/account', '/order', '/dashboard']
 
 // Define admin routes
 const adminRoutes = ['/admin']
@@ -53,10 +53,10 @@ export async function middleware(request: NextRequest) {
       return handleAuthError(request)
     }
 
-    // If user is authenticated and trying to access public routes or home page, redirect to account
+    // If user is authenticated and trying to access public routes or home page, redirect to dashboard
     if (session) {
       if (publicRoutes.includes(pathname) || pathname === '/') {
-        const response = NextResponse.redirect(new URL('/account', request.url))
+        const response = NextResponse.redirect(new URL('/dashboard', request.url))
         setAuthCookies(response, session)
         return response
       }
