@@ -59,8 +59,13 @@ export default function AccountPage() {
           .limit(1)
           .single()
 
-        if (error) throw error
-        setProposal(proposalData)
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading proposal:', error)
+        }
+        
+        if (proposalData) {
+          setProposal(proposalData)
+        }
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -82,27 +87,6 @@ export default function AccountPage() {
       </div>
     )
   }
-
-  const menuItems = [
-    {
-      title: 'My Proposals',
-      description: 'View and manage your solar proposals',
-      icon: Sun,
-      href: '/proposal',
-    },
-    {
-      title: 'Documents',
-      description: 'Access important documents and files',
-      icon: FileText,
-      href: '/documents',
-    },
-    {
-      title: 'Profile Settings',
-      description: 'Update your account information',
-      icon: Settings,
-      href: '/profile',
-    },
-  ]
 
   return (
     <div className="min-h-screen pt-24 pb-12">
@@ -177,30 +161,59 @@ export default function AccountPage() {
 
         {/* Menu Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {menuItems.map((item) => (
-            <Link
-              key={item.title}
-              href={item.href}
-              className="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <item.icon className="h-6 w-6 text-gray-900" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {item.title}
-                  </h2>
-                  <p className="mt-1 text-gray-600">
-                    {item.description}
-                  </p>
-                </div>
+          <Link
+            href="/proposal"
+            className="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <Sun className="h-6 w-6 text-gray-900" />
               </div>
-            </Link>
-          ))}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">My Proposal</h2>
+                <p className="mt-1 text-gray-600">
+                  View your solar system proposal details
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/documents"
+            className="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <FileText className="h-6 w-6 text-gray-900" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Documents</h2>
+                <p className="mt-1 text-gray-600">
+                  Upload and manage your documents
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/profile"
+            className="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <Settings className="h-6 w-6 text-gray-900" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
+                <p className="mt-1 text-gray-600">
+                  Update your account information
+                </p>
+              </div>
+            </div>
+          </Link>
         </div>
 
-        {/* Upload Documents Section */}
+        {/* Required Documents Section */}
         <div className="mt-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             Required Documents

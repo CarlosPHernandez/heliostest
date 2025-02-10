@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/profile', '/documents', '/proposal']
+const protectedRoutes = ['/profile', '/documents', '/proposal', '/account']
 
 // Define admin routes
 const adminRoutes = ['/admin']
