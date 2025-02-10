@@ -22,37 +22,52 @@ export default function AddressPage() {
   const [error, setError] = useState('')
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false)
 
-  // Make initAutocomplete available globally
-  window.initAutocomplete = () => {
-    const input = document.getElementById('address') as HTMLInputElement
-    if (!input) return
+  // Initialize Google Maps autocomplete
+  useEffect(() => {
+    // Define the initialization function
+    const initializeAutocomplete = () => {
+      const input = document.getElementById('address') as HTMLInputElement
+      if (!input) return
 
-    // Clear any existing autocomplete
-    const existingAutocomplete = input.getAttribute('data-autocomplete')
-    if (existingAutocomplete) {
-      window.google.maps.event.clearInstanceListeners(input)
+      try {
+        const autocomplete = new window.google.maps.places.Autocomplete(input, {
+          componentRestrictions: { country: 'us' },
+          fields: ['address_components', 'formatted_address'],
+          types: ['address']
+        })
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace()
+          if (place.formatted_address) {
+            setAddress(place.formatted_address)
+          }
+        })
+
+        // Mark input as having autocomplete initialized
+        input.setAttribute('data-autocomplete', 'true')
+      } catch (err) {
+        console.error('Error initializing autocomplete:', err)
+      }
     }
 
-    try {
-      const autocomplete = new window.google.maps.places.Autocomplete(input, {
-        componentRestrictions: { country: 'us' },
-        fields: ['address_components', 'formatted_address'],
-        types: ['address']
-      })
+    // Set up the global callback
+    if (typeof window !== 'undefined') {
+      window.initAutocomplete = () => {
+        initializeAutocomplete()
+        setIsGoogleLoaded(true)
+      }
+    }
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace()
-        if (place.formatted_address) {
-          setAddress(place.formatted_address)
+    // Clean up function
+    return () => {
+      if (typeof window !== 'undefined') {
+        const input = document.getElementById('address') as HTMLInputElement
+        if (input && window.google?.maps?.event) {
+          window.google.maps.event.clearInstanceListeners(input)
         }
-      })
-
-      // Mark input as having autocomplete initialized
-      input.setAttribute('data-autocomplete', 'true')
-    } catch (err) {
-      console.error('Error initializing autocomplete:', err)
+      }
     }
-  }
+  }, []) // Empty dependency array means this runs once on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +109,6 @@ export default function AddressPage() {
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`}
         strategy="afterInteractive"
-        onLoad={() => setIsGoogleLoaded(true)}
         onError={(e) => {
           console.error('Error loading Google Maps:', e)
           setError('Error loading address lookup. Please try again later.')
