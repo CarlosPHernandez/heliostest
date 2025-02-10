@@ -70,18 +70,24 @@ const config: Config = {
           '80%': { transform: 'scaleX(0.8)' },
           '100%': { transform: 'scaleX(1)' }
         },
-        'spin': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' }
-        },
-        'scale': {
+        'orbit': {
           '0%': { 
-            opacity: '0.2',
-            transform: 'scale(0.8)'
+            transform: 'rotate(0deg) translateX(12px) rotate(0deg)',
           },
-          '100%': {
+          '100%': { 
+            transform: 'rotate(360deg) translateX(12px) rotate(-360deg)',
+          }
+        },
+        'pulse-glow': {
+          '0%, 100%': { 
+            opacity: '0.9',
+            transform: 'scale(1)',
+            boxShadow: '0 0 20px rgba(250, 204, 21, 0.5)'
+          },
+          '50%': { 
             opacity: '1',
-            transform: 'scale(1)'
+            transform: 'scale(1.05)',
+            boxShadow: '0 0 30px rgba(250, 204, 21, 0.7)'
           }
         }
       },
@@ -91,8 +97,8 @@ const config: Config = {
         'fade': 'fade 0.4s ease-in-out',
         'progress-vertical': 'progress-vertical 2s ease-in-out infinite',
         'progress': 'progress 2s ease-in-out infinite',
-        'spin': 'spin 2s linear infinite',
-        'scale': 'scale 1s ease-out forwards'
+        'orbit': 'orbit 3s linear infinite',
+        'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
       },
     },
   },

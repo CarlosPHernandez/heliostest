@@ -68,9 +68,11 @@ export default function ProposalPage() {
   const [selectedWarranty, setSelectedWarranty] = useState<WarrantyPackage>('basic')
 
   const loadingSteps = [
-    "Analyzing your utility data...",
-    "Calculating optimal panel placement...",
-    "Preparing your custom solar solution...",
+    "Analyzing your roof dimensions...",
+    "Calculating solar exposure...",
+    "Determining optimal panel layout...",
+    "Estimating energy production...",
+    "Generating your custom packages..."
   ]
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function ProposalPage() {
     if (loading) {
       stepInterval = setInterval(() => {
         setLoadingStep((prev) => (prev + 1) % loadingSteps.length)
-      }, 800)
+      }, 1200)
     }
     return () => clearInterval(stepInterval)
   }, [loading])
@@ -116,10 +118,10 @@ export default function ProposalPage() {
       const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=21&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       setMapUrl(mapUrl)
       
-      // Add a minimum loading time of 2 seconds
+      // Add a minimum loading time of 3.5 seconds
       setTimeout(() => {
         setLoading(false)
-      }, 2000)
+      }, 3500)
     } catch (err) {
       console.error('Error loading proposal data:', err)
       setError(err instanceof Error ? err.message : 'Error loading proposal')
@@ -179,16 +181,17 @@ export default function ProposalPage() {
       <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-center">
-            <div className="relative w-24 h-24 mb-8">
-              {/* Animated sun icon */}
-              <div className="absolute inset-0">
-                <div className="w-full h-full rounded-full bg-yellow-100 animate-scale" />
+            <div className="relative w-32 h-32 mb-8">
+              {/* Central sun */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-yellow-400 animate-pulse-glow" />
               </div>
-              <div className="absolute inset-0">
-                <div className="w-full h-full rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
+              {/* Orbiting planet */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-blue-500 animate-orbit" />
               </div>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Preparing Your Solar Proposal</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Analyzing Your Property</h2>
             <p className="text-gray-600 text-center max-w-sm mb-8 h-6 animate-fade">
               {loadingSteps[loadingStep]}
             </p>
