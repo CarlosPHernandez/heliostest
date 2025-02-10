@@ -10,7 +10,6 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
-import { savePendingProposal } from '@/lib/proposals'
 
 export function LoginForm() {
   const router = useRouter()
@@ -25,7 +24,7 @@ export function LoginForm() {
   useEffect(() => {
     // If user is already authenticated, redirect to account page
     if (user) {
-      router.replace('/account')
+      router.push('/account')
     }
   }, [user, router])
 
@@ -43,16 +42,7 @@ export function LoginForm() {
 
     try {
       await signIn(email, password)
-      
-      // Check for and save any pending proposals
-      if (user) {
-        const saved = await savePendingProposal(user.id)
-        if (saved) {
-          toast.success('Your proposal has been saved successfully!')
-        }
-      }
-
-      router.replace('/account')
+      // After successful sign in, the auth state will update and trigger the useEffect above
     } catch (err) {
       console.error('Login error:', err)
       setError(err instanceof Error ? err.message : 'Failed to sign in')
