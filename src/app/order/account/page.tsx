@@ -170,8 +170,8 @@ export default function AccountPage() {
       localStorage.removeItem('paymentType')
       localStorage.removeItem('financingDetails')
 
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Redirect to home
+      router.push('/')
     } catch (err) {
       console.error('Registration error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred during registration')

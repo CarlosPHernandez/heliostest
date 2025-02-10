@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Menu, X, LogOut, User } from 'lucide-react'
+import { Menu, X, LogOut, User, HomeIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import Image from 'next/image'
 
 const Header = () => {
   const router = useRouter()
@@ -42,8 +43,8 @@ const Header = () => {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href={user ? '/dashboard' : '/'} className="text-2xl font-bold text-black">
-              Helios Nexus
+            <Link href="/" className="text-2xl font-bold text-black">
+              <Image src="/logo.png" alt="Helios" width={120} height={40} />
             </Link>
 
             {/* Desktop Navigation */}
@@ -132,11 +133,11 @@ const Header = () => {
         >
           <div className="flex items-center justify-between p-4 border-b">
             <Link 
-              href={user ? '/dashboard' : '/'} 
+              href="/" 
               className="text-xl font-bold text-black"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Helios Nexus
+              <Image src="/logo.png" alt="Helios" width={120} height={40} />
             </Link>
             <button
               onClick={() => setIsMobileMenuOpen(false)}

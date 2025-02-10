@@ -49,7 +49,7 @@ export default function OrderSummaryPage() {
     setIsSubmitting(true)
     // Here you would implement the order submission logic
     await new Promise(resolve => setTimeout(resolve, 1500)) // Simulated API call
-    router.push('/dashboard')
+    router.push('/')
   }
 
   if (!packageData || !packageType) {

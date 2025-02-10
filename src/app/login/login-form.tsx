@@ -18,7 +18,7 @@ export function LoginForm() {
   useEffect(() => {
     // If user is already authenticated, redirect to dashboard
     if (user) {
-      router.replace('/dashboard')
+      router.replace('/')
     }
   }, [user, router])
 

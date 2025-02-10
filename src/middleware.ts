@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/profile', '/documents']
+const protectedRoutes = ['/profile', '/documents']
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
@@ -54,9 +54,9 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    // If user is authenticated and trying to access public routes, redirect to dashboard
+    // If user is authenticated and trying to access public routes, redirect to home
     if (session && publicRoutes.includes(pathname)) {
-      const response = NextResponse.redirect(new URL('/dashboard', request.url))
+      const response = NextResponse.redirect(new URL('/', request.url))
       // Ensure session cookies are set
       response.cookies.set('sb-access-token', session.access_token, {
         httpOnly: true,
@@ -73,9 +73,9 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    // If user is not authenticated and trying to access protected routes, redirect to login
+    // If user is not authenticated and trying to access protected routes, redirect to home
     if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
-      const response = NextResponse.redirect(new URL('/login', request.url))
+      const response = NextResponse.redirect(new URL('/', request.url))
       response.cookies.delete('sb-access-token')
       response.cookies.delete('sb-refresh-token')
       return response
