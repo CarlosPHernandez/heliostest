@@ -2,7 +2,8 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getUtilityRate, calculateSolarProposal, NC_CONFIG } from '@/lib/solarCalculator'
+import { calculateSolarProposal, NC_CONFIG } from '@/lib/solar-calculations'
+import { getUtilityRate } from '@/lib/utility-providers'
 
 const loadingSteps = [
   "Analyzing your roof dimensions...",
