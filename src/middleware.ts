@@ -12,6 +12,16 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-url', request.url)
 
+  // Skip middleware for static files and API routes
+  const { pathname } = new URL(request.url)
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|gif|svg)$/)
+  ) {
+    return NextResponse.next()
+  }
+
   try {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,43 +41,44 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    // Get the pathname
-    const pathname = new URL(request.url).pathname
-
-    // Skip middleware for non-HTML requests (like API routes)
-    if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
-      return NextResponse.next({
-        headers: requestHeaders,
-      })
-    }
-
     // Get the session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-    // Handle session errors by clearing cookies and redirecting to login
+    // Handle session errors
     if (sessionError) {
       console.error('Session error:', sessionError)
-      requestHeaders.set('Set-Cookie', 'sb-access-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
-      requestHeaders.set('Set-Cookie', 'sb-refresh-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
-      return NextResponse.redirect(new URL('/login', request.url), {
-        headers: requestHeaders,
-      })
+      // Clear session cookies
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('sb-access-token')
+      response.cookies.delete('sb-refresh-token')
+      return response
     }
 
     // If user is authenticated and trying to access public routes, redirect to dashboard
     if (session && publicRoutes.includes(pathname)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url), {
-        headers: requestHeaders,
+      const response = NextResponse.redirect(new URL('/dashboard', request.url))
+      // Ensure session cookies are set
+      response.cookies.set('sb-access-token', session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
       })
+      response.cookies.set('sb-refresh-token', session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      })
+      return response
     }
 
     // If user is not authenticated and trying to access protected routes, redirect to login
     if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
-      const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(redirectUrl, {
-        headers: requestHeaders,
-      })
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('sb-access-token')
+      response.cookies.delete('sb-refresh-token')
+      return response
     }
 
     // For all other cases, continue with the request
@@ -75,7 +86,7 @@ export async function middleware(request: NextRequest) {
       headers: requestHeaders,
     })
 
-    // Ensure cookies are properly set in the response
+    // Ensure session cookies are set for authenticated users
     if (session) {
       response.cookies.set('sb-access-token', session.access_token, {
         httpOnly: true,
@@ -94,12 +105,10 @@ export async function middleware(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Middleware error:', error)
-    // Clear problematic session cookies
-    requestHeaders.set('Set-Cookie', 'sb-access-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
-    requestHeaders.set('Set-Cookie', 'sb-refresh-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
-    return NextResponse.redirect(new URL('/login', request.url), {
-      headers: requestHeaders,
-    })
+    const response = NextResponse.redirect(new URL('/login', request.url))
+    response.cookies.delete('sb-access-token')
+    response.cookies.delete('sb-refresh-token')
+    return response
   }
 }
 
