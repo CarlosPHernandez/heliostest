@@ -140,7 +140,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
             <ul className="space-y-4">
               <li className="flex items-start">
                 <div className="flex-shrink-0">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
                     ✓
                   </span>
                 </div>
@@ -155,7 +155,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
               </li>
               <li className="flex items-start">
                 <div className="flex-shrink-0">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
                     ✓
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
               </li>
               <li className="flex items-start">
                 <div className="flex-shrink-0">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
                     ✓
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
               </li>
               <li className="flex items-start">
                 <div className="flex-shrink-0">
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-600">
                     ✓
                   </span>
                 </div>
@@ -202,8 +202,8 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
               onClick={() => handlePackageSelect('standard')}
               className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors shadow-md
                 ${selectedPackage === 'standard'
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-black text-white hover:bg-gray-800'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                 }`}
             >
               Select Standard Package
@@ -214,7 +214,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
         {/* Premium Package */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col relative border border-gray-100">
           <div className="absolute top-4 right-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-600 text-white shadow-sm">
               Most Popular
             </span>
           </div>
@@ -309,8 +309,8 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
               onClick={() => handlePackageSelect('premium')}
               className={`w-full py-3 px-6 rounded-lg text-center font-medium transition-colors shadow-md
                 ${selectedPackage === 'premium'
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gradient-to-r from-blue-600 to-blue-800 text-white hover:from-blue-700 hover:to-blue-900'
                 }`}
             >
               Select Premium Package

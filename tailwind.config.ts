@@ -41,8 +41,8 @@ const config: Config = {
       },
       keyframes: {
         'pulse-subtle': {
-          '0%, 100%': { borderColor: 'rgba(59, 130, 246, 0.3)' },
-          '50%': { borderColor: 'rgba(59, 130, 246, 0.6)' },
+          '0%, 100%': { borderColor: 'rgba(37, 99, 235, 0.1)' },
+          '50%': { borderColor: 'rgba(37, 99, 235, 0.2)' },
         },
         'fade-in-up': {
           'from': {
@@ -72,33 +72,32 @@ const config: Config = {
         },
         'orbit': {
           '0%': { 
-            transform: 'rotate(0deg) translateX(12px) rotate(0deg)',
+            transform: 'rotate(0deg)' 
           },
           '100%': { 
-            transform: 'rotate(360deg) translateX(12px) rotate(-360deg)',
+            transform: 'rotate(360deg)' 
           }
         },
         'pulse-glow': {
           '0%, 100%': { 
-            opacity: '0.9',
-            transform: 'scale(1)',
-            boxShadow: '0 0 20px rgba(250, 204, 21, 0.5)'
+            opacity: '0.2',
+            transform: 'scale(0.95)'
           },
           '50%': { 
-            opacity: '1',
-            transform: 'scale(1.05)',
-            boxShadow: '0 0 30px rgba(250, 204, 21, 0.7)'
+            opacity: '0.4',
+            transform: 'scale(1)'
           }
         }
       },
       animation: {
-        'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
         'fade': 'fade 0.4s ease-in-out',
         'progress-vertical': 'progress-vertical 2s ease-in-out infinite',
         'progress': 'progress 2s ease-in-out infinite',
-        'orbit': 'orbit 3s linear infinite',
-        'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
+        'orbit': 'orbit 8s linear infinite',
+        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
+        'spin-slow': 'spin 12s linear infinite',
       },
     },
   },
