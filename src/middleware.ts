@@ -77,9 +77,9 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // If user is authenticated and trying to access public routes, redirect to home
-    if (session && publicRoutes.includes(pathname)) {
-      const response = NextResponse.redirect(new URL('/', request.url))
+    // If user is authenticated and trying to access public routes or home page, redirect to account
+    if (session && (publicRoutes.includes(pathname) || pathname === '/')) {
+      const response = NextResponse.redirect(new URL('/account', request.url))
       // Ensure session cookies are set
       response.cookies.set('sb-access-token', session.access_token, {
         httpOnly: true,

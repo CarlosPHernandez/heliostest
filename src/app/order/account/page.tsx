@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 interface AccountFormData {
   fullName: string
@@ -66,8 +67,6 @@ export default function AccountPage() {
     setError('')
 
     try {
-      console.log('Starting registration process...')
-      
       // Validate form
       const validationError = validateForm()
       if (validationError) {
@@ -77,7 +76,6 @@ export default function AccountPage() {
       }
 
       // Load proposal data
-      console.log('Loading proposal data...')
       const proposalData = {
         selectedPackage: localStorage.getItem('selectedPackage'),
         selectedPackageData: JSON.parse(localStorage.getItem('selectedPackageData') || '{}'),
@@ -86,81 +84,56 @@ export default function AccountPage() {
         paymentType: localStorage.getItem('paymentType'),
         financingDetails: localStorage.getItem('financingDetails')
       }
-      console.log('Proposal data:', proposalData)
 
       // Register user with Supabase
-      console.log('Registering user with Supabase...')
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             full_name: formData.fullName,
-            phone: formData.phone
+            phone: formData.phone,
+            address: formData.address
           }
         }
       })
 
-      if (signUpError) {
-        console.error('Supabase signup error:', signUpError)
-        throw new Error(signUpError.message)
-      }
+      if (signUpError) throw signUpError
 
       if (!authData.user) {
-        console.error('No user data returned from Supabase')
         throw new Error('Failed to create account')
       }
 
-      console.log('User registered successfully:', authData.user.id)
-
-      // Save proposal data
-      console.log('Saving proposal data...')
-      const proposalToSave = {
-        user_id: authData.user.id,
-        proposal_data: {
-          packageType: proposalData.selectedPackage,
-          systemInfo: proposalData.selectedPackageData,
-          address: proposalData.address,
-          monthlyBill: proposalData.monthlyBill,
-          paymentType: proposalData.paymentType || 'cash',
-          financing: proposalData.financingDetails
-        },
-        status: 'pending'
-      }
-      console.log('Proposal structure to save:', JSON.stringify(proposalToSave, null, 2))
-
-      // Get the session to ensure we have valid authentication
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError)
-        throw new Error('Authentication error while saving proposal')
-      }
-
-      if (!session) {
-        console.error('No active session found')
-        // Store proposal data temporarily
-        localStorage.setItem('pendingProposal', JSON.stringify(proposalToSave))
-        router.push('/login?message=Please check your email to verify your account')
-        return
-      }
-
+      // Create proposal
       const { error: proposalError } = await supabase
         .from('proposals')
-        .insert([proposalToSave])
+        .insert([{
+          user_id: authData.user.id,
+          package_type: proposalData.selectedPackage,
+          system_size: proposalData.selectedPackageData.systemSize || 0,
+          panel_count: proposalData.selectedPackageData.numberOfPanels || 0,
+          monthly_production: proposalData.selectedPackageData.monthlyProduction || 0,
+          address: proposalData.address,
+          monthly_bill: parseFloat(proposalData.monthlyBill || '0'),
+          payment_type: proposalData.paymentType || 'cash',
+          financing: proposalData.financingDetails ? JSON.parse(proposalData.financingDetails) : null,
+          status: 'saved'
+        }])
 
       if (proposalError) {
         console.error('Error saving proposal:', proposalError)
-        if (proposalError.code === '42501') {
-          throw new Error('Permission denied: Unable to save proposal. Please verify your email first.')
-        } else if (proposalError.code === '23505') {
-          throw new Error('A proposal already exists for this account')
-        } else {
-          throw new Error(`Failed to save proposal data: ${proposalError.message}`)
-        }
+        // Store proposal data temporarily
+        localStorage.setItem('pendingProposal', JSON.stringify({
+          package_type: proposalData.selectedPackage,
+          system_size: proposalData.selectedPackageData.systemSize || 0,
+          panel_count: proposalData.selectedPackageData.numberOfPanels || 0,
+          monthly_production: proposalData.selectedPackageData.monthlyProduction || 0,
+          address: proposalData.address,
+          monthly_bill: parseFloat(proposalData.monthlyBill || '0'),
+          payment_type: proposalData.paymentType || 'cash',
+          financing: proposalData.financingDetails ? JSON.parse(proposalData.financingDetails) : null
+        }))
       }
-
-      console.log('Proposal saved successfully')
 
       // Clear localStorage
       localStorage.removeItem('selectedPackage')
@@ -170,8 +143,11 @@ export default function AccountPage() {
       localStorage.removeItem('paymentType')
       localStorage.removeItem('financingDetails')
 
-      // Redirect to home
-      router.push('/')
+      // Show success message
+      toast.success('Account created successfully! Please check your email to verify your account.')
+
+      // Redirect to login
+      router.push('/login?message=Please check your email to verify your account')
     } catch (err) {
       console.error('Registration error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred during registration')
@@ -252,26 +228,22 @@ export default function AccountPage() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
-            <div className="relative mt-1">
+            <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
               >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <Eye className="h-5 w-5 text-gray-400" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
@@ -280,14 +252,14 @@ export default function AccountPage() {
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               Confirm Password
             </label>
-            <div className="relative mt-1">
+            <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 required
               />
             </div>
