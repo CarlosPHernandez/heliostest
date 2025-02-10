@@ -6,10 +6,13 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/profile', '/documents', '/account', '/order', '/dashboard']
+const protectedRoutes = ['/profile', '/documents', '/account', '/dashboard']
 
 // Define admin routes
 const adminRoutes = ['/admin']
+
+// Define public order routes (quote flow)
+const publicOrderRoutes = ['/order/proposal', '/order/address', '/order/utility']
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
@@ -25,9 +28,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ALLOW unauthenticated access to proposal page
-  if (pathname.startsWith('/order/proposal')) {
-    return NextResponse.next();
+  // Allow unauthenticated access to public order routes
+  if (publicOrderRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.next()
   }
 
   try {
