@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { saveNewProposal, ProposalData } from '@/lib/proposals'
 
 interface AccountFormData {
   fullName: string
@@ -76,13 +77,16 @@ export default function AccountPage() {
       }
 
       // Load proposal data
-      const proposalData = {
-        selectedPackage: localStorage.getItem('selectedPackage'),
-        selectedPackageData: JSON.parse(localStorage.getItem('selectedPackageData') || '{}'),
-        address: localStorage.getItem('address'),
-        monthlyBill: localStorage.getItem('monthlyBill'),
-        paymentType: localStorage.getItem('paymentType'),
-        financingDetails: localStorage.getItem('financingDetails')
+      const proposalData: ProposalData = {
+        package_type: localStorage.getItem('selectedPackage') ?? 'standard',
+        system_size: JSON.parse(localStorage.getItem('selectedPackageData') || '{}').systemSize || 0,
+        panel_count: JSON.parse(localStorage.getItem('selectedPackageData') || '{}').numberOfPanels || 0,
+        monthly_production: JSON.parse(localStorage.getItem('selectedPackageData') || '{}').monthlyProduction || 0,
+        address: localStorage.getItem('address') ?? '',
+        monthly_bill: parseFloat(localStorage.getItem('monthlyBill') || '0'),
+        payment_type: localStorage.getItem('paymentType') ?? 'cash',
+        financing: localStorage.getItem('financingDetails') ? JSON.parse(localStorage.getItem('financingDetails')) : null,
+        status: 'saved'
       }
 
       // Register user with Supabase
@@ -104,38 +108,11 @@ export default function AccountPage() {
         throw new Error('Failed to create account')
       }
 
-      // Create proposal
-      const { error: proposalError } = await supabase
-        .from('proposals')
-        .insert([{
-          user_id: authData.user.id,
-          package_type: proposalData.selectedPackage,
-          system_size: proposalData.selectedPackageData.systemSize || 0,
-          panel_count: proposalData.selectedPackageData.numberOfPanels || 0,
-          monthly_production: proposalData.selectedPackageData.monthlyProduction || 0,
-          address: proposalData.address,
-          monthly_bill: parseFloat(proposalData.monthlyBill || '0'),
-          payment_type: proposalData.paymentType || 'cash',
-          financing: proposalData.financingDetails ? JSON.parse(proposalData.financingDetails) : null,
-          status: 'saved'
-        }])
+      // Try to save the proposal, but don't worry if it fails
+      // It will be saved in localStorage and can be saved later after email verification
+      await saveNewProposal(authData.user.id, proposalData)
 
-      if (proposalError) {
-        console.error('Error saving proposal:', proposalError)
-        // Store proposal data temporarily
-        localStorage.setItem('pendingProposal', JSON.stringify({
-          package_type: proposalData.selectedPackage,
-          system_size: proposalData.selectedPackageData.systemSize || 0,
-          panel_count: proposalData.selectedPackageData.numberOfPanels || 0,
-          monthly_production: proposalData.selectedPackageData.monthlyProduction || 0,
-          address: proposalData.address,
-          monthly_bill: parseFloat(proposalData.monthlyBill || '0'),
-          payment_type: proposalData.paymentType || 'cash',
-          financing: proposalData.financingDetails ? JSON.parse(proposalData.financingDetails) : null
-        }))
-      }
-
-      // Clear localStorage
+      // Clear localStorage except pendingProposal
       localStorage.removeItem('selectedPackage')
       localStorage.removeItem('selectedPackageData')
       localStorage.removeItem('address')
