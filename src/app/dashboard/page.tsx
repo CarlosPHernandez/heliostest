@@ -36,46 +36,53 @@ export default function DashboardPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Don't fetch proposal until auth state is confirmed
-    if (authLoading) return
-
-    // If no user after auth loading is done, redirect to login
-    if (!user) {
-      router.replace('/login')
-      return
-    }
-
+    let mounted = true
+    
     const fetchProposal = async () => {
       try {
+        if (!user?.id) return
+
         const { data, error } = await supabase
           .from('proposals')
           .select('*')
           .eq('user_id', user.id)
           .single()
 
+        if (!mounted) return
+
         if (error) {
-          // Only throw if it's not a "no rows" error
+          // Only set error if it's not a "no rows" error
           if (error.code !== 'PGRST116') {
-            throw error
+            console.error('Error fetching proposal:', error)
+            setError('Failed to load your proposal. Please try again later.')
           }
-          // For no rows, just set proposal to null
+          // For no rows, just set proposal to null - this is not an error state
           setProposal(null)
         } else {
           setProposal(data)
         }
-      } catch (err) {
-        console.error('Error fetching proposal:', err)
-        setError('Failed to load your proposal. Please try again later.')
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
-    fetchProposal()
-  }, [user, authLoading, router])
+    // Only fetch if we have a user and are mounted
+    if (user) {
+      fetchProposal()
+    } else if (!authLoading) {
+      // If we're not loading auth and have no user, we can stop loading
+      setLoading(false)
+    }
 
-  // Show loading state while auth is being checked
-  if (authLoading || loading) {
+    return () => {
+      mounted = false
+    }
+  }, [user, authLoading])
+
+  // Show brief loading state while checking auth
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-background pt-24 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
@@ -83,24 +90,33 @@ export default function DashboardPage() {
     )
   }
 
-  // If no user after auth check, don't render anything (redirect will happen)
-  if (!user) {
+  // Only redirect to login if we're certain there's no user and auth is not loading
+  if (!user && !authLoading) {
+    router.replace('/login')
     return null
   }
 
+  // Show error state if there's an actual error (not just missing proposal)
   if (error) {
     return (
       <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-700">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 text-sm text-red-600 hover:text-red-500"
+            >
+              Try again
+            </button>
           </div>
         </div>
       </div>
     )
   }
 
-  if (!proposal) {
+  // Show welcome state if no proposal (this is not an error state)
+  if (!loading && !proposal) {
     return (
       <div className="min-h-screen bg-background pt-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
