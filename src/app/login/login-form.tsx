@@ -16,9 +16,9 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
 
   useEffect(() => {
-    // If user is already authenticated, redirect to dashboard
+    // If user is already authenticated, redirect to account page
     if (user) {
-      router.replace('/')
+      router.replace('/account')
     }
   }, [user, router])
 
