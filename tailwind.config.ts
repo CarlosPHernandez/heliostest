@@ -54,6 +54,10 @@ const config: Config = {
             transform: 'translateY(0)'
           }
         },
+        'fade': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
+        },
         'progress-vertical': {
           '0%': { transform: 'scaleY(0)' },
           '40%': { transform: 'scaleY(0.4)' },
@@ -83,6 +87,7 @@ const config: Config = {
       animation: {
         'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
+        'fade': 'fade 0.4s ease-in-out',
         'progress-vertical': 'progress-vertical 3s ease-in-out infinite',
         'progress': 'progress 2s ease-in-out infinite',
         'sun-rotate': 'sun-rotate 3s linear infinite',

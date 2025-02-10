@@ -54,6 +54,7 @@ const warrantyOptions = {
 export default function ProposalPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [error, setError] = useState('')
   const [packageType, setPackageType] = useState<'standard' | 'premium'>('standard')
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
@@ -65,6 +66,22 @@ export default function ProposalPage() {
   const [downPayment, setDownPayment] = useState<number>(0)
   const [financingOptions, setFinancingOptions] = useState<any>(null)
   const [selectedWarranty, setSelectedWarranty] = useState<WarrantyPackage>('basic')
+
+  const loadingSteps = [
+    "Analyzing your utility data...",
+    "Calculating optimal panel placement...",
+    "Preparing your custom solar solution...",
+  ]
+
+  useEffect(() => {
+    let stepInterval: NodeJS.Timeout
+    if (loading) {
+      stepInterval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % loadingSteps.length)
+      }, 800)
+    }
+    return () => clearInterval(stepInterval)
+  }, [loading])
 
   useEffect(() => {
     try {
@@ -99,7 +116,10 @@ export default function ProposalPage() {
       const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=21&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       setMapUrl(mapUrl)
       
-      setLoading(false)
+      // Add a minimum loading time of 2 seconds
+      setTimeout(() => {
+        setLoading(false)
+      }, 2000)
     } catch (err) {
       console.error('Error loading proposal data:', err)
       setError(err instanceof Error ? err.message : 'Error loading proposal')
@@ -169,8 +189,8 @@ export default function ProposalPage() {
               </div>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Preparing Your Solar Proposal</h2>
-            <p className="text-gray-600 text-center max-w-sm mb-8">
-              We're analyzing your utility data and designing your custom solar solution...
+            <p className="text-gray-600 text-center max-w-sm mb-8 h-6 animate-fade">
+              {loadingSteps[loadingStep]}
             </p>
             <div className="w-full max-w-md bg-gray-100 rounded-full h-2 mb-2">
               <div className="bg-yellow-400 h-2 rounded-full animate-progress origin-left"></div>
