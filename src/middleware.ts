@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-passwor
 const publicPrefixes = ['/api/auth']
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/profile', '/documents', '/proposal', '/account', '/order', '/dashboard']
+const protectedRoutes = ['/profile', '/documents', '/account', '/order', '/dashboard']
 
 // Define admin routes
 const adminRoutes = ['/admin']
@@ -23,6 +23,11 @@ export async function middleware(request: NextRequest) {
     pathname.match(/\.(ico|png|jpg|jpeg|gif|svg)$/)
   ) {
     return NextResponse.next()
+  }
+
+  // ALLOW unauthenticated access to proposal page
+  if (pathname.startsWith('/order/proposal')) {
+    return NextResponse.next();
   }
 
   try {
@@ -83,9 +88,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // For all other cases, continue with the request
-    const response = NextResponse.next({
-      headers: requestHeaders,
-    })
+    const response = NextResponse.next({ headers: requestHeaders })
 
     // Ensure session cookies are set for authenticated users
     if (session) {
