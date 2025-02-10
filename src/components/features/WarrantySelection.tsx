@@ -1,13 +1,13 @@
 import { Shield, Check } from 'lucide-react'
 
 interface WarrantySelectionProps {
-  selectedWarranty: 'basic' | 'extended' | 'comprehensive'
-  onSelect: (warranty: 'basic' | 'extended' | 'comprehensive') => void
+  selectedWarranty: 'standard' | 'extended'
+  onSelect: (warranty: 'standard' | 'extended') => void
 }
 
 const warrantyOptions = {
-  basic: {
-    title: 'Basic Warranty',
+  standard: {
+    title: 'Standard Warranty',
     price: 0,
     coverage: [
       '25-year panel performance warranty',
@@ -20,19 +20,8 @@ const warrantyOptions = {
     price: 1500,
     coverage: [
       '25-year panel performance warranty',
-      '15-year inverter warranty',
-      '15-year workmanship warranty',
-      'Extended parts coverage',
-    ]
-  },
-  comprehensive: {
-    title: 'Comprehensive Warranty',
-    price: 2000,
-    coverage: [
-      '25-year panel performance warranty',
       '25-year inverter warranty',
       '25-year workmanship warranty',
-      'Full system coverage',
       'Annual maintenance included',
     ]
   }
@@ -57,7 +46,7 @@ export function WarrantySelection({ selectedWarranty, onSelect }: WarrantySelect
         <h2 className="text-2xl font-bold text-gray-900">Select Your Warranty</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {(Object.entries(warrantyOptions) as [keyof typeof warrantyOptions, typeof warrantyOptions[keyof typeof warrantyOptions]][]).map(([key, option]) => (
           <div
             key={key}

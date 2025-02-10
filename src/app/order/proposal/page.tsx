@@ -20,7 +20,7 @@ interface SystemInfo {
 }
 
 type PaymentType = 'cash' | 'finance'
-type WarrantyPackage = 'basic' | 'extended' | 'comprehensive'
+type WarrantyPackage = 'standard' | 'extended'
 
 export default function ProposalPage() {
   const router = useRouter()
@@ -34,7 +34,7 @@ export default function ProposalPage() {
   const [selectedTerm, setSelectedTerm] = useState(AVAILABLE_TERMS[1]) // Default to 15 years
   const [downPayment, setDownPayment] = useState<number>(0)
   const [financingOptions, setFinancingOptions] = useState<any>(null)
-  const [selectedWarranty, setSelectedWarranty] = useState<WarrantyPackage>('basic')
+  const [selectedWarranty, setSelectedWarranty] = useState<WarrantyPackage>('standard')
 
   useEffect(() => {
     try {
@@ -207,11 +207,6 @@ export default function ProposalPage() {
           <EquipmentDetails packageType={packageType} />
         </div>
 
-        {/* Installation Roadmap */}
-        <div className="mb-8">
-          <InstallationRoadmap />
-        </div>
-
         {/* Warranty Selection */}
         <div className="mb-8">
           <WarrantySelection
@@ -377,6 +372,11 @@ export default function ProposalPage() {
             <a href="/payment-terms" className="underline hover:text-gray-700">Payment Terms</a>, and{' '}
             <a href="/privacy" className="underline hover:text-gray-700">Privacy Policy</a>.
           </p>
+        </div>
+
+        {/* Installation Roadmap moved to bottom */}
+        <div className="mt-16">
+          <InstallationRoadmap />
         </div>
       </div>
     </div>
