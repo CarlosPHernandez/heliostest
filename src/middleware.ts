@@ -31,11 +31,22 @@ export async function middleware(request: NextRequest) {
       }
     )
 
+    // Get the pathname
+    const pathname = new URL(request.url).pathname
+
+    // Skip middleware for non-HTML requests (like API routes)
+    if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth')) {
+      return NextResponse.next({
+        headers: requestHeaders,
+      })
+    }
+
+    // Get the session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
+    // Handle session errors by clearing cookies and redirecting to login
     if (sessionError) {
       console.error('Session error:', sessionError)
-      // Clear problematic session cookies
       requestHeaders.set('Set-Cookie', 'sb-access-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
       requestHeaders.set('Set-Cookie', 'sb-refresh-token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0')
       return NextResponse.redirect(new URL('/login', request.url), {
@@ -43,9 +54,7 @@ export async function middleware(request: NextRequest) {
       })
     }
 
-    const pathname = new URL(request.url).pathname
-
-    // If user is authenticated and trying to access public routes (like login), redirect to dashboard
+    // If user is authenticated and trying to access public routes, redirect to dashboard
     if (session && publicRoutes.includes(pathname)) {
       return NextResponse.redirect(new URL('/dashboard', request.url), {
         headers: requestHeaders,
@@ -55,16 +64,34 @@ export async function middleware(request: NextRequest) {
     // If user is not authenticated and trying to access protected routes, redirect to login
     if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
       const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirect', request.url)
+      redirectUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(redirectUrl, {
         headers: requestHeaders,
       })
     }
 
     // For all other cases, continue with the request
-    return NextResponse.next({
+    const response = NextResponse.next({
       headers: requestHeaders,
     })
+
+    // Ensure cookies are properly set in the response
+    if (session) {
+      response.cookies.set('sb-access-token', session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      })
+      response.cookies.set('sb-refresh-token', session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      })
+    }
+
+    return response
   } catch (error) {
     console.error('Middleware error:', error)
     // Clear problematic session cookies
@@ -77,5 +104,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

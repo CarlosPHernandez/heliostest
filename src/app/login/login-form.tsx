@@ -20,9 +20,10 @@ export default function LoginForm() {
   useEffect(() => {
     if (user) {
       const redirectTo = searchParams?.get('redirect') || '/dashboard'
-      router.replace(redirectTo)
+      // Use window.location for a full page reload
+      window.location.href = redirectTo
     }
-  }, [user, router, searchParams])
+  }, [user, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,7 +46,7 @@ export default function LoginForm() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 text-black animate-spin mx-auto" />
-          <p className="mt-2 text-gray-600">Redirecting...</p>
+          <p className="mt-2 text-gray-600">Redirecting to dashboard...</p>
         </div>
       </div>
     )
