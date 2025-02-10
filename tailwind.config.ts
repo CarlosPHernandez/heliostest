@@ -71,12 +71,8 @@ const config: Config = {
           '100%': { transform: 'scaleX(1)' }
         },
         'orbit': {
-          '0%': { 
-            transform: 'rotate(0deg)' 
-          },
-          '100%': { 
-            transform: 'rotate(360deg)' 
-          }
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
         },
         'pulse-glow': {
           '0%, 100%': { 
@@ -87,6 +83,20 @@ const config: Config = {
             opacity: '0.4',
             transform: 'scale(1)'
           }
+        },
+        'sun-fill': {
+          '0%': {
+            opacity: '0.2',
+            transform: 'scale(0.8)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)'
+          }
+        },
+        'sun-rotate': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
         }
       },
       animation: {
@@ -98,6 +108,8 @@ const config: Config = {
         'orbit': 'orbit 8s linear infinite',
         'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
         'spin-slow': 'spin 12s linear infinite',
+        'sun-fill': 'sun-fill 2.5s ease-out forwards',
+        'sun-rotate': 'sun-rotate 3s linear infinite'
       },
     },
   },
