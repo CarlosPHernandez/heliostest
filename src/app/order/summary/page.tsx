@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Check, Shield, Zap } from 'lucide-react'
-import { SavingsBreakdown } from '@/components/features/SavingsBreakdown'
+import { EquipmentDetails } from '@/components/features/EquipmentDetails'
+import { InstallationRoadmap } from '@/components/features/InstallationRoadmap'
 
 interface PackageData {
   systemSize: number
@@ -17,6 +18,7 @@ export default function OrderSummaryPage() {
   const router = useRouter()
   const [packageData, setPackageData] = useState<PackageData | null>(null)
   const [packageType, setPackageType] = useState<'standard' | 'premium' | null>(null)
+  const [warrantyPackage, setWarrantyPackage] = useState<'basic' | 'extended' | 'comprehensive'>('basic')
   const [monthlyBill, setMonthlyBill] = useState<number>(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -25,6 +27,7 @@ export default function OrderSummaryPage() {
     const savedPackageType = localStorage.getItem('selectedPackage')
     const savedPackageData = localStorage.getItem('selectedPackageData')
     const savedMonthlyBill = localStorage.getItem('monthlyBill')
+    const savedWarrantyPackage = localStorage.getItem('warrantyPackage')
 
     if (!savedPackageType || !savedPackageData || !savedMonthlyBill) {
       router.push('/order/packages')
@@ -34,6 +37,7 @@ export default function OrderSummaryPage() {
     setPackageType(savedPackageType as 'standard' | 'premium')
     setPackageData(JSON.parse(savedPackageData))
     setMonthlyBill(Number(savedMonthlyBill))
+    setWarrantyPackage((savedWarrantyPackage as 'basic' | 'extended' | 'comprehensive') || 'basic')
   }, [router])
 
   const formatCurrency = (amount: number) => {
@@ -121,10 +125,6 @@ export default function OrderSummaryPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-600">25-Year Warranty</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-600">System Monitoring</span>
                   </li>
                   {packageType === 'premium' && (
@@ -137,10 +137,6 @@ export default function OrderSummaryPage() {
                         <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-600">Solar Edge Trim</span>
                       </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-600">Extended Protection Plan</span>
-                      </li>
                     </>
                   )}
                 </ul>
@@ -148,14 +144,17 @@ export default function OrderSummaryPage() {
             </div>
           </div>
 
-          {/* Savings Breakdown */}
-          <SavingsBreakdown
-            monthlyBill={monthlyBill}
-            systemProduction={packageData.monthlyProduction}
+          {/* Equipment Details */}
+          <EquipmentDetails 
+            packageType={packageType} 
+            warrantyPackage={warrantyPackage}
           />
 
+          {/* Installation Process */}
+          <InstallationRoadmap />
+
           {/* Submit Order Button */}
-          <div className="flex justify-center pt-8">
+          <div className="flex flex-col items-center mt-8">
             <button
               onClick={handleSubmitOrder}
               disabled={isSubmitting}
@@ -163,6 +162,15 @@ export default function OrderSummaryPage() {
             >
               {isSubmitting ? 'Processing...' : 'Submit Order'}
             </button>
+            <p className="mt-4 text-sm text-gray-500 text-center max-w-xl">
+              Refundable deposit until you accept your design. Quoted price is subject to change based on installation complexity.
+            </p>
+            <p className="mt-2 text-sm text-gray-500 text-center max-w-xl">
+              By submitting this order, you are agreeing to our{' '}
+              <a href="/terms" className="underline hover:text-gray-700">Order Terms</a>,{' '}
+              <a href="/payment-terms" className="underline hover:text-gray-700">Payment Terms</a>, and{' '}
+              <a href="/privacy" className="underline hover:text-gray-700">Privacy Policy</a>.
+            </p>
           </div>
         </div>
       </div>
