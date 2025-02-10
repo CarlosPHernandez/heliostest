@@ -19,39 +19,6 @@ interface SystemInfo {
 type PaymentType = 'cash' | 'finance'
 type WarrantyPackage = 'basic' | 'extended' | 'comprehensive'
 
-const warrantyOptions = {
-  basic: {
-    name: 'Basic Warranty',
-    price: 0,
-    features: [
-      '25-year panel performance warranty',
-      '10-year inverter warranty',
-      '10-year workmanship warranty',
-    ]
-  },
-  extended: {
-    name: 'Extended Warranty',
-    price: 1500,
-    features: [
-      '25-year panel performance warranty',
-      '15-year inverter warranty',
-      '15-year workmanship warranty',
-      'Extended parts coverage',
-    ]
-  },
-  comprehensive: {
-    name: 'Comprehensive Warranty',
-    price: 2000,
-    features: [
-      '25-year panel performance warranty',
-      '25-year inverter warranty',
-      '25-year workmanship warranty',
-      'Full system coverage',
-      'Annual maintenance included',
-    ]
-  }
-}
-
 export default function ProposalPage() {
   const router = useRouter()
   const [error, setError] = useState('')
@@ -134,7 +101,6 @@ export default function ProposalPage() {
         address,
         monthlyBill,
         paymentType,
-        warrantyPackage: selectedWarranty,
         financing: paymentType === 'finance' ? {
           term: selectedTerm,
           downPayment,
@@ -144,11 +110,9 @@ export default function ProposalPage() {
       
       // Store in localStorage
       localStorage.setItem('proposalData', JSON.stringify(proposalData))
-      localStorage.setItem('warrantyPackage', selectedWarranty)
       
       // Store in cookies
       setCookie('proposalData', JSON.stringify(proposalData))
-      setCookie('warrantyPackage', selectedWarranty)
       
       router.push('/order/summary')
     } catch (err) {
@@ -231,49 +195,6 @@ export default function ProposalPage() {
                 className="object-cover"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Warranty Options */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Warranty Options</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {(Object.keys(warrantyOptions) as WarrantyPackage[]).map((key) => {
-              const option = warrantyOptions[key]
-              return (
-                <div
-                  key={key}
-                  className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                    selectedWarranty === key
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-200'
-                  }`}
-                  onClick={() => setSelectedWarranty(key)}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-semibold text-gray-900">{option.name}</h3>
-                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded-full ${
-                      selectedWarranty === key ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                    }`}>
-                      {selectedWarranty === key && (
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 mb-4">
-                    {option.price === 0 ? 'Included' : formatCurrency(option.price)}
-                  </p>
-                  <ul className="space-y-2">
-                    {option.features.map((feature, index) => (
-                      <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                        <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            })}
           </div>
         </div>
 
