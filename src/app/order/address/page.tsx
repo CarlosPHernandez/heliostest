@@ -10,20 +10,8 @@ import { NC_UTILITY_PROVIDERS, UtilityProvider, getUtilityRate } from '@/lib/uti
 // Extend Window interface for Google Maps
 declare global {
   interface Window {
-    google: {
-      maps: {
-        places: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            options?: {
-              componentRestrictions?: { country: string }
-              fields?: string[]
-              types?: string[]
-            }
-          ) => any
-        }
-      }
-    }
+    google: any;
+    initAutocomplete: () => void;
   }
 }
 
@@ -32,11 +20,39 @@ export default function AddressPage() {
   const [address, setAddress] = useState('')
   const [selectedUtility, setSelectedUtility] = useState<UtilityProvider | null>(null)
   const [error, setError] = useState('')
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false)
 
-  useEffect(() => {
-    // Initialize autocomplete when component mounts
-    initAutocomplete()
-  }, []) // Empty dependency array means this runs once on mount
+  // Make initAutocomplete available globally
+  window.initAutocomplete = () => {
+    const input = document.getElementById('address') as HTMLInputElement
+    if (!input) return
+
+    // Clear any existing autocomplete
+    const existingAutocomplete = input.getAttribute('data-autocomplete')
+    if (existingAutocomplete) {
+      window.google.maps.event.clearInstanceListeners(input)
+    }
+
+    try {
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: 'us' },
+        fields: ['address_components', 'formatted_address'],
+        types: ['address']
+      })
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace()
+        if (place.formatted_address) {
+          setAddress(place.formatted_address)
+        }
+      })
+
+      // Mark input as having autocomplete initialized
+      input.setAttribute('data-autocomplete', 'true')
+    } catch (err) {
+      console.error('Error initializing autocomplete:', err)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,6 +77,10 @@ export default function AddressPage() {
         return
       }
 
+      // Store data in localStorage
+      localStorage.setItem('address', address)
+      localStorage.setItem('selectedUtility', JSON.stringify(selectedUtility))
+
       // Show loading screen
       router.push('/order/loading?next=packages')
     } catch (err) {
@@ -69,39 +89,16 @@ export default function AddressPage() {
     }
   }
 
-  const initAutocomplete = () => {
-    const input = document.getElementById('address') as HTMLInputElement
-    if (!input) return
-
-    // Clear any existing autocomplete
-    const existingAutocomplete = input.getAttribute('data-autocomplete')
-    if (existingAutocomplete) {
-      // @ts-ignore
-      google.maps.event.clearInstanceListeners(input)
-    }
-
-    const autocomplete = new window.google.maps.places.Autocomplete(input, {
-      componentRestrictions: { country: 'us' },
-      fields: ['address_components', 'formatted_address'],
-      types: ['address']
-    })
-
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace()
-      if (place.formatted_address) {
-        setAddress(place.formatted_address)
-      }
-    })
-
-    // Mark input as having autocomplete initialized
-    input.setAttribute('data-autocomplete', 'true')
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-        onLoad={initAutocomplete}
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`}
+        strategy="afterInteractive"
+        onLoad={() => setIsGoogleLoaded(true)}
+        onError={(e) => {
+          console.error('Error loading Google Maps:', e)
+          setError('Error loading address lookup. Please try again later.')
+        }}
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
@@ -144,7 +141,11 @@ export default function AddressPage() {
                 placeholder="Enter your address"
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 placeholder:text-gray-500"
                 required
+                disabled={!isGoogleLoaded}
               />
+              {!isGoogleLoaded && (
+                <p className="mt-2 text-sm text-gray-500">Loading address lookup...</p>
+              )}
             </div>
 
             {/* Utility Provider Selection */}
