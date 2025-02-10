@@ -38,7 +38,7 @@ const Header = () => {
   ]
 
   const userNavItems = [
-    { name: 'Dashboard', href: '/account', icon: HomeIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'My Proposals', href: '/proposal', icon: HomeIcon },
     { name: 'Documents', href: '/documents', icon: User },
   ]
@@ -49,7 +49,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href={user ? '/account' : '/'} className="flex items-center">
+            <Link href={user ? '/dashboard' : '/'} className="flex items-center">
               <Image
                 src="/logo.png"
                 alt="Helios Logo"

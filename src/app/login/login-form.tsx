@@ -30,7 +30,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.push('/account')
+      router.push('/dashboard')
     }
   }, [user, isLoading, router])
 
@@ -41,10 +41,10 @@ export function LoginForm() {
 
     try {
       await signIn(email, password)
-      // Wait a short period for the session to update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // The current timeout might not be long enough
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Increase timeout to 1000ms
       router.refresh();
-      router.push('/account');
+      router.push('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to sign in');
