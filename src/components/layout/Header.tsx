@@ -37,6 +37,18 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+            <Link
+              href="/login"
+              className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/register"
+              className="bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
+            >
+              Get Started
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -69,6 +81,20 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
+              <Link
+                href="/login"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="block px-3 py-2 rounded-md text-base font-medium bg-black text-white hover:bg-gray-800"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Get Started
+              </Link>
             </div>
           </div>
         )}
