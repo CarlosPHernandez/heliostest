@@ -11,8 +11,27 @@ const ORDER_FLOW = [
   '/order/summary'
 ]
 
+// Define public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/register',
+  '/reset-password',
+  '/about',
+  '/discover',
+  '/shop',
+  '/investors',
+  '/careers',
+  '/about-us',
+  '/auth/callback'
+]
+
 function isOrderRoute(pathname: string): boolean {
   return ORDER_FLOW.some(route => pathname.startsWith(route))
+}
+
+function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith('/auth/'))
 }
 
 function getRequiredData(step: string): string[] {
@@ -42,18 +61,6 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // If user is not signed in and the current path is not /login or /register
-  // redirect the user to /login
-  if (!session && !['/login', '/register', '/reset-password'].includes(req.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL('/login', req.url))
-  }
-
-  // If user is signed in and the current path is /login or /register
-  // redirect the user to /dashboard
-  if (session && ['/login', '/register'].includes(req.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
-  }
-
   const { pathname } = new URL(req.url)
 
   // Skip middleware for static files and API routes
@@ -65,7 +72,23 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // Only apply protection to order routes
+  // Allow access to public routes
+  if (isPublicRoute(pathname)) {
+    // If user is signed in and tries to access login/register, redirect to dashboard
+    if (session && ['/login', '/register'].includes(pathname)) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    return res
+  }
+
+  // Require authentication for protected routes
+  if (!session) {
+    const redirectUrl = new URL('/login', req.url)
+    redirectUrl.searchParams.set('returnUrl', pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // Handle order flow
   if (isOrderRoute(pathname)) {
     // Allow direct access to the main order page
     if (pathname === '/order') {
