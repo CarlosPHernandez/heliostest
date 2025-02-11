@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import { Roboto } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { Footer } from '@/components/layout/Footer'
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -39,7 +40,10 @@ export default function RootLayout({
         `}
       >
         <Header />
-        {children}
+        <main className="min-h-screen">
+          {children}
+        </main>
+        <Footer />
         <Toaster />
       </body>
     </html>
