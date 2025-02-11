@@ -400,9 +400,24 @@ export default function OrderSummaryPage() {
           {paymentType === 'cash' ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">System Cost</span>
-                <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalCost())}</span>
+                <span className="text-gray-600">Base System Cost</span>
+                <span className="text-gray-900 font-medium">{formatCurrency(packageData.totalPrice)}</span>
               </div>
+              
+              {includeBattery && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Battery ({batteryOptions[selectedBattery].name})</span>
+                  <span className="text-gray-900 font-medium">+{formatCurrency(batteryOptions[selectedBattery].price)}</span>
+                </div>
+              )}
+
+              {warrantyPackage === 'extended' && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Extended Warranty Package</span>
+                  <span className="text-gray-900 font-medium">+$1,500</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-gray-600">Federal Tax Credit (30%)</span>
                 <span className="text-green-600 font-medium">-{formatCurrency(calculateTotalCost() * 0.3)}</span>
@@ -433,9 +448,24 @@ export default function OrderSummaryPage() {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">System Cost</span>
-                  <span className="text-gray-900 font-medium">{formatCurrency(calculateTotalCost())}</span>
+                  <span className="text-gray-600">Base System Cost</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(packageData.totalPrice)}</span>
                 </div>
+
+                {includeBattery && (
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-600">Battery ({batteryOptions[selectedBattery].name})</span>
+                    <span className="text-gray-900 font-medium">+{formatCurrency(batteryOptions[selectedBattery].price)}</span>
+                  </div>
+                )}
+
+                {warrantyPackage === 'extended' && (
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-600">Extended Warranty Package</span>
+                    <span className="text-gray-900 font-medium">+$1,500</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-gray-600">Federal Tax Credit (30%)</span>
                   <span className="text-green-600 font-medium">-{formatCurrency(calculateTotalCost() * 0.3)}</span>
