@@ -267,7 +267,7 @@ export default function OrderSummaryPage() {
 
         {/* Equipment Details */}
         <div className="mb-8">
-          <EquipmentDetails packageType={proposalData?.packageType} />
+          <EquipmentDetails packageType={packageType || 'standard'} />
         </div>
 
         {/* Warranty Options */}
