@@ -53,7 +53,7 @@ const equipmentDetails = {
       ]
     }
   }
-}
+} as const
 
 const backupGuide = {
   supported: [
@@ -75,8 +75,8 @@ const backupGuide = {
   ]
 }
 
-export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
-  const equipment = equipmentDetails[packageType]
+export function EquipmentDetails({ packageType = 'standard' }: EquipmentDetailsProps) {
+  const equipment = equipmentDetails[packageType] || equipmentDetails.standard
   const [imageLoadError, setImageLoadError] = useState<{[key: string]: boolean}>({})
   const [includeBattery, setIncludeBattery] = useState(false)
   const [batteryCount, setBatteryCount] = useState(1)
@@ -191,11 +191,12 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
               </div>
               <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden mb-6">
                 <Image
-                  src="/images/battery.jpg"
+                  src="/franklin.png"
                   alt="Franklin Home Power Battery"
                   fill
                   style={{ objectFit: 'contain', padding: '16px' }}
                   priority
+                  onError={() => handleImageError('battery')}
                 />
               </div>
             </div>
@@ -295,9 +296,9 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4 items-start">
               <div className="flex-1">
-                <p className="font-medium text-gray-900 mb-2">{equipment.panels.name}</p>
+                <p className="font-medium text-gray-900 mb-2">{equipment?.panels?.name || 'Standard Solar Panel'}</p>
                 <ul className="space-y-2">
-                  {equipment.panels.details.map((detail, index) => (
+                  {equipment?.panels?.details?.map((detail, index) => (
                     <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
                       <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                       {detail}
@@ -305,7 +306,7 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
                   ))}
                 </ul>
               </div>
-              {!imageLoadError['panels'] && (
+              {!imageLoadError['panels'] && equipment?.panels?.image && (
                 <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                   <Image
                     src={equipment.panels.image}
@@ -333,9 +334,9 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4 items-start">
               <div className="flex-1">
-                <p className="font-medium text-gray-900 mb-2">{equipment.inverter.name}</p>
+                <p className="font-medium text-gray-900 mb-2">{equipment?.inverter?.name || 'Standard Inverter'}</p>
                 <ul className="space-y-2">
-                  {equipment.inverter.details.map((detail, index) => (
+                  {equipment?.inverter?.details?.map((detail, index) => (
                     <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
                       <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                       {detail}
@@ -343,7 +344,7 @@ export function EquipmentDetails({ packageType }: EquipmentDetailsProps) {
                   ))}
                 </ul>
               </div>
-              {!imageLoadError['inverter'] && (
+              {!imageLoadError['inverter'] && equipment?.inverter?.image && (
                 <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                   <Image
                     src={equipment.inverter.image}
