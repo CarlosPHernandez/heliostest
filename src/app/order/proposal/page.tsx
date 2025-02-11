@@ -367,6 +367,14 @@ export default function ProposalPage() {
                 </span>
               </div>
 
+              <div className="flex justify-between items-center py-4 bg-blue-50 rounded-lg px-3">
+                <div>
+                  <span className="text-blue-900 font-semibold">Due Today</span>
+                  <p className="text-sm text-blue-800">No upfront payment required</p>
+                </div>
+                <span className="text-blue-900 font-bold text-xl">$0</span>
+              </div>
+
               <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-800">
                   <span className="font-medium">Pro Tip:</span> The federal tax credit is a dollar-for-dollar reduction 
@@ -482,6 +490,14 @@ export default function ProposalPage() {
                   </span>
                 </div>
 
+                <div className="flex justify-between items-center py-4 bg-blue-50 rounded-lg px-3">
+                  <div>
+                    <span className="text-blue-900 font-semibold">Due Today</span>
+                    <p className="text-sm text-blue-800">No upfront payment required</p>
+                  </div>
+                  <span className="text-blue-900 font-bold text-xl">$0</span>
+                </div>
+
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <span className="font-medium">Pro Tip:</span> You can apply your tax credit as an additional 
@@ -494,28 +510,37 @@ export default function ProposalPage() {
           )}
         </div>
 
-        {/* Installation Roadmap */}
-        <div className="mt-16">
-          <InstallationRoadmap />
+        {/* Place Order Button */}
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handlePlaceOrder}
+              className="w-full max-w-md px-8 py-4 bg-black text-white rounded-lg font-medium text-lg hover:bg-gray-800 transition-colors"
+            >
+              Place Order
+            </button>
+            
+            <div className="mt-6 max-w-2xl text-center space-y-4">
+              <p className="text-gray-600">
+                A refundable deposit will be required to begin your solar journey. Final pricing may be adjusted 
+                based on installation requirements and site evaluation.
+              </p>
+              
+              <p className="text-gray-600">
+                By placing this order, you agree to our{' '}
+                <a href="/terms" className="text-blue-600 hover:text-blue-800 underline">Order Terms</a>,{' '}
+                <a href="/payment-terms" className="text-blue-600 hover:text-blue-800 underline">Payment Terms</a>,{' '}
+                and{' '}
+                <a href="/privacy" className="text-blue-600 hover:text-blue-800 underline">Privacy Policy</a>.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Place Order Button */}
-        <div className="flex flex-col items-center mt-8">
-          <button
-            onClick={handlePlaceOrder}
-            className="px-8 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
-          >
-            Place Order
-          </button>
-          <p className="mt-4 text-sm text-gray-500 text-center max-w-xl">
-            Refundable deposit until you accept your design. Quoted price is subject to change based on installation complexity.
-          </p>
-          <p className="mt-2 text-sm text-gray-500 text-center max-w-xl">
-            By submitting this order, you are agreeing to our{' '}
-            <a href="/terms" className="underline hover:text-gray-700">Order Terms</a>,{' '}
-            <a href="/payment-terms" className="underline hover:text-gray-700">Payment Terms</a>, and{' '}
-            <a href="/privacy" className="underline hover:text-gray-700">Privacy Policy</a>.
-          </p>
+        {/* Installation Roadmap */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Your Solar Journey</h2>
+          <InstallationRoadmap />
         </div>
       </div>
     </div>
