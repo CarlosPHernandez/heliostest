@@ -140,7 +140,11 @@ export default function ProposalPage() {
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
-      if (userError) throw userError
+      if (userError) {
+        console.error('Auth error:', userError)
+        toast.error('Authentication error. Please try again.')
+        return
+      }
       
       if (!user) {
         // Store current proposal data in localStorage for after login
@@ -161,7 +165,10 @@ export default function ProposalPage() {
           packageType
         }))
         
-        router.push('/login')
+        // Redirect to login with return URL
+        const returnUrl = encodeURIComponent('/order/proposal')
+        router.push(`/login?returnUrl=${returnUrl}`)
+        toast.info('Please log in or create an account to save your proposal')
         return
       }
 
@@ -188,7 +195,11 @@ export default function ProposalPage() {
           }
         ])
 
-      if (proposalError) throw proposalError
+      if (proposalError) {
+        console.error('Database error:', proposalError)
+        toast.error('Error saving proposal. Please try again.')
+        return
+      }
 
       toast.success('Proposal saved successfully!')
       router.push('/profile')

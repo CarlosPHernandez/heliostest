@@ -1,21 +1,23 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
+  const returnUrl = searchParams.get('returnUrl') || '/dashboard'
 
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback?returnUrl=${encodeURIComponent(returnUrl)}`
         }
       })
 
@@ -45,8 +47,51 @@ export default function LoginPage() {
         throw new Error(error.message)
       }
 
+      // Check for pending proposal
+      const pendingProposal = localStorage.getItem('pendingProposal')
+      if (pendingProposal && returnUrl.includes('/order/proposal')) {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const proposalData = JSON.parse(pendingProposal)
+          
+          // Save proposal to Supabase
+          const { error: proposalError } = await supabase
+            .from('proposals')
+            .insert([
+              {
+                user_id: user.id,
+                system_size: proposalData.systemInfo.systemSize,
+                number_of_panels: proposalData.systemInfo.numberOfPanels,
+                total_price: proposalData.systemInfo.totalPrice,
+                monthly_bill: proposalData.monthlyBill,
+                address: proposalData.address,
+                package_type: proposalData.packageType,
+                include_battery: proposalData.includeBattery,
+                battery_count: proposalData.batteryCount,
+                battery_type: proposalData.batteryType,
+                warranty_package: proposalData.warranty,
+                payment_type: proposalData.paymentType,
+                financing_term: proposalData.financing?.term,
+                down_payment: proposalData.financing?.downPayment,
+                monthly_payment: proposalData.financing?.monthlyPayment
+              }
+            ])
+
+          if (proposalError) {
+            console.error('Error saving pending proposal:', proposalError)
+            toast.error('Error saving your proposal. Please try again.')
+          } else {
+            toast.success('Proposal saved successfully!')
+            localStorage.removeItem('pendingProposal')
+            router.push('/profile')
+            return
+          }
+        }
+      }
+
       toast.success('Logged in successfully!')
-      router.push('/dashboard')
+      router.push(returnUrl)
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error logging in')
