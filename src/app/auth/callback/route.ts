@@ -8,13 +8,14 @@ export async function GET(request: Request) {
   const returnUrl = requestUrl.searchParams.get('returnUrl') || '/dashboard'
 
   if (code) {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error || !user) {
-      console.error('Auth error:', error)
-      return NextResponse.redirect(new URL('/login', requestUrl.origin))
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    // Exchange the code for a session
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (error) {
+      console.error('Auth callback error:', error)
+      return NextResponse.redirect(new URL('/login?error=auth', requestUrl.origin))
     }
 
     // If returning to proposal page, check for pending proposal
@@ -64,5 +65,6 @@ export async function GET(request: Request) {
     }
   }
 
+  // Redirect to the return URL or dashboard
   return NextResponse.redirect(new URL(returnUrl, requestUrl.origin))
 } 

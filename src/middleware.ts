@@ -69,12 +69,7 @@ function checkRequiredData(data: { [key: string]: string | null }, required: str
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  const { pathname } = new URL(req.url)
+  const { pathname } = req.nextUrl
 
   // Skip middleware for static files and API routes
   if (
@@ -85,20 +80,26 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // Allow access to public routes
-  if (isPublicRoute(pathname)) {
+  // Get the user's session
+  const { data: { session } } = await supabase.auth.getSession()
+
+  // Handle protected routes
+  if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
+    if (!session) {
+      const redirectUrl = new URL('/login', req.url)
+      redirectUrl.searchParams.set('returnUrl', pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+    return res
+  }
+
+  // Handle public routes
+  if (PUBLIC_ROUTES.some(route => pathname === route)) {
     // If user is signed in and tries to access login/register, redirect to dashboard
     if (session && ['/login', '/register'].includes(pathname)) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
     return res
-  }
-
-  // Require authentication for protected routes
-  if (isProtectedRoute(pathname) && !session) {
-    const redirectUrl = new URL('/login', req.url)
-    redirectUrl.searchParams.set('returnUrl', pathname)
-    return NextResponse.redirect(redirectUrl)
   }
 
   // Handle order flow data requirements
@@ -138,14 +139,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|public).*)']
 }
