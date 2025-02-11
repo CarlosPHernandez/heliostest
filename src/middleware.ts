@@ -23,7 +23,16 @@ const PUBLIC_ROUTES = [
   '/investors',
   '/careers',
   '/about-us',
-  '/auth/callback'
+  '/auth/callback',
+  ...ORDER_FLOW // Add order flow to public routes
+]
+
+// Define routes that require authentication
+const PROTECTED_ROUTES = [
+  '/dashboard',
+  '/profile',
+  '/settings',
+  '/proposals'
 ]
 
 function isOrderRoute(pathname: string): boolean {
@@ -32,6 +41,10 @@ function isOrderRoute(pathname: string): boolean {
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith('/auth/'))
+}
+
+function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_ROUTES.some(route => pathname.startsWith(route))
 }
 
 function getRequiredData(step: string): string[] {
@@ -82,13 +95,13 @@ export async function middleware(req: NextRequest) {
   }
 
   // Require authentication for protected routes
-  if (!session) {
+  if (isProtectedRoute(pathname) && !session) {
     const redirectUrl = new URL('/login', req.url)
     redirectUrl.searchParams.set('returnUrl', pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Handle order flow
+  // Handle order flow data requirements
   if (isOrderRoute(pathname)) {
     // Allow direct access to the main order page
     if (pathname === '/order') {
