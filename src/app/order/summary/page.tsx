@@ -485,29 +485,39 @@ export default function OrderSummaryPage() {
           )}
         </div>
 
-        {/* Installation Roadmap */}
-        <div className="mt-16">
-          <InstallationRoadmap />
+        {/* Submit Order Button and Terms */}
+        <div className="mt-12 mb-16">
+          <div className="max-w-xl mx-auto">
+            <button
+              onClick={handleSubmitOrder}
+              disabled={isSubmitting}
+              className="w-full px-8 py-4 bg-black text-white rounded-lg font-medium text-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Processing...' : 'Place Order'}
+            </button>
+            
+            <div className="mt-6 space-y-4 text-sm text-gray-600">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="font-medium text-gray-900 mb-1">Deposit Information</p>
+                <p>Refundable deposit until you accept your design. Quoted price is subject to change based on installation complexity.</p>
+              </div>
+              
+              <div className="text-center">
+                <p>
+                  By submitting this order, you are agreeing to our{' '}
+                  <a href="/terms" className="text-blue-600 hover:text-blue-800 underline">Order Terms</a>,{' '}
+                  <a href="/payment-terms" className="text-blue-600 hover:text-blue-800 underline">Payment Terms</a>, and{' '}
+                  <a href="/privacy" className="text-blue-600 hover:text-blue-800 underline">Privacy Policy</a>.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Submit Order Button */}
-        <div className="flex flex-col items-center mt-8">
-          <button
-            onClick={handleSubmitOrder}
-            disabled={isSubmitting}
-            className="px-8 py-4 bg-black text-white rounded-lg font-medium text-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
-          >
-            {isSubmitting ? 'Processing...' : 'Submit Order'}
-          </button>
-          <p className="mt-4 text-sm text-gray-500 text-center max-w-xl">
-            Refundable deposit until you accept your design. Quoted price is subject to change based on installation complexity.
-          </p>
-          <p className="mt-2 text-sm text-gray-500 text-center max-w-xl">
-            By submitting this order, you are agreeing to our{' '}
-            <a href="/terms" className="underline hover:text-gray-700">Order Terms</a>,{' '}
-            <a href="/payment-terms" className="underline hover:text-gray-700">Payment Terms</a>, and{' '}
-            <a href="/privacy" className="underline hover:text-gray-700">Privacy Policy</a>.
-          </p>
+        {/* Installation Roadmap */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Your Solar Journey</h2>
+          <InstallationRoadmap />
         </div>
       </div>
     </div>
