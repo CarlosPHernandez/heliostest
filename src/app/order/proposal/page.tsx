@@ -7,8 +7,36 @@ import Image from 'next/image'
 import { EquipmentDetails } from '@/components/features/EquipmentDetails'
 import { InstallationRoadmap } from '@/components/features/InstallationRoadmap'
 import { WarrantySelection } from '@/components/features/WarrantySelection'
+import { UtilityCostProjection } from '@/components/features/UtilityCostProjection'
 import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calculations'
 import { setCookie } from '@/lib/cookies'
+
+const batteryOptions = {
+  franklin: {
+    name: 'Franklin WH5000',
+    price: 8500,
+    capacity: '5 kWh',
+    description: 'High-performance home battery system with advanced energy management',
+  },
+  qcell: {
+    name: 'Q.HOME ESS HYB-G3',
+    price: 9200,
+    capacity: '6 kWh',
+    description: 'Premium energy storage solution with intelligent power management',
+  }
+}
+
+const calculateMonthlyPayment = (totalAmount: number, downPayment: number, termYears: number) => {
+  const principal = totalAmount - downPayment
+  const monthlyRate = 0.0625 / 12 // 6.25% APR
+  const numberOfPayments = termYears * 12
+
+  const monthlyPayment = 
+    (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
+    (Math.pow(1 + monthlyRate, numberOfPayments) - 1)
+
+  return Math.round(monthlyPayment)
+}
 
 interface SystemInfo {
   systemSize: number
@@ -34,6 +62,9 @@ export default function ProposalPage() {
   const [downPayment, setDownPayment] = useState<number>(0)
   const [financingOptions, setFinancingOptions] = useState<any>(null)
   const [selectedWarranty, setSelectedWarranty] = useState<WarrantyPackage>('standard')
+  const [includeBattery, setIncludeBattery] = useState(false)
+  const [batteryCount, setBatteryCount] = useState(1)
+  const [selectedBattery, setSelectedBattery] = useState<'franklin' | 'qcell'>('franklin')
 
   useEffect(() => {
     try {
@@ -65,7 +96,7 @@ export default function ProposalPage() {
 
       // Generate Google Maps Static API URL for aerial view
       const encodedAddress = encodeURIComponent(storedAddress)
-      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=19&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=20&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       setMapUrl(mapUrl)
     } catch (err) {
       console.error('Error loading proposal data:', err)
@@ -122,6 +153,21 @@ export default function ProposalPage() {
       console.error('Error saving proposal:', err)
       setError('Failed to save proposal data')
     }
+  }
+
+  const handleBatteryChange = (include: boolean) => {
+    setIncludeBattery(include)
+    if (!include) {
+      setBatteryCount(1)
+    }
+  }
+
+  const handleBatteryCountChange = (count: number) => {
+    setBatteryCount(count)
+  }
+
+  const handleBatteryTypeChange = (type: 'franklin' | 'qcell') => {
+    setSelectedBattery(type)
   }
 
   if (error || !systemInfo) {
@@ -201,9 +247,25 @@ export default function ProposalPage() {
           </div>
         </div>
 
+        {/* Utility Cost Projection */}
+        <div className="mb-8">
+          <UtilityCostProjection 
+            monthlyBill={monthlyBill}
+            utilityName="your utility provider"
+          />
+        </div>
+
         {/* Equipment Details */}
         <div className="mb-8">
-          <EquipmentDetails packageType={packageType} />
+          <EquipmentDetails 
+            packageType={packageType}
+            includeBattery={includeBattery}
+            batteryCount={batteryCount}
+            selectedBattery={selectedBattery}
+            onBatteryChange={handleBatteryChange}
+            onBatteryCountChange={handleBatteryCountChange}
+            onBatteryTypeChange={handleBatteryTypeChange}
+          />
         </div>
 
         {/* Warranty Selection */}
@@ -247,16 +309,70 @@ export default function ProposalPage() {
           {paymentType === 'cash' ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">System Cost</span>
+                <span className="text-gray-600">Base System Cost</span>
                 <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">Federal Tax Credit (30%)</span>
-                <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
+              
+              {includeBattery && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Battery System ({batteryCount}x {batteryOptions[selectedBattery].name})</span>
+                  <span className="text-gray-900 font-medium">
+                    +{formatCurrency(batteryOptions[selectedBattery].price * batteryCount)}
+                  </span>
+                </div>
+              )}
+
+              {selectedWarranty === 'extended' && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Extended Warranty Package</span>
+                  <span className="text-gray-900 font-medium">+$1,500</span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center py-2 bg-gray-50 rounded-lg px-3">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-900 font-medium">
+                  {formatCurrency(
+                    systemInfo.totalPrice + 
+                    (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+                    (selectedWarranty === 'extended' ? 1500 : 0)
+                  )}
+                </span>
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-900 font-semibold">Final Cost</span>
-                <span className="text-gray-900 font-bold text-xl">{formatCurrency(finalPrice)}</span>
+
+              <div className="flex justify-between items-center py-2 border-b">
+                <div>
+                  <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                  <p className="text-sm text-gray-500">Applied in next year's tax return</p>
+                </div>
+                <span className="text-green-600 font-medium">
+                  -{formatCurrency(
+                    (systemInfo.totalPrice + 
+                    (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0)) * 0.3
+                  )}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center py-4 bg-gray-50 rounded-lg px-3">
+                <div>
+                  <span className="text-gray-900 font-semibold">Final Cost</span>
+                  <p className="text-sm text-gray-500">After tax credit</p>
+                </div>
+                <span className="text-gray-900 font-bold text-xl">
+                  {formatCurrency(
+                    (systemInfo.totalPrice + 
+                    (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+                    (selectedWarranty === 'extended' ? 1500 : 0)) * 0.7
+                  )}
+                </span>
+              </div>
+
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Pro Tip:</span> The federal tax credit is a dollar-for-dollar reduction 
+                  in your federal income taxes. You'll receive this credit when you file your taxes for the year the 
+                  system is installed and operational.
+                </p>
               </div>
             </div>
           ) : (
@@ -277,32 +393,103 @@ export default function ProposalPage() {
                 </select>
               </div>
 
-              {financingOptions && (
-                <div className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-gray-600">Base System Cost</span>
+                  <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
+                </div>
+
+                {includeBattery && (
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">System Cost</span>
-                    <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">Down Payment</span>
-                    <span className="text-gray-900 font-medium">{formatCurrency(downPayment)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">Federal Tax Credit (30%)</span>
-                    <span className="text-green-600 font-medium">-{formatCurrency(federalTaxCredit)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">Interest Rate (APR)</span>
-                    <span className="text-gray-900 font-medium">6.25%</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-900 font-semibold">Monthly Payment</span>
-                    <span className="text-gray-900 font-bold text-xl">
-                      {formatCurrency(financingOptions[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit || 0)}
+                    <span className="text-gray-600">Battery System ({batteryCount}x {batteryOptions[selectedBattery].name})</span>
+                    <span className="text-gray-900 font-medium">
+                      +{formatCurrency(batteryOptions[selectedBattery].price * batteryCount)}
                     </span>
                   </div>
+                )}
+
+                {selectedWarranty === 'extended' && (
+                  <div className="flex justify-between items-center py-2 border-b">
+                    <span className="text-gray-600">Extended Warranty Package</span>
+                    <span className="text-gray-900 font-medium">+$1,500</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center py-2 bg-gray-50 rounded-lg px-3">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-gray-900 font-medium">
+                    {formatCurrency(
+                      systemInfo.totalPrice + 
+                      (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+                      (selectedWarranty === 'extended' ? 1500 : 0)
+                    )}
+                  </span>
                 </div>
-              )}
+
+                <div className="flex justify-between items-center py-2 border-b">
+                  <div>
+                    <span className="text-gray-600">Down Payment</span>
+                    <p className="text-sm text-gray-500">Minimum required: $0</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      value={downPayment}
+                      onChange={(e) => setDownPayment(Math.max(0, Number(e.target.value)))}
+                      className="w-32 px-3 py-2 border rounded-md text-right"
+                      min="0"
+                      step="1000"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center py-2 border-b">
+                  <div>
+                    <span className="text-gray-600">Federal Tax Credit (30%)</span>
+                    <p className="text-sm text-gray-500">Applied in next year's tax return</p>
+                  </div>
+                  <span className="text-green-600 font-medium">
+                    -{formatCurrency(
+                      (systemInfo.totalPrice + 
+                      (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0)) * 0.3
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-2 border-b">
+                  <div>
+                    <span className="text-gray-600">Interest Rate (APR)</span>
+                    <p className="text-sm text-gray-500">Fixed rate for entire term</p>
+                  </div>
+                  <span className="text-gray-900 font-medium">6.25%</span>
+                </div>
+
+                <div className="flex justify-between items-center py-4 bg-gray-50 rounded-lg px-3">
+                  <div>
+                    <span className="text-gray-900 font-semibold">Monthly Payment</span>
+                    <p className="text-sm text-gray-500">For {selectedTerm} years</p>
+                  </div>
+                  <span className="text-gray-900 font-bold text-xl">
+                    {formatCurrency(
+                      calculateMonthlyPayment(
+                        systemInfo.totalPrice + 
+                        (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+                        (selectedWarranty === 'extended' ? 1500 : 0),
+                        downPayment,
+                        selectedTerm
+                      )
+                    )}
+                  </span>
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Pro Tip:</span> You can apply your tax credit as an additional 
+                    payment within the first 18 months to reduce your monthly payments. Ask your loan officer 
+                    about this option.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
