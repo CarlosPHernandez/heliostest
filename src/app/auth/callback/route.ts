@@ -12,7 +12,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Get the intended destination from the URL, defaulting to dashboard
-  const redirectTo = requestUrl.searchParams.get('redirectTo') || '/dashboard'
-  return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
+  // Always redirect to dashboard after successful authentication
+  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
 } 
