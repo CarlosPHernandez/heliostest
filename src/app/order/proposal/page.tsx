@@ -10,6 +10,8 @@ import { WarrantySelection } from '@/components/features/WarrantySelection'
 import { UtilityCostProjection } from '@/components/features/UtilityCostProjection'
 import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calculations'
 import { setCookie } from '@/lib/cookies'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 const batteryOptions = {
   franklin: {
@@ -65,6 +67,7 @@ export default function ProposalPage() {
   const [includeBattery, setIncludeBattery] = useState(false)
   const [batteryCount, setBatteryCount] = useState(1)
   const [selectedBattery, setSelectedBattery] = useState<'franklin' | 'qcell'>('franklin')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     try {
@@ -125,33 +128,75 @@ export default function ProposalPage() {
     }
   }
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
+    if (!systemInfo) {
+      toast.error('Missing system information')
+      return
+    }
+
     try {
-      // Save proposal data including payment type and financing details
-      const proposalData = {
-        packageType,
-        systemInfo,
-        address,
-        monthlyBill,
-        paymentType,
-        financing: paymentType === 'finance' ? {
-          term: selectedTerm,
-          downPayment,
-          monthlyPayment: financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit
-        } : null,
-        warranty: selectedWarranty
+      setIsSubmitting(true)
+
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError) throw userError
+      
+      if (!user) {
+        // Store current proposal data in localStorage for after login
+        localStorage.setItem('pendingProposal', JSON.stringify({
+          systemInfo,
+          address,
+          monthlyBill,
+          paymentType,
+          financing: paymentType === 'finance' ? {
+            term: selectedTerm,
+            downPayment,
+            monthlyPayment: financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit
+          } : null,
+          warranty: selectedWarranty,
+          includeBattery,
+          batteryCount,
+          batteryType: selectedBattery,
+          packageType
+        }))
+        
+        router.push('/login')
+        return
       }
-      
-      // Store in localStorage
-      localStorage.setItem('proposalData', JSON.stringify(proposalData))
-      
-      // Store in cookies
-      setCookie('proposalData', JSON.stringify(proposalData))
-      
-      router.push('/order/summary')
-    } catch (err) {
-      console.error('Error saving proposal:', err)
-      setError('Failed to save proposal data')
+
+      // Save proposal to Supabase
+      const { error: proposalError } = await supabase
+        .from('proposals')
+        .insert([
+          {
+            user_id: user.id,
+            system_size: systemInfo.systemSize,
+            number_of_panels: systemInfo.numberOfPanels,
+            total_price: systemInfo.totalPrice,
+            monthly_bill: monthlyBill,
+            address,
+            package_type: packageType,
+            include_battery: includeBattery,
+            battery_count: batteryCount,
+            battery_type: selectedBattery,
+            warranty_package: selectedWarranty,
+            payment_type: paymentType,
+            financing_term: paymentType === 'finance' ? selectedTerm : null,
+            down_payment: paymentType === 'finance' ? downPayment : null,
+            monthly_payment: paymentType === 'finance' ? financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit : null
+          }
+        ])
+
+      if (proposalError) throw proposalError
+
+      toast.success('Proposal saved successfully!')
+      router.push('/profile')
+    } catch (error) {
+      console.error('Error saving proposal:', error)
+      toast.error('Error saving proposal. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
