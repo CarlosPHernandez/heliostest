@@ -164,6 +164,7 @@ export default function OrderSummaryPage() {
   const [selectedTerm, setSelectedTerm] = useState(25) // Default to 25 years
   const [error, setError] = useState('')
   const [proposalData, setProposalData] = useState<any>(null)
+  const [batteryCount, setBatteryCount] = useState(1)
 
   useEffect(() => {
     // Load saved data from localStorage
@@ -220,7 +221,7 @@ export default function OrderSummaryPage() {
 
     // Add battery cost if selected
     if (includeBattery) {
-      total += batteryOptions[selectedBattery].price
+      total += batteryOptions[selectedBattery].price * batteryCount
     }
     
     return total
@@ -239,6 +240,22 @@ export default function OrderSummaryPage() {
       finalCost: afterTaxCredit,
       monthly: afterTaxCredit / 12 // Simplified monthly calculation
     }
+  }
+
+  const handleBatteryChange = (include: boolean) => {
+    setIncludeBattery(include)
+    // Reset battery count when disabling battery
+    if (!include) {
+      setBatteryCount(1)
+    }
+  }
+
+  const handleBatteryCountChange = (count: number) => {
+    setBatteryCount(count)
+  }
+
+  const handleBatteryTypeChange = (type: 'franklin' | 'qcell') => {
+    setSelectedBattery(type)
   }
 
   if (!packageData || !packageType) {
@@ -267,7 +284,15 @@ export default function OrderSummaryPage() {
 
         {/* Equipment Details */}
         <div className="mb-8">
-          <EquipmentDetails packageType={packageType || 'standard'} />
+          <EquipmentDetails 
+            packageType={packageType}
+            includeBattery={includeBattery}
+            batteryCount={batteryCount}
+            selectedBattery={selectedBattery}
+            onBatteryChange={handleBatteryChange}
+            onBatteryCountChange={handleBatteryCountChange}
+            onBatteryTypeChange={handleBatteryTypeChange}
+          />
         </div>
 
         {/* Warranty Options */}

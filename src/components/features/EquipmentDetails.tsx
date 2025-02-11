@@ -4,6 +4,36 @@ import { useState, useEffect } from 'react'
 
 interface EquipmentDetailsProps {
   packageType: 'standard' | 'premium'
+  includeBattery: boolean
+  batteryCount: number
+  selectedBattery: 'franklin' | 'qcell'
+  onBatteryChange: (include: boolean) => void
+  onBatteryCountChange: (count: number) => void
+  onBatteryTypeChange: (type: 'franklin' | 'qcell') => void
+}
+
+const batteryOptions = {
+  franklin: {
+    name: 'Franklin WH5000',
+    price: 8500,
+    capacity: '5 kWh',
+    description: 'High-performance home battery system with advanced energy management',
+  },
+  qcell: {
+    name: 'Q.HOME ESS HYB-G3',
+    price: 9200,
+    capacity: '6 kWh',
+    description: 'Premium energy storage solution with intelligent power management',
+  }
+}
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
 }
 
 const equipmentDetails = {
@@ -75,11 +105,17 @@ const backupGuide = {
   ]
 }
 
-export function EquipmentDetails({ packageType = 'standard' }: EquipmentDetailsProps) {
+export function EquipmentDetails({ 
+  packageType = 'standard',
+  includeBattery,
+  batteryCount,
+  selectedBattery,
+  onBatteryChange,
+  onBatteryCountChange,
+  onBatteryTypeChange
+}: EquipmentDetailsProps) {
   const equipment = equipmentDetails[packageType] || equipmentDetails.standard
   const [imageLoadError, setImageLoadError] = useState<{[key: string]: boolean}>({})
-  const [includeBattery, setIncludeBattery] = useState(false)
-  const [batteryCount, setBatteryCount] = useState(1)
   const [currentGuideSection, setCurrentGuideSection] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -99,10 +135,9 @@ export function EquipmentDetails({ packageType = 'standard' }: EquipmentDetailsP
   }
 
   const adjustBatteryCount = (increment: boolean) => {
-    setBatteryCount(prev => {
-      const newCount = increment ? prev + 1 : prev - 1
-      return Math.min(Math.max(1, newCount), 3) // Clamp between 1 and 3
-    })
+    const newCount = increment ? batteryCount + 1 : batteryCount - 1
+    const clampedCount = Math.min(Math.max(1, newCount), 3) // Clamp between 1 and 3
+    onBatteryCountChange(clampedCount)
   }
 
   const guideSections = [
@@ -153,7 +188,7 @@ export function EquipmentDetails({ packageType = 'standard' }: EquipmentDetailsP
                 type="checkbox"
                 className="sr-only peer"
                 checked={includeBattery}
-                onChange={() => setIncludeBattery(!includeBattery)}
+                onChange={(e) => onBatteryChange(e.target.checked)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
@@ -187,7 +222,9 @@ export function EquipmentDetails({ packageType = 'standard' }: EquipmentDetailsP
             <div>
               <div className="flex justify-between items-center mb-4">
                 <label className="font-medium text-gray-900">Battery type</label>
-                <span className="text-blue-600 font-medium">$15,931</span>
+                <span className="text-blue-600 font-medium">
+                  {formatCurrency(batteryOptions[selectedBattery].price * batteryCount)}
+                </span>
               </div>
               <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden mb-6">
                 <Image

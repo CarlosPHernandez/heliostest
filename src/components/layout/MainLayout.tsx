@@ -42,9 +42,13 @@ const MainLayout = ({ children, showBreadcrumbs = true }: MainLayoutProps) => {
                 {item.name}
               </Link>
             ))}
-            <button className="mt-4 bg-black text-white px-8 py-3 rounded-md">
+            <Link
+              href="/order"
+              className="mt-4 bg-black text-white px-8 py-3 rounded-md"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               Order
-            </button>
+            </Link>
           </nav>
         </div>
       )}

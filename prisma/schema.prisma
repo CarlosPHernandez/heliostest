@@ -1,0 +1,40 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  password  String
+  proposals Proposal[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Proposal {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  systemSize      Float
+  numberOfPanels  Int
+  totalPrice      Float
+  monthlyBill     Float
+  address         String
+  packageType     String
+  includeBattery  Boolean  @default(false)
+  batteryCount    Int      @default(0)
+  batteryType     String?
+  warrantyPackage String   @default("standard")
+  paymentType     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+} 
