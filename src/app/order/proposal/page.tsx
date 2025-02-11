@@ -148,31 +148,32 @@ export default function ProposalPage() {
       
       if (!user) {
         // Store current proposal data in localStorage for after login
-        localStorage.setItem('pendingProposal', JSON.stringify({
+        const proposalData = {
           systemInfo,
           address,
           monthlyBill,
+          packageType,
           paymentType,
+          includeBattery,
+          batteryCount,
+          selectedBattery,
+          warranty: selectedWarranty,
           financing: paymentType === 'finance' ? {
             term: selectedTerm,
             downPayment,
-            monthlyPayment: financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit
+            monthlyPayment: financingOptions?.[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit
           } : null,
-          warranty: selectedWarranty,
-          includeBattery,
-          batteryCount,
-          batteryType: selectedBattery,
-          packageType
-        }))
+        }
+        
+        localStorage.setItem('pendingProposal', JSON.stringify(proposalData))
         
         // Redirect to login with return URL
-        const returnUrl = encodeURIComponent('/order/proposal')
-        router.push(`/login?returnUrl=${returnUrl}`)
-        toast.info('Please log in or create an account to save your proposal')
+        const returnUrl = '/order/proposal'
+        router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
         return
       }
 
-      // Save proposal to Supabase
+      // If user is authenticated, save the proposal
       const { error: proposalError } = await supabase
         .from('proposals')
         .insert([
@@ -182,7 +183,7 @@ export default function ProposalPage() {
             number_of_panels: systemInfo.numberOfPanels,
             total_price: systemInfo.totalPrice,
             monthly_bill: monthlyBill,
-            address,
+            address: address,
             package_type: packageType,
             include_battery: includeBattery,
             battery_count: batteryCount,
@@ -191,18 +192,16 @@ export default function ProposalPage() {
             payment_type: paymentType,
             financing_term: paymentType === 'finance' ? selectedTerm : null,
             down_payment: paymentType === 'finance' ? downPayment : null,
-            monthly_payment: paymentType === 'finance' ? financingOptions[selectedTerm].monthlyPaymentWithDownPaymentAndCredit : null
+            monthly_payment: paymentType === 'finance' ? financingOptions?.[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit : null
           }
         ])
 
       if (proposalError) {
-        console.error('Database error:', proposalError)
-        toast.error('Error saving proposal. Please try again.')
-        return
+        throw proposalError
       }
 
       toast.success('Proposal saved successfully!')
-      router.push('/profile')
+      router.push('/dashboard')
     } catch (error) {
       console.error('Error saving proposal:', error)
       toast.error('Error saving proposal. Please try again.')
