@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CookiePreferences } from '@/components/features/CookiePreferences'
 
 export function Footer() {
   return (
@@ -31,12 +32,7 @@ export function Footer() {
 
         {/* Footer Bottom */}
         <div className="space-y-4 text-sm text-gray-400">
-          <button 
-            className="text-gray-400 hover:text-gray-300 transition-colors"
-            onClick={() => {/* Add cookie preferences handler */}}
-          >
-            Manage cookies preferences
-          </button>
+          <CookiePreferences />
 
           <p className="text-gray-400">
             We are committed to providing an accessible website experience for all users. If you encounter any issues, please contact us at{' '}
