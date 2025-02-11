@@ -11,55 +11,53 @@ export async function GET(request: Request) {
     const supabase = createRouteHandlerClient({ cookies })
     
     // Exchange the code for a session
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
     
-    if (error) {
+    if (error || !session) {
       console.error('Auth callback error:', error)
       return NextResponse.redirect(new URL('/login?error=auth', requestUrl.origin))
     }
 
     // If returning to proposal page, check for pending proposal
     if (returnUrl.includes('/order/proposal')) {
-      const pendingProposal = await supabase
-        .from('local_storage')
-        .select('value')
-        .eq('key', 'pendingProposal')
-        .single()
+      // Get the proposal data from localStorage
+      const pendingProposal = localStorage.getItem('pendingProposal')
+      
+      if (pendingProposal) {
+        try {
+          const proposalData = JSON.parse(pendingProposal)
+          
+          // Save proposal to Supabase
+          const { error: proposalError } = await supabase
+            .from('proposals')
+            .insert([
+              {
+                user_id: session.user.id,
+                system_size: proposalData.systemInfo.systemSize,
+                number_of_panels: proposalData.systemInfo.numberOfPanels,
+                total_price: proposalData.systemInfo.totalPrice,
+                monthly_bill: proposalData.monthlyBill,
+                address: proposalData.address,
+                package_type: proposalData.packageType,
+                include_battery: proposalData.includeBattery || false,
+                battery_count: proposalData.batteryCount || 0,
+                battery_type: proposalData.batteryType,
+                warranty_package: proposalData.warranty || 'standard',
+                payment_type: proposalData.paymentType || 'cash'
+              }
+            ])
 
-      if (pendingProposal.data) {
-        const proposalData = JSON.parse(pendingProposal.data.value)
-        
-        // Save proposal to Supabase
-        const { error: proposalError } = await supabase
-          .from('proposals')
-          .insert([
-            {
-              user_id: user.id,
-              system_size: proposalData.systemInfo.systemSize,
-              number_of_panels: proposalData.systemInfo.numberOfPanels,
-              total_price: proposalData.systemInfo.totalPrice,
-              monthly_bill: proposalData.monthlyBill,
-              address: proposalData.address,
-              package_type: proposalData.packageType,
-              include_battery: proposalData.includeBattery,
-              battery_count: proposalData.batteryCount,
-              battery_type: proposalData.batteryType,
-              warranty_package: proposalData.warranty,
-              payment_type: proposalData.paymentType,
-              financing_term: proposalData.financing?.term,
-              down_payment: proposalData.financing?.downPayment,
-              monthly_payment: proposalData.financing?.monthlyPayment
-            }
-          ])
+          if (proposalError) {
+            console.error('Error saving proposal:', proposalError)
+            return NextResponse.redirect(new URL('/order/proposal?error=save', requestUrl.origin))
+          }
 
-        if (!proposalError) {
-          // Clean up stored proposal
-          await supabase
-            .from('local_storage')
-            .delete()
-            .eq('key', 'pendingProposal')
-
-          return NextResponse.redirect(new URL('/profile', requestUrl.origin))
+          // Clear the stored proposal
+          localStorage.removeItem('pendingProposal')
+          return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+        } catch (error) {
+          console.error('Error processing proposal:', error)
+          return NextResponse.redirect(new URL('/order/proposal?error=process', requestUrl.origin))
         }
       }
     }

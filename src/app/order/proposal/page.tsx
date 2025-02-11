@@ -129,42 +129,36 @@ export default function ProposalPage() {
   }
 
   const handlePlaceOrder = async () => {
-    if (!systemInfo) {
-      toast.error('Missing system information')
-      return
-    }
+    setIsSubmitting(true)
+    setError('')
 
     try {
-      setIsSubmitting(true)
-
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
-      if (userError) {
-        console.error('Auth error:', userError)
-        toast.error('Authentication error. Please try again.')
-        return
+      if (!systemInfo) {
+        throw new Error('Missing system information')
       }
-      
-      if (!user) {
-        // Store current proposal data in localStorage for after login
-        const proposalData = {
-          systemInfo,
-          address,
-          monthlyBill,
-          packageType,
-          paymentType,
-          includeBattery,
-          batteryCount,
-          selectedBattery,
-          warranty: selectedWarranty,
-          financing: paymentType === 'finance' ? {
-            term: selectedTerm,
-            downPayment,
-            monthlyPayment: financingOptions?.[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit
-          } : null,
-        }
-        
+
+      const { data: { session } } = await supabase.auth.getSession()
+
+      // Prepare proposal data
+      const proposalData = {
+        systemInfo,
+        address,
+        monthlyBill,
+        packageType,
+        includeBattery,
+        batteryCount,
+        batteryType: selectedBattery,
+        warranty: selectedWarranty,
+        paymentType,
+        financing: paymentType === 'finance' ? {
+          term: selectedTerm,
+          downPayment,
+          monthlyPayment: financingOptions?.monthlyPayment
+        } : null
+      }
+
+      if (!session) {
+        // Store proposal data in localStorage for unauthenticated users
         localStorage.setItem('pendingProposal', JSON.stringify(proposalData))
         
         // Redirect to login with return URL
@@ -173,26 +167,23 @@ export default function ProposalPage() {
         return
       }
 
-      // If user is authenticated, save the proposal
+      // For authenticated users, save directly to Supabase
       const { error: proposalError } = await supabase
         .from('proposals')
         .insert([
           {
-            user_id: user.id,
+            user_id: session.user.id,
             system_size: systemInfo.systemSize,
             number_of_panels: systemInfo.numberOfPanels,
             total_price: systemInfo.totalPrice,
             monthly_bill: monthlyBill,
-            address: address,
+            address,
             package_type: packageType,
             include_battery: includeBattery,
             battery_count: batteryCount,
             battery_type: selectedBattery,
             warranty_package: selectedWarranty,
-            payment_type: paymentType,
-            financing_term: paymentType === 'finance' ? selectedTerm : null,
-            down_payment: paymentType === 'finance' ? downPayment : null,
-            monthly_payment: paymentType === 'finance' ? financingOptions?.[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit : null
+            payment_type: paymentType
           }
         ])
 
@@ -204,6 +195,7 @@ export default function ProposalPage() {
       router.push('/dashboard')
     } catch (error) {
       console.error('Error saving proposal:', error)
+      setError('Error saving proposal. Please try again.')
       toast.error('Error saving proposal. Please try again.')
     } finally {
       setIsSubmitting(false)
