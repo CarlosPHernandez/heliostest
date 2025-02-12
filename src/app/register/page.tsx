@@ -20,7 +20,8 @@ export default function RegisterPage() {
     const name = formData.get('name') as string
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Sign up the user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -30,28 +31,37 @@ export default function RegisterPage() {
         },
       })
 
-      if (signUpError) {
-        throw new Error(signUpError.message)
-      }
+      if (signUpError) throw signUpError
 
-      // Insert user profile data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user?.id,
-            name,
-            email,
-          },
-        ])
+      if (authData.user) {
+        // Wait a moment for the user to be fully created
+        await new Promise(resolve => setTimeout(resolve, 1000))
 
-      if (profileError) {
-        throw new Error(profileError.message)
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user.id,
+              name,
+              email,
+            },
+          ])
+          .select()
+          .single()
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError)
+          // If profile creation fails, we should clean up the auth user
+          await supabase.auth.signOut()
+          throw new Error('Failed to create profile')
+        }
       }
 
       toast.success('Registration successful! Please check your email to confirm your account.')
       router.push('/login')
     } catch (error) {
+      console.error('Registration error:', error)
       toast.error(error instanceof Error ? error.message : 'Error registering user')
     } finally {
       setIsLoading(false)
