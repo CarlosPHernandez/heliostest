@@ -30,6 +30,7 @@ export default function RegisterPage() {
           data: {
             name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
@@ -40,8 +41,13 @@ export default function RegisterPage() {
 
       console.log('Auth data:', authData)
 
+      if (!authData.user?.identities?.length) {
+        throw new Error('Email already registered')
+      }
+
       if (authData.user) {
         console.log('User created successfully, attempting profile creation...')
+        console.log('Email confirmation status:', authData.user.confirmation_sent_at ? 'Sent' : 'Not sent')
         
         // Create profile
         const { data: profileData, error: profileError } = await supabase
@@ -62,18 +68,28 @@ export default function RegisterPage() {
             details: profileError.details,
             hint: profileError.hint
           })
-          // Don't sign out, let the trigger handle profile creation as backup
           console.log('Profile creation failed, continuing with registration...')
         } else {
           console.log('Profile created successfully:', profileData)
         }
+
+        // Check if email was sent
+        if (authData.user.confirmation_sent_at) {
+          toast.success('Registration successful! Please check your email to confirm your account. Check your spam folder if you don\'t see it.')
+        } else {
+          toast.warning('Account created but there might be an issue with the verification email. Please contact support.')
+        }
       }
 
-      toast.success('Registration successful! Please check your email to confirm your account.')
       router.push('/login')
     } catch (error) {
       console.error('Registration error:', error)
-      toast.error(error instanceof Error ? error.message : 'Error registering user')
+      if (error instanceof Error && error.message === 'Email already registered') {
+        toast.error('This email is already registered. Please try logging in instead.')
+        router.push('/login')
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Error registering user')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -139,9 +155,13 @@ export default function RegisterPage() {
                   type="password"
                   autoComplete="new-password"
                   required
+                  minLength={6}
                   className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Password must be at least 6 characters long
+              </p>
             </div>
 
             <div>
