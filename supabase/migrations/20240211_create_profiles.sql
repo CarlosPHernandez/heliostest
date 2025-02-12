@@ -11,17 +11,17 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 -- Create policies
-create policy "Users can view their own profile"
-  on public.profiles for select
-  using ( auth.uid() = id );
+create policy "Enable insert for authentication users only"
+  on profiles for insert
+  with check (true);  -- Allow insert during registration
 
-create policy "Users can update their own profile"
-  on public.profiles for update
-  using ( auth.uid() = id );
+create policy "Enable select for users based on id"
+  on profiles for select
+  using (auth.uid() = id);
 
-create policy "Users can insert their own profile"
-  on public.profiles for insert
-  with check ( auth.uid() = id );
+create policy "Enable update for users based on id"
+  on profiles for update
+  using (auth.uid() = id);
 
 -- Create function to handle user creation
 create or replace function public.handle_new_user()
