@@ -20,6 +20,8 @@ export default function RegisterPage() {
     const name = formData.get('name') as string
 
     try {
+      console.log('Starting registration process...')
+      
       // Sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -31,14 +33,22 @@ export default function RegisterPage() {
         },
       })
 
-      if (signUpError) throw signUpError
+      if (signUpError) {
+        console.error('Signup error:', signUpError)
+        throw signUpError
+      }
+
+      console.log('Auth data:', authData)
 
       if (authData.user) {
+        console.log('User created successfully, waiting before profile creation...')
         // Wait a moment for the user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000))
 
+        console.log('Attempting to create profile for user:', authData.user.id)
+        
         // Create profile
-        const { error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
@@ -48,14 +58,20 @@ export default function RegisterPage() {
             },
           ])
           .select()
-          .single()
 
         if (profileError) {
           console.error('Profile creation error:', profileError)
+          console.error('Profile error details:', {
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint
+          })
           // If profile creation fails, we should clean up the auth user
           await supabase.auth.signOut()
-          throw new Error('Failed to create profile')
+          throw new Error(`Failed to create profile: ${profileError.message}`)
         }
+
+        console.log('Profile created successfully:', profileData)
       }
 
       toast.success('Registration successful! Please check your email to confirm your account.')
