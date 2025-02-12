@@ -24,34 +24,38 @@ export default function DashboardPage() {
   const [proposals, setProposals] = useState<Proposal[]>([])
 
   useEffect(() => {
-    async function getUser() {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser()
-        if (error) throw error
-        setUser(user)
+    checkUser()
+  }, [])
 
-        // Fetch proposals after getting user
-        if (user) {
-          const { data: proposals, error: proposalsError } = await supabase
-            .from('proposals')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-
-          if (proposalsError) throw proposalsError
-          setProposals(proposals || [])
-        }
-      } catch (error) {
-        console.error('Error:', error)
-        toast.error('Please sign in to access the dashboard')
-        router.push('/login')
-      } finally {
-        setLoading(false)
+  async function checkUser() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error) throw error
+      
+      if (!session) {
+        // If no session, redirect to login
+        router.push('/login?returnUrl=/dashboard')
+        return
       }
-    }
 
-    getUser()
-  }, [router])
+      setUser(session.user)
+
+      // Fetch proposals after confirming user is authenticated
+      const { data: proposals, error: proposalsError } = await supabase
+        .from('proposals')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+
+      if (proposalsError) throw proposalsError
+      setProposals(proposals || [])
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error loading dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -68,6 +72,10 @@ export default function DashboardPage() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     )
+  }
+
+  if (!user) {
+    return null // Return null as we're redirecting in checkUser
   }
 
   return (
