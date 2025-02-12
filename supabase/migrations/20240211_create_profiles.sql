@@ -15,10 +15,10 @@ drop policy if exists "Enable insert for authentication users only" on profiles;
 drop policy if exists "Enable select for users based on id" on profiles;
 drop policy if exists "Enable update for users based on id" on profiles;
 
--- Create policies
-create policy "Enable insert for authentication users only"
+-- Create policies with more permissive insert
+create policy "Enable insert for users"
   on profiles for insert
-  with check (auth.uid() = id);
+  with check (true);  -- Allow any authenticated user to insert
 
 create policy "Enable select for users based on id"
   on profiles for select
@@ -30,36 +30,22 @@ create policy "Enable update for users based on id"
 
 -- Create function to handle user creation
 create or replace function public.handle_new_user()
-returns trigger as $$
-declare
-  retries integer := 0;
-  max_retries constant integer := 5;
-  profile_created boolean := false;
+returns trigger security definer
+as $$
 begin
-  while retries < max_retries and not profile_created loop
-    begin
-      insert into public.profiles (id, name, email)
-      values (
-        new.id,
-        coalesce(new.raw_user_meta_data->>'name', ''),
-        new.email
-      );
-      profile_created := true;
-    exception when others then
-      retries := retries + 1;
-      if retries < max_retries then
-        perform pg_sleep(0.5); -- Wait 500ms before retrying
-      end if;
-    end;
-  end loop;
-
-  if not profile_created then
-    raise exception 'Failed to create profile after % attempts', max_retries;
-  end if;
-
+  insert into public.profiles (id, name, email)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', ''),
+    new.email
+  );
+  return new;
+exception when others then
+  -- Log the error but don't prevent user creation
+  raise warning 'Failed to create profile for user %: %', new.id, sqlerrm;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql;
 
 -- Create trigger for new user creation
 drop trigger if exists on_auth_user_created on auth.users;

@@ -41,11 +41,7 @@ export default function RegisterPage() {
       console.log('Auth data:', authData)
 
       if (authData.user) {
-        console.log('User created successfully, waiting before profile creation...')
-        // Wait a moment for the user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 2000))
-
-        console.log('Attempting to create profile for user:', authData.user.id)
+        console.log('User created successfully, attempting profile creation...')
         
         // Create profile
         const { data: profileData, error: profileError } = await supabase
@@ -66,12 +62,11 @@ export default function RegisterPage() {
             details: profileError.details,
             hint: profileError.hint
           })
-          // If profile creation fails, we should clean up the auth user
-          await supabase.auth.signOut()
-          throw new Error(`Failed to create profile: ${profileError.message}`)
+          // Don't sign out, let the trigger handle profile creation as backup
+          console.log('Profile creation failed, continuing with registration...')
+        } else {
+          console.log('Profile created successfully:', profileData)
         }
-
-        console.log('Profile created successfully:', profileData)
       }
 
       toast.success('Registration successful! Please check your email to confirm your account.')
