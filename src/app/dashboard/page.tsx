@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { toast } from 'sonner'
 import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [proposals, setProposals] = useState<Proposal[]>([])
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
     checkUser()
@@ -43,8 +44,8 @@ export default function DashboardPage() {
 
       console.log('Session check complete:', session ? 'Session found' : 'No session')
       
-      if (!session) {
-        console.log('No session, redirecting to login...')
+      if (!session?.user) {
+        console.log('No session or user, redirecting to login...')
         router.push('/login?returnUrl=/dashboard')
         return
       }
@@ -54,7 +55,7 @@ export default function DashboardPage() {
 
       // Fetch proposals after confirming user is authenticated
       console.log('Fetching proposals...')
-      const { data: proposals, error: proposalsError } = await supabase
+      const { data: proposalsData, error: proposalsError } = await supabase
         .from('proposals')
         .select('*')
         .eq('user_id', session.user.id)
@@ -65,8 +66,8 @@ export default function DashboardPage() {
         throw proposalsError
       }
 
-      console.log('Proposals fetched:', proposals?.length || 0, 'proposals found')
-      setProposals(proposals || [])
+      console.log('Proposals fetched:', proposalsData?.length || 0, 'proposals found')
+      setProposals(proposalsData || [])
     } catch (error) {
       console.error('Dashboard error:', error)
       setError(error instanceof Error ? error.message : 'Error loading dashboard')
