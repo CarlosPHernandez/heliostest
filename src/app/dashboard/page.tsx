@@ -185,12 +185,6 @@ export default function DashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
-                <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
-                  <span className="sr-only">Close</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
             </div>
 
@@ -299,7 +293,7 @@ export default function DashboardPage() {
         {/* Proposals Section - Only show if there are proposals */}
         {proposals.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xl font-medium mb-4">Recent Proposals</h2>
+            <h2 className="text-xl font-medium text-white mb-4">Recent Proposals</h2>
             <div className="space-y-4">
               {proposals.map((proposal) => (
                 <Link
@@ -310,7 +304,7 @@ export default function DashboardPage() {
                   <div className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium mb-1">
+                        <h3 className="font-medium text-white mb-1">
                           {proposal.address}
                         </h3>
                         <p className="text-sm text-gray-400">
@@ -318,7 +312,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <p className="font-medium">
+                        <p className="font-medium text-white">
                           {formatCurrency(proposal.total_price)}
                         </p>
                         <ChevronRight className="h-5 w-5 text-gray-400" />
