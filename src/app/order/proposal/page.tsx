@@ -203,8 +203,13 @@ export default function ProposalPage() {
         .single()
 
       if (proposalError) {
-        console.error('Error saving proposal:', proposalError)
-        throw proposalError
+        console.error('Error saving proposal:', {
+          code: proposalError.code,
+          message: proposalError.message,
+          details: proposalError.details,
+          hint: proposalError.hint
+        })
+        throw new Error(`Failed to save proposal: ${proposalError.message}`)
       }
 
       console.log('Proposal saved successfully:', savedProposal)
@@ -215,9 +220,12 @@ export default function ProposalPage() {
       toast.success('Proposal saved successfully!')
       router.push('/dashboard')
     } catch (error) {
-      console.error('Error saving proposal:', error)
-      setError('Error saving proposal. Please try again.')
-      toast.error('Error saving proposal. Please try again.')
+      console.error('Error in handlePlaceOrder:', error instanceof Error ? {
+        message: error.message,
+        stack: error.stack
+      } : error)
+      setError(error instanceof Error ? error.message : 'Error saving proposal')
+      toast.error(error instanceof Error ? error.message : 'Error saving proposal. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
