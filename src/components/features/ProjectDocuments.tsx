@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Upload, File, Trash2, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -22,8 +22,12 @@ interface ProjectDocumentsProps {
 
 export default function ProjectDocuments({ proposalId, isAdmin = false }: ProjectDocumentsProps) {
   const [documents, setDocuments] = useState<ProjectDocument[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    loadDocuments()
+  }, [proposalId])
 
   const loadDocuments = async () => {
     try {
@@ -121,9 +125,9 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Project Documents</h2>
-        {isAdmin && (
+      {isAdmin && (
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Project Documents</h2>
           <div className="relative">
             <input
               type="file"
@@ -143,8 +147,8 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
               Upload Document
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-8">

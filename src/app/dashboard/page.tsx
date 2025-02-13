@@ -106,7 +106,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 mt-16">
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">
           <div className="flex justify-between items-center">
@@ -161,11 +161,27 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Status</p>
-                      <p className="font-medium capitalize">{proposal.status}</p>
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        proposal.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        proposal.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        proposal.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {proposal.status}
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Stage</p>
-                      <p className="font-medium capitalize">{proposal.stage}</p>
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        proposal.stage === 'completed' ? 'bg-green-100 text-green-800' :
+                        proposal.stage === 'installation' ? 'bg-purple-100 text-purple-800' :
+                        proposal.stage === 'permitting' ? 'bg-yellow-100 text-yellow-800' :
+                        proposal.stage === 'design' ? 'bg-indigo-100 text-indigo-800' :
+                        proposal.stage === 'onboarding' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {proposal.stage}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -176,9 +192,9 @@ export default function DashboardPage() {
 
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Onboarding Documents</h2>
+            <h2 className="text-xl font-bold mb-4">Project Documents</h2>
             {selectedProposal ? (
-              <ProjectDocuments proposalId={selectedProposal} />
+              <ProjectDocuments proposalId={selectedProposal} isAdmin={false} />
             ) : (
               <p className="text-center text-gray-500 py-4">
                 No active project selected
