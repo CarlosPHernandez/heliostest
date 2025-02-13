@@ -139,9 +139,17 @@ export default function ProposalPage() {
 
       const { data: { session } } = await supabase.auth.getSession()
 
+      // Calculate total price including add-ons
+      const totalPrice = systemInfo.totalPrice + 
+        (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+        (selectedWarranty === 'extended' ? 1500 : 0)
+
       // Prepare proposal data
       const proposalData = {
-        systemInfo,
+        systemInfo: {
+          ...systemInfo,
+          totalPrice // Update with final price including add-ons
+        },
         address,
         monthlyBill,
         packageType,
@@ -159,6 +167,7 @@ export default function ProposalPage() {
 
       if (!session) {
         // Store proposal data in localStorage for unauthenticated users
+        console.log('No session, storing proposal data for later:', proposalData)
         localStorage.setItem('pendingProposal', JSON.stringify(proposalData))
         
         // Redirect to login with return URL
@@ -166,6 +175,8 @@ export default function ProposalPage() {
         router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
         return
       }
+
+      console.log('Saving proposal to database:', proposalData)
 
       // For authenticated users, save directly to Supabase
       const { error: proposalError } = await supabase
@@ -175,7 +186,7 @@ export default function ProposalPage() {
             user_id: session.user.id,
             system_size: systemInfo.systemSize,
             number_of_panels: systemInfo.numberOfPanels,
-            total_price: systemInfo.totalPrice,
+            total_price: totalPrice, // Use updated total price
             monthly_bill: monthlyBill,
             address,
             package_type: packageType,
@@ -183,14 +194,21 @@ export default function ProposalPage() {
             battery_count: batteryCount,
             battery_type: selectedBattery,
             warranty_package: selectedWarranty,
-            payment_type: paymentType
+            payment_type: paymentType,
+            financing_term: paymentType === 'finance' ? selectedTerm : null,
+            down_payment: paymentType === 'finance' ? downPayment : null,
+            monthly_payment: paymentType === 'finance' ? financingOptions?.monthlyPayment : null
           }
         ])
 
       if (proposalError) {
+        console.error('Error saving proposal:', proposalError)
         throw proposalError
       }
 
+      // Clear stored proposal data
+      localStorage.removeItem('pendingProposal')
+      
       toast.success('Proposal saved successfully!')
       router.push('/dashboard')
     } catch (error) {
