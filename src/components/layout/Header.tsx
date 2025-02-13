@@ -60,9 +60,15 @@ const Header = () => {
     { name: 'Discover', href: '/discover' },
     { name: 'Shop', href: '/shop' },
     { name: 'Investors', href: '/investors' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'About Us', href: '/about-us' },
+    { name: 'About Us', href: '/about' },
   ]
+
+  const userNavItems = user ? [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Profile', href: '/profile' },
+  ] : []
+
+  const navItems = [...publicNavItems, ...userNavItems]
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-[100]">
@@ -77,7 +83,7 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-6">
-            {publicNavItems.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -88,25 +94,16 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+            
             {!loading && (
               <>
                 {user ? (
-                  <div className="flex items-center space-x-4">
-                    <Link
-                      href="/dashboard"
-                      className={`text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium ${
-                        pathname === '/dashboard' ? 'text-black font-semibold' : ''
-                      }`}
-                    >
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign Out
+                  </button>
                 ) : (
                   <>
                     <Link
@@ -147,7 +144,7 @@ const Header = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {publicNavItems.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -162,26 +159,15 @@ const Header = () => {
               {!loading && (
                 <>
                   {user ? (
-                    <>
-                      <Link
-                        href="/dashboard"
-                        className={`block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 ${
-                          pathname === '/dashboard' ? 'text-black font-semibold' : ''
-                        }`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
-                      <button
-                        onClick={() => {
-                          handleSignOut()
-                          setIsMobileMenuOpen(false)
-                        }}
-                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      >
-                        Sign Out
-                      </button>
-                    </>
+                    <button
+                      onClick={() => {
+                        handleSignOut()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    >
+                      Sign Out
+                    </button>
                   ) : (
                     <>
                       <Link
