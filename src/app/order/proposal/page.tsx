@@ -186,20 +186,21 @@ export default function ProposalPage() {
         address,
         package_type: packageType,
         include_battery: includeBattery,
-        battery_count: batteryCount,
-        battery_type: selectedBattery,
+        battery_count: includeBattery ? batteryCount : 0,
+        battery_type: includeBattery ? selectedBattery : null,
         warranty_package: selectedWarranty,
         payment_type: paymentType,
-        financing_term: paymentType === 'finance' ? selectedTerm : null,
-        down_payment: paymentType === 'finance' ? downPayment : null,
-        monthly_payment: paymentType === 'finance' ? financingOptions?.monthlyPayment : null
+        financing_term: paymentType === 'finance' ? Number(selectedTerm) : null,
+        down_payment: paymentType === 'finance' ? Number(downPayment) : null,
+        monthly_payment: paymentType === 'finance' ? Number(financingOptions?.monthlyPayment) : null
       }
-      console.log('Proposal data:', proposalDataToSave)
+      console.log('Proposal data to save:', proposalDataToSave)
 
       const { data: savedProposal, error: proposalError } = await supabase
         .from('proposals')
         .insert([proposalDataToSave])
-        .select()
+        .select('*')
+        .single()
 
       if (proposalError) {
         console.error('Error saving proposal:', proposalError)
