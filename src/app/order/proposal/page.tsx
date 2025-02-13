@@ -137,38 +137,43 @@ export default function ProposalPage() {
         throw new Error('Missing system information')
       }
 
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-      // Calculate total price including add-ons
-      const totalPrice = systemInfo.totalPrice + 
-        (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
-        (selectedWarranty === 'extended' ? 1500 : 0)
-
-      // Prepare proposal data
-      const proposalData = {
-        systemInfo: {
-          ...systemInfo,
-          totalPrice // Update with final price including add-ons
-        },
-        address,
-        monthlyBill,
-        packageType,
-        includeBattery,
-        batteryCount,
-        batteryType: selectedBattery,
-        warranty: selectedWarranty,
-        paymentType,
-        financing: paymentType === 'finance' ? {
-          term: selectedTerm,
-          downPayment,
-          monthlyPayment: financingOptions?.monthlyPayment
-        } : null
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        // Clear any stale session data
+        await supabase.auth.signOut()
+        router.push('/login')
+        return
       }
 
-      if (!session) {
+      if (!session?.user?.id) {
         // Store proposal data in localStorage for unauthenticated users
-        console.log('No session, storing proposal data for later:', proposalData)
-        localStorage.setItem('pendingProposal', JSON.stringify(proposalData))
+        console.log('No session, storing proposal data for later')
+        const proposalData = {
+          systemInfo: {
+            ...systemInfo,
+            totalPrice: systemInfo.totalPrice + 
+              (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+              (selectedWarranty === 'extended' ? 1500 : 0)
+          },
+          address,
+          monthlyBill,
+          packageType,
+          includeBattery,
+          batteryCount,
+          batteryType: selectedBattery,
+          warranty: selectedWarranty,
+          paymentType,
+          financing: paymentType === 'finance' ? {
+            term: selectedTerm,
+            downPayment,
+            monthlyPayment: financingOptions?.monthlyPayment
+          } : null
+        }
+        
+        // Store in cookie instead of localStorage for better security
+        document.cookie = `pendingProposal=${JSON.stringify(proposalData)}; path=/; max-age=3600; secure; samesite=strict`
         
         // Redirect to login with return URL
         const returnUrl = '/order/proposal'
@@ -176,8 +181,13 @@ export default function ProposalPage() {
         return
       }
 
+      // Calculate total price including add-ons
+      const totalPrice = systemInfo.totalPrice + 
+        (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+        (selectedWarranty === 'extended' ? 1500 : 0)
+
       console.log('Saving proposal to Supabase for user:', session.user.id)
-      const proposalDataToSave = {
+      const proposalData = {
         user_id: session.user.id,
         system_size: systemInfo.systemSize,
         number_of_panels: systemInfo.numberOfPanels,
@@ -194,11 +204,11 @@ export default function ProposalPage() {
         down_payment: paymentType === 'finance' ? Number(downPayment) : null,
         monthly_payment: paymentType === 'finance' ? Number(financingOptions?.monthlyPayment) : null
       }
-      console.log('Proposal data to save:', proposalDataToSave)
+      console.log('Proposal data to save:', proposalData)
 
       const { data: savedProposal, error: proposalError } = await supabase
         .from('proposals')
-        .insert([proposalDataToSave])
+        .insert([proposalData])
         .select('*')
         .single()
 
@@ -209,13 +219,21 @@ export default function ProposalPage() {
           details: proposalError.details,
           hint: proposalError.hint
         })
+        
+        // If the error is related to auth, sign out and redirect
+        if (proposalError.code === 'PGRST301' || proposalError.message.includes('JWT')) {
+          await supabase.auth.signOut()
+          router.push('/login')
+          return
+        }
+        
         throw new Error(`Failed to save proposal: ${proposalError.message}`)
       }
 
       console.log('Proposal saved successfully:', savedProposal)
 
       // Clear stored proposal data
-      localStorage.removeItem('pendingProposal')
+      document.cookie = 'pendingProposal=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       
       toast.success('Proposal saved successfully!')
       router.push('/dashboard')

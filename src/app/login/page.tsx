@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -10,28 +10,49 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const returnUrl = searchParams.get('returnUrl') || '/dashboard'
+  const error = searchParams.get('error')
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const supabase = createClientComponentClient()
+
+  // Show error message if redirected due to deleted profile
+  useEffect(() => {
+    if (error === 'profile_not_found') {
+      toast.error('Your account has been deleted. Please create a new account.')
+    }
+  }, [error])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (signInError) throw signInError
+
+      // Check if profile exists
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (profileError || !profile) {
+        // Profile doesn't exist, sign out and show error
+        await supabase.auth.signOut()
+        throw new Error('Account not found. Please create a new account.')
+      }
 
       // Redirect to return URL or dashboard
       router.push(returnUrl)
     } catch (error) {
       console.error('Login error:', error)
-      toast.error('Error signing in. Please try again.')
+      toast.error(error instanceof Error ? error.message : 'Error signing in. Please try again.')
     } finally {
       setIsLoading(false)
     }

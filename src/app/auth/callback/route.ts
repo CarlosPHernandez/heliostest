@@ -34,35 +34,41 @@ export async function GET(request: Request) {
               (proposalData.includeBattery ? (proposalData.batteryCount * (proposalData.batteryType === 'franklin' ? 8500 : 9200)) : 0) +
               (proposalData.warranty === 'extended' ? 1500 : 0)
 
+            // Prepare proposal data with snake_case column names
+            const proposalInsert = {
+              user_id: session.user.id,
+              system_size: proposalData.systemInfo.systemSize,
+              number_of_panels: proposalData.systemInfo.numberOfPanels,
+              total_price: totalPrice,
+              monthly_bill: proposalData.monthlyBill,
+              address: proposalData.address,
+              package_type: proposalData.packageType,
+              include_battery: proposalData.includeBattery || false,
+              battery_count: proposalData.batteryCount || 0,
+              battery_type: proposalData.batteryType,
+              warranty_package: proposalData.warranty || 'standard',
+              payment_type: proposalData.paymentType || 'cash',
+              financing_term: proposalData.financing?.term || null,
+              down_payment: proposalData.financing?.downPayment || null,
+              monthly_payment: proposalData.financing?.monthlyPayment || null
+            }
+
             // Save proposal to Supabase
             const { error: proposalError } = await supabase
               .from('proposals')
-              .insert([
-                {
-                  user_id: session.user.id,
-                  system_size: proposalData.systemInfo.systemSize,
-                  number_of_panels: proposalData.systemInfo.numberOfPanels,
-                  total_price: totalPrice,
-                  monthly_bill: proposalData.monthlyBill,
-                  address: proposalData.address,
-                  package_type: proposalData.packageType,
-                  include_battery: proposalData.includeBattery || false,
-                  battery_count: proposalData.batteryCount || 0,
-                  battery_type: proposalData.batteryType,
-                  warranty_package: proposalData.warranty || 'standard',
-                  payment_type: proposalData.paymentType || 'cash',
-                  financing_term: proposalData.financing?.term,
-                  down_payment: proposalData.financing?.downPayment,
-                  monthly_payment: proposalData.financing?.monthlyPayment
-                }
-              ])
+              .insert([proposalInsert])
 
             if (proposalError) {
-              console.error('Error saving proposal:', proposalError)
-              return NextResponse.redirect(new URL('/order/proposal?error=save', requestUrl.origin))
+              console.error('Error saving proposal:', {
+                code: proposalError.code,
+                message: proposalError.message,
+                details: proposalError.details,
+                hint: proposalError.hint
+              })
+              return NextResponse.redirect(new URL(`/order/proposal?error=${encodeURIComponent(proposalError.message)}`, requestUrl.origin))
             }
 
-            // Clear the stored proposal
+            // Clear the stored proposal and redirect
             const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
             response.cookies.delete('pendingProposal')
             return response

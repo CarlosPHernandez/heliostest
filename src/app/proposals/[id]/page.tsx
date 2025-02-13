@@ -134,12 +134,27 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
       
       if (sessionError) {
         console.error('Session error:', sessionError)
-        throw sessionError
+        throw new Error('Session validation failed')
       }
 
       if (!session) {
         console.log('No session found, redirecting to login...')
         router.push('/login?returnUrl=' + encodeURIComponent('/proposals/' + params.id))
+        return
+      }
+
+      // Check if user still exists in profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', session.user.id)
+        .single()
+
+      if (profileError || !profile) {
+        console.error('Profile not found:', profileError)
+        // User might have been deleted, clear the session
+        await supabase.auth.signOut()
+        router.push('/login?error=profile_not_found')
         return
       }
 
@@ -151,8 +166,11 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
         .single()
 
       if (proposalError) {
+        if (proposalError.code === 'PGRST116') {
+          throw new Error('Proposal not found')
+        }
         console.error('Proposal error:', proposalError)
-        throw proposalError
+        throw new Error('Failed to load proposal')
       }
 
       if (!proposal) {
@@ -160,12 +178,17 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
         throw new Error('Proposal not found')
       }
 
+      // Verify proposal ownership
+      if (proposal.user_id !== session.user.id) {
+        throw new Error('You do not have permission to view this proposal')
+      }
+
       console.log('Proposal loaded:', proposal)
       setProposal(proposal)
     } catch (error) {
       console.error('Error loading proposal:', error)
       setError(error instanceof Error ? error.message : 'Error loading proposal')
-      toast.error('Error loading proposal details')
+      toast.error(error instanceof Error ? error.message : 'Error loading proposal details')
     } finally {
       setLoading(false)
     }
