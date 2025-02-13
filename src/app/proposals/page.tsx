@@ -16,7 +16,7 @@ interface Proposal {
   status: string
   stage: string
   created_at: string
-  user: {
+  profiles: {
     email: string
     name: string
   }
@@ -66,7 +66,7 @@ export default function ProposalsPage() {
         .from('proposals')
         .select(`
           *,
-          user:user_id (
+          profiles:user_id (
             email,
             name
           )
@@ -133,7 +133,7 @@ export default function ProposalsPage() {
                 <div>
                   <h2 className="text-lg font-semibold mb-1">{proposal.address}</h2>
                   <p className="text-sm text-gray-500">
-                    Customer: {proposal.user.name || proposal.user.email}
+                    Customer: {proposal.profiles.name || proposal.profiles.email}
                   </p>
                   <p className="text-sm text-gray-500">
                     Created on {new Date(proposal.created_at).toLocaleDateString()}
@@ -159,11 +159,27 @@ export default function ProposalsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Status</p>
-                  <p className="font-medium capitalize">{proposal.status}</p>
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    proposal.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    proposal.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                    proposal.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {proposal.status}
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Stage</p>
-                  <p className="font-medium capitalize">{proposal.stage}</p>
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    proposal.stage === 'completed' ? 'bg-green-100 text-green-800' :
+                    proposal.stage === 'installation' ? 'bg-purple-100 text-purple-800' :
+                    proposal.stage === 'permitting' ? 'bg-yellow-100 text-yellow-800' :
+                    proposal.stage === 'design' ? 'bg-indigo-100 text-indigo-800' :
+                    proposal.stage === 'onboarding' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {proposal.stage}
+                  </div>
                 </div>
               </div>
             </div>
