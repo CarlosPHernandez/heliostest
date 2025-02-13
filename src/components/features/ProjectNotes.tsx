@@ -23,8 +23,10 @@ export default function ProjectNotes({ proposalId }: ProjectNotesProps) {
   const [newNote, setNewNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
+    checkUser()
     loadNotes()
 
     // Subscribe to new notes
@@ -48,6 +50,15 @@ export default function ProjectNotes({ proposalId }: ProjectNotesProps) {
       supabase.removeChannel(channel)
     }
   }, [proposalId])
+
+  const checkUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUserId(session?.user?.id || null)
+    } catch (error) {
+      console.error('Error checking user:', error)
+    }
+  }
 
   const loadNotes = async () => {
     try {
@@ -78,7 +89,7 @@ export default function ProjectNotes({ proposalId }: ProjectNotesProps) {
 
   const addNote = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newNote.trim()) return
+    if (!newNote.trim() || !userId) return
 
     try {
       setSubmitting(true)
@@ -86,6 +97,7 @@ export default function ProjectNotes({ proposalId }: ProjectNotesProps) {
         .from('project_notes')
         .insert({
           proposal_id: proposalId,
+          author_id: userId,
           content: newNote.trim()
         })
 
@@ -134,7 +146,7 @@ export default function ProjectNotes({ proposalId }: ProjectNotesProps) {
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={submitting || !newNote.trim()}
+          disabled={submitting || !newNote.trim() || !userId}
         >
           {submitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />

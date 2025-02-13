@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { Send, Loader2 } from 'lucide-react'
@@ -12,10 +12,24 @@ interface SendMessageProps {
 export default function SendMessage({ proposalId }: SendMessageProps) {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  const checkUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUserId(session?.user?.id || null)
+    } catch (error) {
+      console.error('Error checking user:', error)
+    }
+  }
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim()) return
+    if (!message.trim() || !userId) return
 
     try {
       setSubmitting(true)
@@ -23,6 +37,7 @@ export default function SendMessage({ proposalId }: SendMessageProps) {
         .from('project_messages')
         .insert({
           proposal_id: proposalId,
+          author_id: userId,
           content: message.trim()
         })
 
@@ -54,7 +69,7 @@ export default function SendMessage({ proposalId }: SendMessageProps) {
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={submitting || !message.trim()}
+          disabled={submitting || !message.trim() || !userId}
         >
           {submitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
