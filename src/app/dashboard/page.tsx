@@ -3,19 +3,26 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2 } from 'lucide-react'
+import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 interface Proposal {
   id: string
+  user_id: string
+  address: string
   system_size: number
   number_of_panels: number
   total_price: number
-  monthly_bill: number
-  address: string
   package_type: string
+  payment_type: string
+  include_battery: boolean
+  battery_type?: string
+  battery_count?: number
+  status: string
+  notes?: string
   created_at: string
+  status_updated_at?: string
 }
 
 export default function DashboardPage() {
@@ -79,13 +86,20 @@ export default function DashboardPage() {
         console.log('Processing proposal:', proposal)
         return {
           id: proposal.id,
+          user_id: proposal.user_id,
+          address: proposal.address,
           system_size: proposal.system_size,
           number_of_panels: proposal.number_of_panels,
           total_price: proposal.total_price,
-          monthly_bill: proposal.monthly_bill,
-          address: proposal.address,
           package_type: proposal.package_type,
-          created_at: proposal.created_at
+          payment_type: proposal.payment_type,
+          include_battery: proposal.include_battery,
+          battery_type: proposal.battery_type,
+          battery_count: proposal.battery_count,
+          status: proposal.status,
+          notes: proposal.notes,
+          created_at: proposal.created_at,
+          status_updated_at: proposal.status_updated_at
         }
       })
 
@@ -233,69 +247,89 @@ export default function DashboardPage() {
         </div>
 
         {/* Proposals Section */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Your Solar Proposals</h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900">My Solar Projects</h2>
+          {proposals.length === 0 && (
+            <button
+              onClick={() => router.push('/order/proposal')}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <PlusCircle className="h-5 w-5 mr-2" />
+              Create New Proposal
+            </button>
+          )}
+        </div>
+        
+        {proposals.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <Sun className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-4 text-lg font-medium text-gray-900">No Proposals Yet</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Start your solar journey by creating a new proposal.
+            </p>
+            <button
+              onClick={() => router.push('/order/proposal')}
+              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <PlusCircle className="h-5 w-5 mr-2" />
+              Create New Proposal
+            </button>
           </div>
-          
-          {proposals.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="mb-4">
-                <Sun className="mx-auto h-12 w-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No proposals yet</h3>
-              <p className="text-gray-600 mb-4">Start your solar journey by creating your first proposal</p>
-              <Link
-                href="/order"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        ) : (
+          <div className="space-y-6">
+            {proposals.map((proposal) => (
+              <div
+                key={proposal.id}
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                onClick={() => router.push(`/proposals/${proposal.id}`)}
               >
-                Create Your First Proposal
-              </Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {proposals.map((proposal) => (
-                <div
-                  key={proposal.id}
-                  className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/proposals/${proposal.id}`)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-1">
                         {proposal.address}
-                      </h3>
-                      <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Sun className="h-4 w-4" />
-                          {proposal.system_size.toFixed(1)}kW
-                        </span>
-                        <span>•</span>
-                        <span>{proposal.number_of_panels} Panels</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(proposal.created_at).toLocaleDateString()}
-                        </span>
+                      </h2>
+                      <p className="text-sm text-gray-500 capitalize">
+                        Status: {proposal.status.split('_').join(' ')}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-3">
+                      <Sun className="h-5 w-5 text-blue-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">System Size</p>
+                        <p className="font-medium">{proposal.system_size} kW</p>
                       </div>
                     </div>
+                    
+                    {proposal.include_battery && (
+                      <div className="flex items-center gap-3">
+                        <Battery className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <p className="text-sm text-gray-600">Battery System</p>
+                          <p className="font-medium">
+                            {proposal.battery_count}x {proposal.battery_type}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {proposal.package_type}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">
-                          {formatCurrency(proposal.total_price)}
-                        </span>
-                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                      <DollarSign className="h-5 w-5 text-blue-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">Total Investment</p>
+                        <p className="font-medium">{formatCurrency(proposal.total_price)}</p>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
