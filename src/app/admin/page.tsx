@@ -219,7 +219,7 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/proposals"
+            href="/proposals"
             className="bg-gray-900 rounded-xl p-6 hover:bg-gray-800 transition-colors"
           >
             <div className="flex items-center justify-between">
