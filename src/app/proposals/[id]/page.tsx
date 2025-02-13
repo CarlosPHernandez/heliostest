@@ -17,6 +17,8 @@ import {
   ArrowRight
 } from 'lucide-react'
 import ProjectDocuments from '@/components/features/ProjectDocuments'
+import ProjectNotes from '@/components/features/ProjectNotes'
+import SendMessage from '@/components/features/SendMessage'
 
 interface ProposalStatus {
   status: string
@@ -275,6 +277,18 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
             </div>
           )}
         </div>
+
+        {/* Project Notes and Messages (Admin Only) */}
+        {isAdmin && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <ProjectNotes proposalId={params.id} />
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <SendMessage proposalId={params.id} />
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow p-6">
           <ProjectDocuments proposalId={params.id} isAdmin={isAdmin} />

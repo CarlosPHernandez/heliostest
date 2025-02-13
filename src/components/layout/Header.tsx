@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
+import NotificationBell from '@/components/features/NotificationBell'
 
 const Header = () => {
   const router = useRouter()
@@ -98,12 +99,15 @@ const Header = () => {
             {!loading && (
               <>
                 {user ? (
-                  <button
-                    onClick={handleSignOut}
-                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Sign Out
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <NotificationBell />
+                    <button
+                      onClick={handleSignOut}
+                      className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 ) : (
                   <>
                     <Link
@@ -159,15 +163,20 @@ const Header = () => {
               {!loading && (
                 <>
                   {user ? (
-                    <button
-                      onClick={() => {
-                        handleSignOut()
-                        setIsMobileMenuOpen(false)
-                      }}
-                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                    >
-                      Sign Out
-                    </button>
+                    <>
+                      <div className="px-3 py-2">
+                        <NotificationBell />
+                      </div>
+                      <button
+                        onClick={() => {
+                          handleSignOut()
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      >
+                        Sign Out
+                      </button>
+                    </>
                   ) : (
                     <>
                       <Link
