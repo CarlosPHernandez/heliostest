@@ -206,7 +206,28 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
     )
   }
 
-  const currentStatus = statusConfig[proposal.status]
+  // Set default status if not present
+  const currentStatus = statusConfig[proposal.status || 'pending']
+
+  // Ensure we have a valid status
+  if (!currentStatus) {
+    console.error('Invalid status:', proposal.status)
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <AlertCircle className="h-12 w-12 text-red-500" />
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Proposal Status</h2>
+          <p className="text-gray-600 mb-4">The proposal status is invalid or corrupted.</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

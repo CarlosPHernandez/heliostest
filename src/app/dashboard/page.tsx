@@ -290,7 +290,7 @@ export default function DashboardPage() {
                         {proposal.address}
                       </h2>
                       <p className="text-sm text-gray-500 capitalize">
-                        Status: {proposal.status.split('_').join(' ')}
+                        Status: {proposal.status ? proposal.status.split('_').join(' ') : 'pending'}
                       </p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
