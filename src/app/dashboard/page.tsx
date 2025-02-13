@@ -170,163 +170,118 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-3xl font-bold mb-2">
+      <div className="bg-black text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <h1 className="text-4xl font-bold mb-4">
             Welcome back, {user?.user_metadata?.name || 'User'}!
           </h1>
-          <p className="text-blue-100">
+          <p className="text-gray-300 text-lg">
             Manage your solar proposals and track your clean energy journey
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Sun className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-red-50 rounded-lg">
+                <Sun className="h-6 w-6 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total System Capacity</p>
-                <p className="text-2xl font-bold">{calculateTotalCapacity().toFixed(1)} kW</p>
+                <p className="text-sm text-gray-600 mb-1">Total System Capacity</p>
+                <p className="text-2xl font-bold text-gray-900">{calculateTotalCapacity().toFixed(1)} kW</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-gray-100 rounded-lg">
+                <DollarSign className="h-6 w-6 text-gray-900" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Investment</p>
-                <p className="text-2xl font-bold">{formatCurrency(calculateTotalInvestment())}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Battery className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Active Proposals</p>
-                <p className="text-2xl font-bold">{proposals.length}</p>
+                <p className="text-sm text-gray-600 mb-1">Total Investment</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(calculateTotalInvestment())}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
           <Link
             href="/order"
-            className="group flex items-center justify-between p-4 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors"
+            className="group flex items-center justify-between p-6 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
           >
-            <span className="font-medium">Start New Solar Order</span>
+            <div className="flex items-center gap-3">
+              <PlusCircle className="h-5 w-5" />
+              <span className="font-medium">New Solar Order</span>
+            </div>
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
             href="/profile"
-            className="group flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            className="group flex items-center justify-between p-6 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            <span className="font-medium">View Profile</span>
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <span className="font-medium text-gray-900">View Profile</span>
+            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
             href="/shop"
-            className="group flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            className="group flex items-center justify-between p-6 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            <span className="font-medium">Browse Shop</span>
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <span className="font-medium text-gray-900">Browse Shop</span>
+            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
         {/* Proposals Section */}
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">My Solar Projects</h2>
-          {proposals.length === 0 && (
-            <button
-              onClick={() => router.push('/order/proposal')}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <PlusCircle className="h-5 w-5 mr-2" />
-              Create New Proposal
-            </button>
-          )}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Your Proposals</h2>
         </div>
-        
+
         {proposals.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <Sun className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No Proposals Yet</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Start your solar journey by creating a new proposal.
-            </p>
-            <button
-              onClick={() => router.push('/order/proposal')}
-              className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <PlusCircle className="h-5 w-5 mr-2" />
-              Create New Proposal
-            </button>
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100">
+            <div className="max-w-md mx-auto">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No proposals yet</h3>
+              <p className="text-gray-500 mb-6">Start your solar journey by creating your first proposal</p>
+              <Link
+                href="/order"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Create New Proposal
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {proposals.map((proposal) => (
-              <div
+              <Link
                 key={proposal.id}
-                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                onClick={() => router.push(`/proposals/${proposal.id}`)}
+                href={`/proposals/${proposal.id}`}
+                className="block bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 transition-colors"
               >
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
                         {proposal.address}
-                      </h2>
-                      <p className="text-sm text-gray-500 capitalize">
-                        Status: {proposal.status ? proposal.status.split('_').join(' ') : 'pending'}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {proposal.system_size}kW System • {proposal.number_of_panels} Panels
                       </p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center gap-3">
-                      <Sun className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="text-sm text-gray-600">System Size</p>
-                        <p className="font-medium">{proposal.system_size} kW</p>
-                      </div>
-                    </div>
-                    
-                    {proposal.include_battery && (
-                      <div className="flex items-center gap-3">
-                        <Battery className="h-5 w-5 text-blue-500" />
-                        <div>
-                          <p className="text-sm text-gray-600">Battery System</p>
-                          <p className="font-medium">
-                            {proposal.battery_count}x {proposal.battery_type}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-3">
-                      <DollarSign className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="text-sm text-gray-600">Total Investment</p>
-                        <p className="font-medium">{formatCurrency(proposal.total_price)}</p>
-                      </div>
+                      <p className="text-lg font-medium text-gray-900">
+                        {formatCurrency(proposal.total_price)}
+                      </p>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
