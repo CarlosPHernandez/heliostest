@@ -13,8 +13,10 @@ import {
   Sun, 
   DollarSign,
   ChevronLeft,
-  AlertCircle
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react'
+import ProjectDocuments from '@/components/features/ProjectDocuments'
 
 interface ProposalStatus {
   status: string
@@ -24,6 +26,39 @@ interface ProposalStatus {
   color: string
 }
 
+const projectStages = [
+  {
+    stage: 'proposal',
+    label: 'Proposal',
+    description: 'Initial proposal and customer agreement'
+  },
+  {
+    stage: 'onboarding',
+    label: 'Onboarding',
+    description: 'Document collection and verification'
+  },
+  {
+    stage: 'design',
+    label: 'Design',
+    description: 'System design and engineering'
+  },
+  {
+    stage: 'permitting',
+    label: 'Permitting',
+    description: 'Permit application and approval'
+  },
+  {
+    stage: 'installation',
+    label: 'Installation',
+    description: 'System installation and testing'
+  },
+  {
+    stage: 'completed',
+    label: 'Completed',
+    description: 'Project completed and system activated'
+  }
+]
+
 const statusConfig: Record<string, ProposalStatus> = {
   pending: {
     status: 'pending',
@@ -32,89 +67,26 @@ const statusConfig: Record<string, ProposalStatus> = {
     icon: <Clock className="w-6 h-6" />,
     color: 'text-gray-500'
   },
-  site_survey_scheduled: {
-    status: 'site_survey_scheduled',
-    label: 'Site Survey Scheduled',
-    description: 'Our team will visit your property to assess installation requirements.',
+  in_progress: {
+    status: 'in_progress',
+    label: 'In Progress',
+    description: 'Your project is actively being worked on.',
     icon: <Calendar className="w-6 h-6" />,
     color: 'text-blue-500'
   },
-  site_survey_completed: {
-    status: 'site_survey_completed',
-    label: 'Site Survey Completed',
-    description: 'Property assessment completed. Proceeding with system design.',
+  completed: {
+    status: 'completed',
+    label: 'Completed',
+    description: 'Your project has been completed.',
     icon: <CheckCircle2 className="w-6 h-6" />,
     color: 'text-green-500'
   },
-  design_in_progress: {
-    status: 'design_in_progress',
-    label: 'Design in Progress',
-    description: 'Our engineers are designing your custom solar system.',
-    icon: <FileText className="w-6 h-6" />,
-    color: 'text-yellow-500'
-  },
-  design_completed: {
-    status: 'design_completed',
-    label: 'Design Completed',
-    description: 'Your solar system design has been finalized.',
-    icon: <CheckCircle2 className="w-6 h-6" />,
-    color: 'text-green-500'
-  },
-  permits_in_progress: {
-    status: 'permits_in_progress',
-    label: 'Permits in Progress',
-    description: 'We are obtaining necessary permits from local authorities.',
-    icon: <FileText className="w-6 h-6" />,
-    color: 'text-yellow-500'
-  },
-  permits_approved: {
-    status: 'permits_approved',
-    label: 'Permits Approved',
-    description: 'All required permits have been approved.',
-    icon: <CheckCircle2 className="w-6 h-6" />,
-    color: 'text-green-500'
-  },
-  installation_scheduled: {
-    status: 'installation_scheduled',
-    label: 'Installation Scheduled',
-    description: 'Your installation date has been set.',
-    icon: <Calendar className="w-6 h-6" />,
-    color: 'text-blue-500'
-  },
-  installation_in_progress: {
-    status: 'installation_in_progress',
-    label: 'Installation in Progress',
-    description: 'Our team is installing your solar system.',
-    icon: <Sun className="w-6 h-6" />,
-    color: 'text-yellow-500'
-  },
-  installation_completed: {
-    status: 'installation_completed',
-    label: 'Installation Completed',
-    description: 'Your solar system has been installed.',
-    icon: <CheckCircle2 className="w-6 h-6" />,
-    color: 'text-green-500'
-  },
-  inspection_scheduled: {
-    status: 'inspection_scheduled',
-    label: 'Inspection Scheduled',
-    description: 'Final inspection has been scheduled.',
-    icon: <Calendar className="w-6 h-6" />,
-    color: 'text-blue-500'
-  },
-  inspection_passed: {
-    status: 'inspection_passed',
-    label: 'Inspection Passed',
-    description: 'Your system has passed final inspection.',
-    icon: <CheckCircle2 className="w-6 h-6" />,
-    color: 'text-green-500'
-  },
-  system_activated: {
-    status: 'system_activated',
-    label: 'System Activated',
-    description: 'Your solar system is now active and producing clean energy!',
-    icon: <Sun className="w-6 h-6" />,
-    color: 'text-green-500'
+  cancelled: {
+    status: 'cancelled',
+    label: 'Cancelled',
+    description: 'This project has been cancelled.',
+    icon: <AlertCircle className="w-6 h-6" />,
+    color: 'text-red-500'
   }
 }
 
@@ -122,281 +94,190 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
   const router = useRouter()
   const [proposal, setProposal] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
-    loadProposal()
+    checkAccess()
   }, [])
 
-  const loadProposal = async () => {
+  const checkAccess = async () => {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError)
-        throw new Error('Session validation failed')
-      }
-
+      const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        console.log('No session found, redirecting to login...')
-        router.push('/login?returnUrl=' + encodeURIComponent('/proposals/' + params.id))
+        router.push('/login')
         return
       }
 
-      // Check if user still exists in profiles table
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('is_admin')
         .eq('id', session.user.id)
         .single()
 
-      if (profileError || !profile) {
-        console.error('Profile not found:', profileError)
-        // User might have been deleted, clear the session
-        await supabase.auth.signOut()
-        router.push('/login?error=profile_not_found')
-        return
-      }
+      setIsAdmin(profile?.is_admin || false)
+      loadProposal()
+    } catch (error) {
+      console.error('Error checking access:', error)
+      toast.error('Failed to check access')
+    }
+  }
 
-      console.log('Fetching proposal:', params.id)
-      const { data: proposal, error: proposalError } = await supabase
+  const loadProposal = async () => {
+    try {
+      setLoading(true)
+      const { data: proposal, error } = await supabase
         .from('proposals')
         .select('*')
         .eq('id', params.id)
         .single()
 
-      if (proposalError) {
-        if (proposalError.code === 'PGRST116') {
-          throw new Error('Proposal not found')
-        }
-        console.error('Proposal error:', proposalError)
-        throw new Error('Failed to load proposal')
-      }
-
-      if (!proposal) {
-        console.error('Proposal not found')
-        throw new Error('Proposal not found')
-      }
-
-      // Verify proposal ownership
-      if (proposal.user_id !== session.user.id) {
-        throw new Error('You do not have permission to view this proposal')
-      }
-
-      console.log('Proposal loaded:', proposal)
+      if (error) throw error
       setProposal(proposal)
     } catch (error) {
       console.error('Error loading proposal:', error)
-      setError(error instanceof Error ? error.message : 'Error loading proposal')
-      toast.error(error instanceof Error ? error.message : 'Error loading proposal details')
+      toast.error('Failed to load proposal')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const updateProjectStage = async (newStage: string) => {
+    try {
+      setUpdating(true)
+      const { error } = await supabase
+        .from('proposals')
+        .update({ 
+          stage: newStage,
+          status: newStage === 'completed' ? 'completed' : 'in_progress',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', params.id)
+
+      if (error) throw error
+
+      toast.success('Project stage updated successfully')
+      loadProposal()
+    } catch (error) {
+      console.error('Error updating project stage:', error)
+      toast.error('Failed to update project stage')
+    } finally {
+      setUpdating(false)
     }
   }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      currency: 'USD'
     }).format(amount)
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     )
   }
 
-  if (error || !proposal) {
+  if (!proposal) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
-        <AlertCircle className="h-12 w-12 text-red-500" />
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Proposal</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Return to Dashboard
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Proposal Not Found</h1>
+        <p className="text-gray-600 mb-4">The proposal you're looking for doesn't exist or you don't have access to it.</p>
+        <button
+          onClick={() => router.back()}
+          className="btn btn-primary"
+        >
+          Go Back
+        </button>
       </div>
     )
   }
 
-  // Set default status if not present
-  const currentStatus = statusConfig[proposal.status || 'pending']
-
-  // Ensure we have a valid status
-  if (!currentStatus) {
-    console.error('Invalid status:', proposal.status)
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
-        <AlertCircle className="h-12 w-12 text-red-500" />
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Proposal Status</h2>
-          <p className="text-gray-600 mb-4">The proposal status is invalid or corrupted.</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    )
-  }
+  const currentStageIndex = projectStages.findIndex(s => s.stage === proposal.stage)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Back Button */}
-        <button
-          onClick={() => router.push('/dashboard')}
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-8"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </button>
+    <div className="container mx-auto px-4 py-8">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+      >
+        <ChevronLeft className="w-4 h-4 mr-1" />
+        Back
+      </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Status Card */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className={`${currentStatus.color}`}>
-                  {currentStatus.icon}
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">{currentStatus.label}</h2>
-                  <p className="text-gray-600">{currentStatus.description}</p>
-                </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h1 className="text-2xl font-bold mb-4">Project Details</h1>
+            <div className="grid gap-4">
+              <div>
+                <label className="text-sm text-gray-500">Address</label>
+                <p className="font-medium">{proposal.address}</p>
               </div>
-              
-              {proposal.notes && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">{proposal.notes}</p>
-                </div>
-              )}
-            </div>
-
-            {/* System Details */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">System Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Sun className="w-5 h-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">System Size</p>
-                      <p className="font-medium">{proposal.system_size} kW</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Number of Panels</p>
-                      <p className="font-medium">{proposal.number_of_panels} panels</p>
-                    </div>
-                  </div>
-                  {proposal.include_battery && (
-                    <div className="flex items-center gap-3">
-                      <Battery className="w-5 h-5 text-blue-500" />
-                      <div>
-                        <p className="text-sm text-gray-600">Battery System</p>
-                        <p className="font-medium">
-                          {proposal.battery_count}x {proposal.battery_type}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="w-5 h-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Total Investment</p>
-                      <p className="font-medium">{formatCurrency(proposal.total_price)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Payment Method</p>
-                      <p className="font-medium capitalize">{proposal.payment_type}</p>
-                    </div>
-                  </div>
-                  {proposal.payment_type === 'finance' && (
-                    <div className="flex items-center gap-3">
-                      <DollarSign className="w-5 h-5 text-blue-500" />
-                      <div>
-                        <p className="text-sm text-gray-600">Monthly Payment</p>
-                        <p className="font-medium">{formatCurrency(proposal.monthly_payment)}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <div>
+                <label className="text-sm text-gray-500">System Size</label>
+                <p className="font-medium">{proposal.system_size} kW</p>
               </div>
-            </div>
-
-            {/* Installation Address */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Installation Address</h2>
-              <p className="text-gray-600">{proposal.address}</p>
+              <div>
+                <label className="text-sm text-gray-500">Total Price</label>
+                <p className="font-medium">{formatCurrency(proposal.total_price)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Package Type</label>
+                <p className="font-medium">{proposal.package_type}</p>
+              </div>
             </div>
           </div>
 
-          {/* Timeline */}
-          <div className="bg-white rounded-xl shadow-sm p-6 h-fit">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Project Timeline</h2>
-            <div className="space-y-6">
-              {Object.values(statusConfig).map((status, index) => {
-                const isCompleted = Object.values(statusConfig).indexOf(currentStatus) >= index
-                const isCurrent = currentStatus.status === status.status
-                
-                return (
-                  <div
-                    key={status.status}
-                    className={`flex items-start gap-3 ${
-                      index !== Object.values(statusConfig).length - 1
-                        ? 'pb-6 border-l-2 border-gray-200 ml-[11px]'
-                        : ''
-                    }`}
-                  >
+          {isAdmin && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold mb-4">Project Stage</h2>
+              <div className="space-y-4">
+                {projectStages.map((stage, index) => {
+                  const isComplete = index < currentStageIndex
+                  const isCurrent = index === currentStageIndex
+                  const isUpcoming = index > currentStageIndex
+
+                  return (
                     <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        isCompleted
-                          ? isCurrent
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-green-500 text-white'
-                          : 'bg-gray-200 text-gray-400'
+                      key={stage.stage}
+                      className={`flex items-center justify-between p-4 rounded-lg border ${
+                        isCurrent ? 'border-blue-500 bg-blue-50' :
+                        isComplete ? 'border-green-500 bg-green-50' :
+                        'border-gray-200'
                       }`}
                     >
-                      {isCompleted && <CheckCircle2 className="w-4 h-4" />}
+                      <div>
+                        <h3 className="font-medium">{stage.label}</h3>
+                        <p className="text-sm text-gray-500">{stage.description}</p>
+                      </div>
+                      {isCurrent && !updating && (
+                        <button
+                          onClick={() => updateProjectStage(projectStages[index + 1]?.stage)}
+                          className="btn btn-primary btn-sm"
+                          disabled={!projectStages[index + 1]}
+                        >
+                          Next Stage
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </button>
+                      )}
+                      {isComplete && (
+                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                      )}
                     </div>
-                    <div>
-                      <p className={`font-medium ${
-                        isCurrent ? 'text-blue-500' : isCompleted ? 'text-gray-900' : 'text-gray-400'
-                      }`}>
-                        {status.label}
-                      </p>
-                      <p className={`text-sm ${
-                        isCompleted ? 'text-gray-600' : 'text-gray-400'
-                      }`}>
-                        {status.description}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <ProjectDocuments proposalId={params.id} isAdmin={isAdmin} />
         </div>
       </div>
     </div>
