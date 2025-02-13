@@ -11,7 +11,7 @@ create policy "Users can upload their own documents"
     (storage.foldername(name))[1] = 'project-documents' AND
     exists (
       select 1 from public.proposals
-      where id = (storage.foldername(name))[2]
+      where id = (storage.foldername(name))[2]::uuid
       and user_id = auth.uid()
     )
   );
@@ -25,7 +25,7 @@ create policy "Users can view their own documents"
     (storage.foldername(name))[1] = 'project-documents' AND
     exists (
       select 1 from public.proposals
-      where id = (storage.foldername(name))[2]
+      where id = (storage.foldername(name))[2]::uuid
       and user_id = auth.uid()
     )
   );
