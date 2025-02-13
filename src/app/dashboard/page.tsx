@@ -168,121 +168,166 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="text-4xl font-bold mb-4">
-            Welcome back, {user?.user_metadata?.name || 'User'}!
-          </h1>
-          <p className="text-gray-300 text-lg">
-            Manage your solar proposals and track your clean energy journey
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-red-50 rounded-lg">
-                <Sun className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total System Capacity</p>
-                <p className="text-2xl font-bold text-gray-900">{calculateTotalCapacity().toFixed(1)} kW</p>
+    <div className="min-h-screen bg-black text-white">
+      {/* Hero Section with Energy Stats */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="relative bg-gray-900 rounded-2xl p-8 overflow-hidden mb-8">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-medium">
+                Demo Home
+                <span className="block text-green-400 text-sm font-normal mt-1">Charging</span>
+              </h1>
+              <div className="flex items-center gap-2">
+                <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                  <span className="sr-only">Information</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+                <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                  <span className="sr-only">Close</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-gray-900" />
+            {/* Energy Flow Visualization */}
+            <div className="grid grid-cols-3 gap-4 mb-8 text-center">
+              <div>
+                <p className="text-2xl font-medium">{(calculateTotalCapacity() * 0.15).toFixed(1)} kW</p>
+                <p className="text-gray-400 text-sm">PANEL 1</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Investment</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(calculateTotalInvestment())}</p>
+                <p className="text-2xl font-medium">{calculateTotalCapacity().toFixed(1)} kW</p>
+                <p className="text-gray-400 text-sm">SOLAR</p>
+              </div>
+              <div>
+                <p className="text-2xl font-medium">{(calculateTotalCapacity() * 0.12).toFixed(1)} kW</p>
+                <p className="text-gray-400 text-sm">HOME</p>
+              </div>
+            </div>
+
+            {/* House Visualization Placeholder */}
+            <div className="relative aspect-video bg-gray-800 rounded-lg mb-8 overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-gray-500">House Visualization</p>
+              </div>
+            </div>
+
+            {/* Energy Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-2xl font-medium">{(calculateTotalCapacity() * 4.9).toFixed(1)} kW</p>
+                <p className="text-gray-400 text-sm">POWERWALL - 89%</p>
+              </div>
+              <div>
+                <p className="text-2xl font-medium">0 kW</p>
+                <p className="text-gray-400 text-sm">GRID</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        <div className="space-y-4">
+          <button className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors">
+            <div className="flex items-center gap-3">
+              <Battery className="h-5 w-5 text-green-400" />
+              <span className="font-medium">Get Powerwall</span>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          </button>
+
+          <button className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors">
+            <div className="flex items-center gap-3">
+              <Sun className="h-5 w-5 text-yellow-400" />
+              <div className="text-left">
+                <span className="font-medium block">Energy</span>
+                <span className="text-sm text-gray-400">{(calculateTotalCapacity() * 10.6).toFixed(1)} kWh Generated Today</span>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          </button>
+
+          <button className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-5 w-5 text-blue-400" />
+              <div className="text-left">
+                <span className="font-medium block">Impact</span>
+                <span className="text-sm text-gray-400">64% Self-Powered Today</span>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          </button>
+
           <Link
             href="/order"
-            className="group flex items-center justify-between p-6 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <PlusCircle className="h-5 w-5" />
+              <PlusCircle className="h-5 w-5 text-red-400" />
               <span className="font-medium">New Solar Order</span>
             </div>
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <Link
-            href="/profile"
-            className="group flex items-center justify-between p-6 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">View Profile</span>
-            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <Link
-            href="/shop"
-            className="group flex items-center justify-between p-6 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">Browse Shop</span>
-            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="h-5 w-5 text-gray-400" />
           </Link>
         </div>
 
-        {/* Proposals Section */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Your Proposals</h2>
-        </div>
-
-        {proposals.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100">
-            <div className="max-w-md mx-auto">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No proposals yet</h3>
-              <p className="text-gray-500 mb-6">Start your solar journey by creating your first proposal</p>
-              <Link
-                href="/order"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors"
-              >
-                Create New Proposal
-              </Link>
+        {/* Weather Status */}
+        <div className="mt-8 p-4 bg-gray-900 rounded-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Sun className="h-5 w-5 text-yellow-400" />
+              <div>
+                <p className="font-medium">Morning - Sunny</p>
+                <p className="text-sm text-gray-400">Generating energy from solar</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                <ChevronRight className="h-5 w-5 text-gray-400 -rotate-180" />
+              </button>
+              <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {proposals.map((proposal) => (
-              <Link
-                key={proposal.id}
-                href={`/proposals/${proposal.id}`}
-                className="block bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 transition-colors"
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-1">
-                        {proposal.address}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {proposal.system_size}kW System • {proposal.number_of_panels} Panels
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <p className="text-lg font-medium text-gray-900">
-                        {formatCurrency(proposal.total_price)}
-                      </p>
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
+        </div>
+
+        {/* Proposals Section - Only show if there are proposals */}
+        {proposals.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xl font-medium mb-4">Recent Proposals</h2>
+            <div className="space-y-4">
+              {proposals.map((proposal) => (
+                <Link
+                  key={proposal.id}
+                  href={`/proposals/${proposal.id}`}
+                  className="block bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium mb-1">
+                          {proposal.address}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          {proposal.system_size}kW System • {proposal.number_of_panels} Panels
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="font-medium">
+                          {formatCurrency(proposal.total_price)}
+                        </p>
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>
