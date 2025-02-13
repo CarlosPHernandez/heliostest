@@ -65,7 +65,14 @@ export default function ProposalsPage() {
       const { data, error } = await supabase
         .from('proposals')
         .select(`
-          *,
+          id,
+          user_id,
+          address,
+          system_size,
+          total_price,
+          status,
+          stage,
+          created_at,
           profiles:user_id (
             email,
             name
