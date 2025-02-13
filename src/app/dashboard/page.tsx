@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { toast } from 'sonner'
 import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 interface Proposal {
   id: string
@@ -24,7 +24,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [proposals, setProposals] = useState<Proposal[]>([])
-  const supabase = createClientComponentClient()
 
   useEffect(() => {
     checkUser()
@@ -66,8 +65,32 @@ export default function DashboardPage() {
         throw proposalsError
       }
 
-      console.log('Proposals fetched:', proposalsData?.length || 0, 'proposals found')
-      setProposals(proposalsData || [])
+      // Log the raw data received
+      console.log('Raw proposals data:', proposalsData)
+
+      if (!proposalsData) {
+        console.log('No proposals data returned')
+        setProposals([])
+        return
+      }
+
+      // Validate each proposal
+      const validProposals = proposalsData.map(proposal => {
+        console.log('Processing proposal:', proposal)
+        return {
+          id: proposal.id,
+          system_size: proposal.system_size,
+          number_of_panels: proposal.number_of_panels,
+          total_price: proposal.total_price,
+          monthly_bill: proposal.monthly_bill,
+          address: proposal.address,
+          package_type: proposal.package_type,
+          created_at: proposal.created_at
+        }
+      })
+
+      console.log('Processed proposals:', validProposals)
+      setProposals(validProposals)
     } catch (error) {
       console.error('Dashboard error:', error)
       setError(error instanceof Error ? error.message : 'Error loading dashboard')

@@ -176,35 +176,37 @@ export default function ProposalPage() {
         return
       }
 
-      console.log('Saving proposal to database:', proposalData)
+      console.log('Saving proposal to Supabase for user:', session.user.id)
+      const proposalDataToSave = {
+        user_id: session.user.id,
+        system_size: systemInfo.systemSize,
+        number_of_panels: systemInfo.numberOfPanels,
+        total_price: totalPrice,
+        monthly_bill: monthlyBill,
+        address,
+        package_type: packageType,
+        include_battery: includeBattery,
+        battery_count: batteryCount,
+        battery_type: selectedBattery,
+        warranty_package: selectedWarranty,
+        payment_type: paymentType,
+        financing_term: paymentType === 'finance' ? selectedTerm : null,
+        down_payment: paymentType === 'finance' ? downPayment : null,
+        monthly_payment: paymentType === 'finance' ? financingOptions?.monthlyPayment : null
+      }
+      console.log('Proposal data:', proposalDataToSave)
 
-      // For authenticated users, save directly to Supabase
-      const { error: proposalError } = await supabase
+      const { data: savedProposal, error: proposalError } = await supabase
         .from('proposals')
-        .insert([
-          {
-            user_id: session.user.id,
-            system_size: systemInfo.systemSize,
-            number_of_panels: systemInfo.numberOfPanels,
-            total_price: totalPrice, // Use updated total price
-            monthly_bill: monthlyBill,
-            address,
-            package_type: packageType,
-            include_battery: includeBattery,
-            battery_count: batteryCount,
-            battery_type: selectedBattery,
-            warranty_package: selectedWarranty,
-            payment_type: paymentType,
-            financing_term: paymentType === 'finance' ? selectedTerm : null,
-            down_payment: paymentType === 'finance' ? downPayment : null,
-            monthly_payment: paymentType === 'finance' ? financingOptions?.monthlyPayment : null
-          }
-        ])
+        .insert([proposalDataToSave])
+        .select()
 
       if (proposalError) {
         console.error('Error saving proposal:', proposalError)
         throw proposalError
       }
+
+      console.log('Proposal saved successfully:', savedProposal)
 
       // Clear stored proposal data
       localStorage.removeItem('pendingProposal')
