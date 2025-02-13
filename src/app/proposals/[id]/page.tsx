@@ -132,24 +132,35 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      if (sessionError) throw sessionError
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        throw sessionError
+      }
+
       if (!session) {
-        router.push('/login')
+        console.log('No session found, redirecting to login...')
+        router.push('/login?returnUrl=' + encodeURIComponent('/proposals/' + params.id))
         return
       }
 
+      console.log('Fetching proposal:', params.id)
       const { data: proposal, error: proposalError } = await supabase
         .from('proposals')
         .select('*')
         .eq('id', params.id)
         .single()
 
-      if (proposalError) throw proposalError
+      if (proposalError) {
+        console.error('Proposal error:', proposalError)
+        throw proposalError
+      }
 
       if (!proposal) {
+        console.error('Proposal not found')
         throw new Error('Proposal not found')
       }
 
+      console.log('Proposal loaded:', proposal)
       setProposal(proposal)
     } catch (error) {
       console.error('Error loading proposal:', error)

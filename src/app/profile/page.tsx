@@ -173,6 +173,7 @@ export default function ProfilePage() {
 function ProposalsList({ userId }: { userId: string | undefined }) {
   const [proposals, setProposals] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     if (userId) {
@@ -248,7 +249,7 @@ function ProposalsList({ userId }: { userId: string | undefined }) {
               </span>
             </div>
             <button
-              onClick={() => window.location.href = `/proposals/${proposal.id}`}
+              onClick={() => router.push(`/proposals/${proposal.id}`)}
               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
             >
               View Details →

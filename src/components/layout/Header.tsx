@@ -68,7 +68,7 @@ const Header = () => {
     { name: 'Profile', href: '/profile' },
   ] : []
 
-  const navItems = [...publicNavItems, ...userNavItems]
+  const navItems = user ? [...userNavItems] : [...publicNavItems]
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-[100]">
