@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight } from 'lucide-react'
+import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface Proposal {
@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [proposals, setProposals] = useState<Proposal[]>([])
 
   useEffect(() => {
@@ -30,27 +31,45 @@ export default function DashboardPage() {
 
   async function checkUser() {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) throw error
+      console.log('Checking user session...')
+      setError(null)
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        throw sessionError
+      }
+
+      console.log('Session check complete:', session ? 'Session found' : 'No session')
       
       if (!session) {
+        console.log('No session, redirecting to login...')
         router.push('/login?returnUrl=/dashboard')
         return
       }
 
       setUser(session.user)
+      console.log('User set:', session.user.id)
 
       // Fetch proposals after confirming user is authenticated
+      console.log('Fetching proposals...')
       const { data: proposals, error: proposalsError } = await supabase
         .from('proposals')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
 
-      if (proposalsError) throw proposalsError
+      if (proposalsError) {
+        console.error('Proposals fetch error:', proposalsError)
+        throw proposalsError
+      }
+
+      console.log('Proposals fetched:', proposals?.length || 0, 'proposals found')
       setProposals(proposals || [])
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Dashboard error:', error)
+      setError(error instanceof Error ? error.message : 'Error loading dashboard')
       toast.error('Error loading dashboard data')
     } finally {
       setLoading(false)
@@ -76,14 +95,38 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <p className="text-gray-600">Loading your dashboard...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <div className="max-w-md text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setLoading(true)
+              setError(null)
+              checkUser()
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     )
   }
 
   if (!user) {
-    return null // Return null as we're redirecting in checkUser
+    console.log('No user found, redirecting...')
+    router.push('/login?returnUrl=/dashboard')
+    return null
   }
 
   return (
@@ -178,12 +221,12 @@ export default function DashboardPage() {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No proposals yet</h3>
               <p className="text-gray-600 mb-4">Start your solar journey by creating your first proposal</p>
-              <button
-                onClick={() => router.push('/order')}
+              <Link
+                href="/order"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 Create Your First Proposal
-              </button>
+              </Link>
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
