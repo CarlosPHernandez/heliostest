@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- House Base -->
+  <path d="M 200 400 L 600 400 L 600 250 L 400 100 L 200 250 Z" fill="#1A1A1A" stroke="white" stroke-width="2"/>
+  
+  <!-- Solar Panels -->
+  <g transform="translate(250, 150) rotate(20)">
+    <rect x="0" y="0" width="250" height="150" fill="#111111" stroke="white" stroke-width="1"/>
+    <g id="panel-grid">
+      <rect x="10" y="10" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="70" y="10" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="130" y="10" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="190" y="10" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      
+      <rect x="10" y="50" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="70" y="50" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="130" y="50" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="190" y="50" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      
+      <rect x="10" y="90" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="70" y="90" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="130" y="90" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+      <rect x="190" y="90" width="50" height="30" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+    </g>
+  </g>
+  
+  <!-- Futuristic Elements -->
+  <circle cx="400" cy="300" r="5" fill="white">
+    <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="450" cy="250" r="3" fill="white">
+    <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="350" cy="250" r="4" fill="white">
+    <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/>
+  </circle>
+</svg> 

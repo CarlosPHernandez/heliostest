@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import { Roboto } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { Footer } from '@/components/layout/Footer'
+import Script from 'next/script'
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -24,7 +25,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={roboto.variable} suppressHydrationWarning>
-      <body 
+      <head>
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+          strategy="lazyOnload"
+        />
+      </head>
+      <body
         className={`
           min-h-screen bg-background font-sans antialiased
           [--radius:0.5rem]

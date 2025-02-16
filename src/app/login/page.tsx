@@ -14,6 +14,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [errorMessage, setError] = useState('')
   const supabase = createClientComponentClient()
 
   // Show error message if redirected due to deleted profile
@@ -23,36 +24,40 @@ function LoginForm() {
     }
   }, [error])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setError('')
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const formData = new FormData(e.currentTarget)
+      const email = formData.get('email') as string
+      const password = formData.get('password') as string
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (signInError) throw signInError
-
-      // Check if profile exists
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .single()
-
-      if (profileError || !profile) {
-        // Profile doesn't exist, sign out and show error
-        await supabase.auth.signOut()
-        throw new Error('Account not found. Please create a new account.')
+      if (error) {
+        if (error.message.includes('rate limit')) {
+          throw new Error('Too many login attempts. Please wait a few minutes before trying again.')
+        }
+        throw error
       }
 
-      // Redirect to return URL or dashboard
-      router.push(returnUrl)
+      if (data?.user) {
+        // Check if returnUrl exists in query params
+        const params = new URLSearchParams(window.location.search)
+        const returnUrl = params.get('returnUrl')
+
+        // Redirect to the return URL or dashboard
+        router.push(returnUrl || '/dashboard')
+      }
     } catch (error) {
       console.error('Login error:', error)
-      toast.error(error instanceof Error ? error.message : 'Error signing in. Please try again.')
+      setError(error instanceof Error ? error.message : 'Failed to sign in')
+      toast.error(error instanceof Error ? error.message : 'Failed to sign in')
     } finally {
       setIsLoading(false)
     }
@@ -75,99 +80,115 @@ function LoginForm() {
   }
 
   return (
-    <div className="max-w-md w-full space-y-8">
-      <div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link href="/register" className="font-medium text-black hover:text-gray-800">
-            create a new account
-          </Link>
-        </p>
-      </div>
-
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label htmlFor="email-address" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-black focus:border-black focus:z-10 sm:text-sm"
-              placeholder="Email address"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-black focus:border-black focus:z-10 sm:text-sm"
-              placeholder="Password"
-            />
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[520px] space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div>
+          <h2 className="text-center text-2xl font-semibold tracking-tight text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+              Sign up
+            </Link>
+          </p>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <Link href="/reset-password" className="font-medium text-black hover:text-gray-800">
-              Forgot your password?
+        {errorMessage && (
+          <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+            <p className="text-sm text-red-700">{errorMessage}</p>
+            {errorMessage.includes('rate limit') && (
+              <p className="mt-1 text-xs text-red-600">
+                This is a security measure to protect your account. Please wait a few minutes before trying again.
+              </p>
+            )}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                placeholder="Enter your password"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end">
+            <Link href="/reset-password" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors">
+              Forgot password?
             </Link>
           </div>
-        </div>
 
-        <div>
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              'Sign in'
+            )}
           </button>
-        </div>
 
-        <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-gray-500">Or continue with</span>
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
             </div>
           </div>
 
-          <div className="mt-6">
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              <img
-                className="h-5 w-5 mr-2"
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google logo"
-              />
-              <span>Sign in with Google</span>
-            </button>
-          </div>
-        </div>
-      </form>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <img
+              className="h-5 w-5 mr-2"
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google logo"
+            />
+            Sign in with Google
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

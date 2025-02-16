@@ -9,11 +9,11 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
-    
+
     try {
       // Exchange the code for a session
       const { data: { session }, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
-      
+
       if (sessionError || !session) {
         console.error('Auth callback error:', sessionError)
         return NextResponse.redirect(new URL('/login?error=auth', requestUrl.origin))
@@ -25,20 +25,33 @@ export async function GET(request: Request) {
           // Get the proposal data from cookies
           const cookieStore = cookies()
           const pendingProposalCookie = cookieStore.get('pendingProposal')
-          
+
           if (pendingProposalCookie?.value) {
             const proposalData = JSON.parse(pendingProposalCookie.value)
-            
+
             // Calculate total price including add-ons
-            const totalPrice = proposalData.systemInfo.totalPrice + 
+            const totalPrice = proposalData.systemInfo.totalPrice +
               (proposalData.includeBattery ? (proposalData.batteryCount * (proposalData.batteryType === 'franklin' ? 8500 : 9200)) : 0) +
               (proposalData.warranty === 'extended' ? 1500 : 0)
+
+            // First check if profile exists
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', session.user.id)
+              .single()
+
+            if (profileError) {
+              console.error('Error checking profile:', profileError)
+              return NextResponse.redirect(new URL('/login?error=profile_not_found', requestUrl.origin))
+            }
 
             // Prepare proposal data with snake_case column names
             const proposalInsert = {
               user_id: session.user.id,
               system_size: proposalData.systemInfo.systemSize,
               number_of_panels: proposalData.systemInfo.numberOfPanels,
+              monthly_production: proposalData.systemInfo.monthlyProduction,
               total_price: totalPrice,
               monthly_bill: proposalData.monthlyBill,
               address: proposalData.address,
@@ -50,7 +63,9 @@ export async function GET(request: Request) {
               payment_type: proposalData.paymentType || 'cash',
               financing_term: proposalData.financing?.term || null,
               down_payment: proposalData.financing?.downPayment || null,
-              monthly_payment: proposalData.financing?.monthlyPayment || null
+              monthly_payment: proposalData.financing?.monthlyPayment || null,
+              status: 'saved',
+              stage: 'proposal'
             }
 
             // Save proposal to Supabase

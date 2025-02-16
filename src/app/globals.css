@@ -62,27 +62,41 @@
   }
 
   /* Interactive elements */
-  a, button, input, select, textarea {
+  a,
+  button,
+  input,
+  select,
+  textarea {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   /* Form elements */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     @apply text-gray-900 placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   /* Ensure text is always readable */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     @apply text-gray-900 placeholder:text-gray-500;
   }
 
   /* Make sure text in cards and sections is visible */
-  .card, .section {
+  .card,
+  .section {
     @apply text-gray-900;
   }
 
   /* Ensure headings are visible */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply text-gray-900;
   }
 
@@ -94,6 +108,40 @@
   /* Ensure paragraph text is readable */
   p {
     @apply text-gray-700;
+  }
+
+  /* Form styles */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  select,
+  textarea {
+    @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
+  }
+
+  input[type="checkbox"] {
+    @apply h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500;
+  }
+
+  input[type="radio"] {
+    @apply h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500;
+  }
+
+  label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  select {
+    @apply mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm;
+  }
+
+  textarea {
+    @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
   }
 }
 
@@ -145,15 +193,34 @@
   }
 
   .button {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium
-    transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring 
-    focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
   }
 
   .input {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
-    ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium
-    placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2
-    focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+  }
+
+  .form-group {
+    @apply space-y-1.5;
+  }
+
+  .input-group {
+    @apply mt-1 relative rounded-md shadow-sm;
+  }
+
+  .form-error {
+    @apply mt-1 text-sm text-red-600;
+  }
+
+  .form-helper {
+    @apply mt-1 text-sm text-gray-500;
   }
 }

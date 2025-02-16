@@ -11,7 +11,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [profile, setProfile] = useState<{
     id: string
-    name: string
+    full_name: string
     email: string
   } | null>(null)
 
@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const loadProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (!user) {
         router.push('/login')
         return
@@ -52,7 +52,7 @@ export default function ProfilePage() {
     try {
       const formData = new FormData(e.currentTarget)
       const updates = {
-        name: formData.get('name') as string,
+        full_name: formData.get('name') as string,
         updated_at: new Date().toISOString(),
       }
 
@@ -75,13 +75,22 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     try {
+      // Clear any stored cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.split('=')
+        document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+      })
+
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      
+
+      // Show success message and redirect
+      toast.success('Signed out successfully')
       router.push('/login')
     } catch (error) {
-      toast.error('Error signing out')
-      console.error('Error:', error)
+      console.error('Error signing out:', error)
+      toast.error('Error signing out. Please try again.')
     }
   }
 
@@ -100,7 +109,7 @@ export default function ProfilePage() {
           <div className="bg-white shadow sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg font-medium leading-6 text-gray-900">Profile Settings</h3>
-              
+
               <form onSubmit={handleSubmit} className="mt-5 space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -111,7 +120,7 @@ export default function ProfilePage() {
                       type="text"
                       name="name"
                       id="name"
-                      defaultValue={profile?.name || ''}
+                      defaultValue={profile?.full_name || ''}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     />
                   </div>

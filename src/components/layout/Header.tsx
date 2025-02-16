@@ -14,14 +14,25 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     // Get initial user state
     getUser()
 
     // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(data?.is_admin ?? false)
+      } else {
+        setIsAdmin(false)
+      }
       setLoading(false)
     })
 
@@ -35,6 +46,14 @@ const Header = () => {
       const { data: { session }, error } = await supabase.auth.getSession()
       if (error) throw error
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(data?.is_admin ?? false)
+      }
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -44,16 +63,27 @@ const Header = () => {
 
   const handleSignOut = async () => {
     try {
+      // Clear any stored cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.split('=')
+        document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+      })
+
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      
+
+      // Update local state
       setUser(null)
+      setIsMobileMenuOpen(false)
+
+      // Show success message and redirect
       toast.success('Signed out successfully')
       router.push('/')
       router.refresh()
     } catch (error) {
-      toast.error('Error signing out')
-      console.error('Error:', error)
+      console.error('Error signing out:', error)
+      toast.error('Error signing out. Please try again.')
     }
   }
 
@@ -88,19 +118,33 @@ const Header = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium ${
-                  pathname === item.href ? 'text-black font-semibold' : ''
-                }`}
+                className={`text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium ${pathname === item.href ? 'text-black font-semibold' : ''
+                  }`}
               >
                 {item.name}
               </Link>
             ))}
-            
+
             {!loading && (
               <>
                 {user ? (
                   <div className="flex items-center gap-4">
                     <NotificationBell />
+                    {isAdmin ? (
+                      <Link
+                        href="/admin/pending-requests"
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Admin Requests
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/admin/register"
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Request Admin Access
+                      </Link>
+                    )}
                     <button
                       onClick={handleSignOut}
                       className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -152,9 +196,8 @@ const Header = () => {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 ${
-                    pathname === item.href ? 'text-black font-semibold' : ''
-                  }`}
+                  className={`block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 ${pathname === item.href ? 'text-black font-semibold' : ''
+                    }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.name}

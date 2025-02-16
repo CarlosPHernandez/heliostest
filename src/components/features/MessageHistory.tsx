@@ -31,7 +31,7 @@ export default function MessageHistory({ proposalId }: MessageHistoryProps) {
   useEffect(() => {
     checkUser()
     loadMessages()
-    
+
     // Subscribe to new messages
     const channel = supabase
       .channel('project_messages')
@@ -75,35 +75,49 @@ export default function MessageHistory({ proposalId }: MessageHistoryProps) {
     try {
       setLoading(true)
       const { data, error } = await supabase
-        .from('project_messages')
+        .from('message_details')
         .select(`
           id,
           content,
           created_at,
           is_read,
-          author:author_id (
-            name,
-            is_admin
-          )
+          author_name,
+          author_is_admin
         `)
         .eq('proposal_id', proposalId)
         .order('created_at', { ascending: true })
-        .returns<Message[]>()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error details:', error)
+        throw error
+      }
+
+      // Transform the data to match our Message interface
+      const transformedMessages = data.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        created_at: msg.created_at,
+        is_read: msg.is_read,
+        author: {
+          name: msg.author_name || 'Unknown',
+          is_admin: msg.author_is_admin || false
+        }
+      }))
 
       // Mark unread messages as read
-      const unreadMessages = data?.filter(m => !m.is_read) || []
+      const unreadMessages = transformedMessages.filter(m => !m.is_read)
       if (unreadMessages.length > 0) {
         const { error: updateError } = await supabase
           .from('project_messages')
           .update({ is_read: true })
           .in('id', unreadMessages.map(m => m.id))
 
-        if (updateError) throw updateError
+        if (updateError) {
+          console.error('Error marking messages as read:', updateError)
+        }
       }
 
-      setMessages(data || [])
+      setMessages(transformedMessages)
     } catch (error) {
       console.error('Error loading messages:', error)
       toast.error('Failed to load messages')
@@ -118,15 +132,31 @@ export default function MessageHistory({ proposalId }: MessageHistoryProps) {
 
     try {
       setSubmitting(true)
+
+      // First get the profile ID
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      if (profileError) {
+        console.error('Error getting profile:', profileError)
+        throw new Error('Failed to get profile')
+      }
+
       const { error } = await supabase
         .from('project_messages')
         .insert({
           proposal_id: proposalId,
-          author_id: userId,
+          author_id: profile.id,
           content: newMessage.trim()
         })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error sending message:', error)
+        throw error
+      }
 
       setNewMessage('')
       toast.success('Message sent')
@@ -149,10 +179,10 @@ export default function MessageHistory({ proposalId }: MessageHistoryProps) {
     } else if (date.toDateString() === yesterday.toDateString()) {
       return `Yesterday ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     } else {
-      return date.toLocaleDateString([], { 
-        month: 'short', 
+      return date.toLocaleDateString([], {
+        month: 'short',
         day: 'numeric',
-        hour: '2-digit', 
+        hour: '2-digit',
         minute: '2-digit'
       })
     }
@@ -161,7 +191,7 @@ export default function MessageHistory({ proposalId }: MessageHistoryProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Messages</h2>
-      
+
       <div className="bg-gray-50 rounded-lg p-4 flex flex-col h-[500px]">
         <div className="flex-1 overflow-y-auto mb-4">
           {loading ? (
@@ -177,24 +207,20 @@ export default function MessageHistory({ proposalId }: MessageHistoryProps) {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex flex-col ${
-                    message.author.is_admin ? 'items-start' : 'items-end'
-                  }`}
+                  className={`flex flex-col ${message.author.is_admin ? 'items-start' : 'items-end'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.author.is_admin
+                    className={`max-w-[80%] rounded-lg p-3 ${message.author.is_admin
                         ? 'bg-white border border-gray-200'
                         : 'bg-blue-500 text-white'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-medium">
                         {message.author.name}
                       </span>
-                      <span className={`text-xs ${
-                        message.author.is_admin ? 'text-gray-500' : 'text-blue-100'
-                      }`}>
+                      <span className={`text-xs ${message.author.is_admin ? 'text-gray-500' : 'text-blue-100'
+                        }`}>
                         {formatMessageTime(message.created_at)}
                       </span>
                     </div>

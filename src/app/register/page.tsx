@@ -21,16 +21,21 @@ export default function RegisterPage() {
 
     try {
       console.log('Starting registration process...')
-      
+
+      // Get any pending proposal from cookies
+      const cookies = document.cookie.split(';')
+      const pendingProposalCookie = cookies.find(cookie => cookie.trim().startsWith('pendingProposal='))
+      const pendingProposal = pendingProposalCookie ? JSON.parse(decodeURIComponent(pendingProposalCookie.split('=')[1])) : null
+
       // Sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
+            full_name: name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?${pendingProposal ? 'returnUrl=/order/proposal' : ''}`,
         },
       })
 
@@ -48,14 +53,14 @@ export default function RegisterPage() {
       if (authData.user) {
         console.log('User created successfully, attempting profile creation...')
         console.log('Email confirmation status:', authData.user.confirmation_sent_at ? 'Sent' : 'Not sent')
-        
+
         // Create profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
               id: authData.user.id,
-              name,
+              full_name: name,
               email,
             },
           ])

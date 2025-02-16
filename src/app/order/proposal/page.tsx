@@ -33,8 +33,8 @@ const calculateMonthlyPayment = (totalAmount: number, downPayment: number, termY
   const monthlyRate = 0.0625 / 12 // 6.25% APR
   const numberOfPayments = termYears * 12
 
-  const monthlyPayment = 
-    (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
+  const monthlyPayment =
+    (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
     (Math.pow(1 + monthlyRate, numberOfPayments) - 1)
 
   return Math.round(monthlyPayment)
@@ -59,6 +59,7 @@ export default function ProposalPage() {
   const [address, setAddress] = useState('')
   const [monthlyBill, setMonthlyBill] = useState<number>(0)
   const [mapUrl, setMapUrl] = useState('')
+  const [mapError, setMapError] = useState<string | null>(null)
   const [paymentType, setPaymentType] = useState<PaymentType>('cash')
   const [selectedTerm, setSelectedTerm] = useState(AVAILABLE_TERMS[1]) // Default to 15 years
   const [downPayment, setDownPayment] = useState<number>(0)
@@ -99,8 +100,35 @@ export default function ProposalPage() {
 
       // Generate Google Maps Static API URL for aerial view
       const encodedAddress = encodeURIComponent(storedAddress)
-      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=20&size=800x400&maptype=satellite&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-      setMapUrl(mapUrl)
+      console.log('Stored address:', storedAddress)
+      console.log('Encoded address:', encodedAddress)
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      console.log('API Key available:', !!apiKey)
+
+      if (!apiKey) {
+        throw new Error('Google Maps API key is not configured')
+      }
+
+      // Construct the Static Maps API URL with proper parameters
+      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?`
+        + `center=${encodedAddress}`
+        + `&zoom=20`
+        + `&size=800x400`
+        + `&scale=2`  // For higher resolution
+        + `&maptype=satellite`
+        + `&key=${apiKey}`
+
+      console.log('Map URL:', mapUrl)
+
+      // Verify the URL is valid
+      try {
+        new URL(mapUrl)
+        setMapUrl(mapUrl)
+        setMapError(null)
+      } catch (err) {
+        console.error('Invalid map URL:', err)
+        setMapError('Invalid map URL configuration')
+      }
     } catch (err) {
       console.error('Error loading proposal data:', err)
       setError(err instanceof Error ? err.message : 'Error loading proposal')
@@ -153,7 +181,7 @@ export default function ProposalPage() {
         const proposalData = {
           systemInfo: {
             ...systemInfo,
-            totalPrice: systemInfo.totalPrice + 
+            totalPrice: systemInfo.totalPrice +
               (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
               (selectedWarranty === 'extended' ? 1500 : 0)
           },
@@ -171,10 +199,10 @@ export default function ProposalPage() {
             monthlyPayment: financingOptions?.monthlyPayment
           } : null
         }
-        
+
         // Store in cookie instead of localStorage for better security
         document.cookie = `pendingProposal=${JSON.stringify(proposalData)}; path=/; max-age=3600; secure; samesite=strict`
-        
+
         // Redirect to login with return URL
         const returnUrl = '/order/proposal'
         router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
@@ -182,7 +210,7 @@ export default function ProposalPage() {
       }
 
       // Calculate total price including add-ons
-      const totalPrice = systemInfo.totalPrice + 
+      const totalPrice = systemInfo.totalPrice +
         (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
         (selectedWarranty === 'extended' ? 1500 : 0)
 
@@ -191,6 +219,7 @@ export default function ProposalPage() {
         user_id: session.user.id,
         system_size: systemInfo.systemSize,
         number_of_panels: systemInfo.numberOfPanels,
+        monthly_production: systemInfo.monthlyProduction,
         total_price: totalPrice,
         monthly_bill: monthlyBill,
         address,
@@ -219,14 +248,14 @@ export default function ProposalPage() {
           details: proposalError.details,
           hint: proposalError.hint
         })
-        
+
         // If the error is related to auth, sign out and redirect
         if (proposalError.code === 'PGRST301' || proposalError.message.includes('JWT')) {
           await supabase.auth.signOut()
           router.push('/login')
           return
         }
-        
+
         throw new Error(`Failed to save proposal: ${proposalError.message}`)
       }
 
@@ -234,7 +263,7 @@ export default function ProposalPage() {
 
       // Clear stored proposal data
       document.cookie = 'pendingProposal=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      
+
       toast.success('Proposal saved successfully!')
       router.push('/dashboard')
     } catch (error) {
@@ -331,19 +360,34 @@ export default function ProposalPage() {
               </div>
             </div>
             <div className="relative aspect-video rounded-lg overflow-hidden">
-              <Image
-                src={mapUrl}
-                alt="Property aerial view"
-                fill
-                className="object-cover"
-              />
+              {mapError ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500">
+                  <p>Failed to load aerial view</p>
+                </div>
+              ) : (
+                <Image
+                  src={mapUrl}
+                  alt="Property aerial view"
+                  fill
+                  className="object-cover"
+                  unoptimized={true}
+                  onError={(e) => {
+                    console.error('Error loading aerial image. Details:', {
+                      mapUrl,
+                      error: e,
+                      status: (e.target as HTMLImageElement).naturalWidth === 0 ? 'Zero width' : 'Unknown error'
+                    })
+                    setMapError('Failed to load aerial image')
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
 
         {/* Utility Cost Projection */}
         <div className="mb-8">
-          <UtilityCostProjection 
+          <UtilityCostProjection
             monthlyBill={monthlyBill}
             utilityName="your utility provider"
           />
@@ -351,7 +395,7 @@ export default function ProposalPage() {
 
         {/* Equipment Details */}
         <div className="mb-8">
-          <EquipmentDetails 
+          <EquipmentDetails
             packageType={packageType}
             includeBattery={includeBattery}
             batteryCount={batteryCount}
@@ -373,27 +417,25 @@ export default function ProposalPage() {
         {/* Payment Options */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Payment Options</h2>
-          
+
           {/* Payment Type Toggle */}
           <div className="flex justify-center mb-8">
             <div className="bg-gray-100 p-1 rounded-lg inline-flex">
               <button
                 onClick={() => setPaymentType('cash')}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                  paymentType === 'cash'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${paymentType === 'cash'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Cash Purchase
               </button>
               <button
                 onClick={() => setPaymentType('finance')}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                  paymentType === 'finance'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${paymentType === 'finance'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Financing
               </button>
@@ -406,7 +448,7 @@ export default function ProposalPage() {
                 <span className="text-gray-600">Base System Cost</span>
                 <span className="text-gray-900 font-medium">{formatCurrency(systemInfo.totalPrice)}</span>
               </div>
-              
+
               {includeBattery && (
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-gray-600">Battery System ({batteryCount}x {batteryOptions[selectedBattery].name})</span>
@@ -427,7 +469,7 @@ export default function ProposalPage() {
                 <span className="text-gray-600">Subtotal</span>
                 <span className="text-gray-900 font-medium">
                   {formatCurrency(
-                    systemInfo.totalPrice + 
+                    systemInfo.totalPrice +
                     (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
                     (selectedWarranty === 'extended' ? 1500 : 0)
                   )}
@@ -441,8 +483,8 @@ export default function ProposalPage() {
                 </div>
                 <span className="text-green-600 font-medium">
                   -{formatCurrency(
-                    (systemInfo.totalPrice + 
-                    (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0)) * 0.3
+                    (systemInfo.totalPrice +
+                      (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0)) * 0.3
                   )}
                 </span>
               </div>
@@ -454,9 +496,9 @@ export default function ProposalPage() {
                 </div>
                 <span className="text-gray-900 font-bold text-xl">
                   {formatCurrency(
-                    (systemInfo.totalPrice + 
-                    (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
-                    (selectedWarranty === 'extended' ? 1500 : 0)) * 0.7
+                    (systemInfo.totalPrice +
+                      (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+                      (selectedWarranty === 'extended' ? 1500 : 0)) * 0.7
                   )}
                 </span>
               </div>
@@ -471,8 +513,8 @@ export default function ProposalPage() {
 
               <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <span className="font-medium">Pro Tip:</span> The federal tax credit is a dollar-for-dollar reduction 
-                  in your federal income taxes. You'll receive this credit when you file your taxes for the year the 
+                  <span className="font-medium">Pro Tip:</span> The federal tax credit is a dollar-for-dollar reduction
+                  in your federal income taxes. You'll receive this credit when you file your taxes for the year the
                   system is installed and operational.
                 </p>
               </div>
@@ -521,7 +563,7 @@ export default function ProposalPage() {
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900 font-medium">
                     {formatCurrency(
-                      systemInfo.totalPrice + 
+                      systemInfo.totalPrice +
                       (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
                       (selectedWarranty === 'extended' ? 1500 : 0)
                     )}
@@ -552,8 +594,8 @@ export default function ProposalPage() {
                   </div>
                   <span className="text-green-600 font-medium">
                     -{formatCurrency(
-                      (systemInfo.totalPrice + 
-                      (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0)) * 0.3
+                      (systemInfo.totalPrice +
+                        (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0)) * 0.3
                     )}
                   </span>
                 </div>
@@ -574,7 +616,7 @@ export default function ProposalPage() {
                   <span className="text-gray-900 font-bold text-xl">
                     {formatCurrency(
                       calculateMonthlyPayment(
-                        systemInfo.totalPrice + 
+                        systemInfo.totalPrice +
                         (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
                         (selectedWarranty === 'extended' ? 1500 : 0),
                         downPayment,
@@ -594,8 +636,8 @@ export default function ProposalPage() {
 
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <span className="font-medium">Pro Tip:</span> You can apply your tax credit as an additional 
-                    payment within the first 18 months to reduce your monthly payments. Ask your loan officer 
+                    <span className="font-medium">Pro Tip:</span> You can apply your tax credit as an additional
+                    payment within the first 18 months to reduce your monthly payments. Ask your loan officer
                     about this option.
                   </p>
                 </div>
@@ -613,13 +655,13 @@ export default function ProposalPage() {
             >
               Place Order
             </button>
-            
+
             <div className="mt-6 max-w-2xl text-center space-y-4">
               <p className="text-gray-600">
-                A refundable deposit will be required to begin your solar journey. Final pricing may be adjusted 
+                A refundable deposit will be required to begin your solar journey. Final pricing may be adjusted
                 based on installation requirements and site evaluation.
               </p>
-              
+
               <p className="text-gray-600">
                 By placing this order, you agree to our{' '}
                 <a href="/terms" className="text-blue-600 hover:text-blue-800 underline">Order Terms</a>,{' '}

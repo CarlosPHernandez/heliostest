@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import formsPlugin from '@tailwindcss/forms';
 
 const config: Config = {
   darkMode: ["class"],
@@ -75,11 +76,11 @@ const config: Config = {
           '100%': { transform: 'rotate(360deg)' }
         },
         'pulse-glow': {
-          '0%, 100%': { 
+          '0%, 100%': {
             opacity: '0.2',
             transform: 'scale(0.95)'
           },
-          '50%': { 
+          '50%': {
             opacity: '0.4',
             transform: 'scale(1)'
           }
@@ -113,7 +114,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [formsPlugin],
 };
 
 export default config;
