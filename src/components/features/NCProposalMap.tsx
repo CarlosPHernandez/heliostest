@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Sun, Battery, Zap, Calendar } from 'lucide-react';
 
@@ -30,10 +30,13 @@ const NCProposalMap = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<MapLocation | null>(null);
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-  });
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.google) {
+      setMapLoaded(true);
+    }
+  }, []);
 
   // NC center coordinates
   const center = {
@@ -216,23 +219,12 @@ const NCProposalMap = () => {
     return 'red';
   };
 
-  if (!isLoaded) {
+  if (!mapLoaded) {
     return (
       <div className="flex justify-center items-center h-[400px] bg-gray-50 rounded-lg">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
           <p className="text-gray-600">Loading Google Maps...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div className="flex justify-center items-center h-[400px] bg-gray-50 rounded-lg">
-        <div className="text-center text-red-600">
-          <p>Error loading Google Maps</p>
-          <p className="text-sm mt-2">{loadError.message}</p>
         </div>
       </div>
     );

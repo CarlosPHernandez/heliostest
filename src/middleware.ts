@@ -2,29 +2,13 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Define public routes that don't require authentication
-const PUBLIC_ROUTES = [
-  '/',
-  '/login',
-  '/register',
-  '/reset-password',
-  '/about',
-  '/discover',
-  '/shop',
-  '/order',
-  '/order/address',
-  '/order/packages',
-  '/order/proposal',
-  '/order/summary',
-  '/auth/callback'
-]
-
 // Define routes that require authentication
 const PROTECTED_ROUTES = [
   '/dashboard',
   '/profile',
   '/settings',
-  '/proposals'
+  '/proposals',
+  '/admin'
 ]
 
 export async function middleware(req: NextRequest) {
@@ -46,9 +30,6 @@ export async function middleware(req: NextRequest) {
 
   // Check if the route is protected
   const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
-  
-  // Check if the route is public
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route)
 
   // If it's a protected route and user is not authenticated
   if (isProtectedRoute && !session) {
@@ -62,6 +43,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
+  // Allow access to all other routes
   return res
 }
 

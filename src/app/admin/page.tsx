@@ -8,6 +8,7 @@ import Link from 'next/link'
 import NCProposalMap from '@/components/features/NCProposalMap'
 import { toast } from 'sonner'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { useAdmin } from '@/hooks/useAdmin'
 
 interface Profile {
   id: string
@@ -46,6 +47,7 @@ const geocodeAddress = async (address: string) => {
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const { isAdmin, loading: adminLoading } = useAdmin()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<AdminStats>({
@@ -58,41 +60,20 @@ export default function AdminDashboard() {
   const [geocodingInProgress, setGeocodingInProgress] = useState(false)
 
   useEffect(() => {
-    checkAdminAccess()
-  }, [])
+    if (isAdmin) {
+      loadDashboardData()
+    }
+  }, [isAdmin])
 
-  const checkAdminAccess = async () => {
+  const loadDashboardData = async () => {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-      if (sessionError) throw sessionError
-
-      if (!session) {
-        router.push('/login?returnUrl=/admin')
-        return
-      }
-
-      // Check if user is admin
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', session.user.id)
-        .single()
-
-      if (profileError) throw profileError
-
-      if (!profile?.is_admin) {
-        router.push('/dashboard')
-        return
-      }
-
-      // Load admin dashboard data
+      setError(null)
       await Promise.all([
         loadStats(),
         loadRecentUsers()
       ])
     } catch (error) {
-      console.error('Admin access error:', error)
+      console.error('Error loading dashboard data:', error)
       setError(error instanceof Error ? error.message : 'Error loading admin dashboard')
     } finally {
       setLoading(false)
@@ -212,7 +193,7 @@ export default function AdminDashboard() {
     }
   }
 
-  if (loading) {
+  if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-white" />
@@ -221,11 +202,15 @@ export default function AdminDashboard() {
     )
   }
 
+  if (!isAdmin) {
+    return null // The hook will handle the redirect
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
         <div className="max-w-md text-center px-4">
-          <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Error</h2>
           <p className="text-gray-400 mb-4">{error}</p>
           <button
             onClick={() => router.push('/dashboard')}

@@ -9,6 +9,8 @@ export default function ProfilePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
   const [profile, setProfile] = useState<{
     id: string
     full_name: string
@@ -94,6 +96,39 @@ export default function ProfilePage() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true)
+
+      // Call the delete user API endpoint
+      const response = await fetch('/api/user', {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete account')
+      }
+
+      // Sign out and clear cookies
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.split('=')
+        document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+      })
+
+      await supabase.auth.signOut()
+
+      toast.success('Account deleted successfully')
+      router.push('/register')
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      toast.error(error instanceof Error ? error.message : 'Error deleting account. Please try again.')
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirmation(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -145,26 +180,56 @@ export default function ProfilePage() {
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center pt-4">
+                <div className="flex justify-between items-center pt-6">
                   <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    type="button"
+                    onClick={handleSignOut}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
                   >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    Sign Out
                   </button>
 
                   <button
                     type="button"
-                    onClick={handleSignOut}
-                    className="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    onClick={() => setShowDeleteConfirmation(true)}
+                    className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
-                    Sign Out
+                    Delete Account
                   </button>
                 </div>
               </form>
             </div>
           </div>
+
+          {/* Delete Account Confirmation Modal */}
+          {showDeleteConfirmation && (
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Account</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data, including proposals and documents.
+                </p>
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirmation(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Account'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Proposals Section */}
           <div className="mt-8 bg-white shadow sm:rounded-lg">

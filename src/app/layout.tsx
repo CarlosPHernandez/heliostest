@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import { Roboto } from 'next/font/google'
-import { Toaster } from 'sonner'
 import { Footer } from '@/components/layout/Footer'
 import Script from 'next/script'
+import { Suspense } from 'react'
+import { Providers } from './providers'
+import Loading from './loading'
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -24,12 +26,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={roboto.variable} suppressHydrationWarning>
+    <html lang="en" className={roboto.variable}>
       <head>
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-          strategy="lazyOnload"
-        />
+        {/* Remove the duplicate Google Maps script */}
       </head>
       <body
         className={`
@@ -45,13 +44,19 @@ export default function RootLayout({
           [--input:214.3_31.8%_91.4%]
           [--ring:222.2_84%_4.9%]
         `}
+        suppressHydrationWarning
       >
-        <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer />
-        <Toaster />
+        <Providers>
+          <Suspense fallback={<Loading />}>
+            <Header />
+            <main className="min-h-screen">
+              <Suspense fallback={<Loading />}>
+                {children}
+              </Suspense>
+            </main>
+            <Footer />
+          </Suspense>
+        </Providers>
       </body>
     </html>
   );

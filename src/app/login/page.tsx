@@ -79,6 +79,27 @@ function LoginForm() {
     }
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback/reset-password`,
+      })
+
+      if (error) throw error
+
+      toast.success('Check your email for the password reset link')
+      setEmail('') // Clear the email field after successful request
+    } catch (error) {
+      console.error('Reset password error:', error)
+      toast.error('Failed to send reset instructions. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-[520px] space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
@@ -142,10 +163,16 @@ function LoginForm() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
-            <Link href="/reset-password" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors">
-              Forgot password?
-            </Link>
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="font-medium text-black hover:text-gray-800"
+              >
+                Forgot your password?
+              </button>
+            </div>
           </div>
 
           <button

@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -22,11 +23,6 @@ export default function RegisterPage() {
     try {
       console.log('Starting registration process...')
 
-      // Get any pending proposal from cookies
-      const cookies = document.cookie.split(';')
-      const pendingProposalCookie = cookies.find(cookie => cookie.trim().startsWith('pendingProposal='))
-      const pendingProposal = pendingProposalCookie ? JSON.parse(decodeURIComponent(pendingProposalCookie.split('=')[1])) : null
-
       // Sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -35,7 +31,7 @@ export default function RegisterPage() {
           data: {
             full_name: name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?${pendingProposal ? 'returnUrl=/order/proposal' : ''}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
@@ -51,11 +47,10 @@ export default function RegisterPage() {
       }
 
       if (authData.user) {
-        console.log('User created successfully, attempting profile creation...')
-        console.log('Email confirmation status:', authData.user.confirmation_sent_at ? 'Sent' : 'Not sent')
+        console.log('User created successfully')
 
         // Create profile
-        const { data: profileData, error: profileError } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
@@ -64,36 +59,85 @@ export default function RegisterPage() {
               email,
             },
           ])
-          .select()
 
         if (profileError) {
           console.error('Profile creation error:', profileError)
-          console.error('Profile error details:', {
-            message: profileError.message,
-            details: profileError.details,
-            hint: profileError.hint
-          })
-          console.log('Profile creation failed, continuing with registration...')
-        } else {
-          console.log('Profile created successfully:', profileData)
+        }
+
+        // After successful registration, sync any pending proposals
+        const tempUserToken = localStorage.getItem('temp_user_token')
+        if (tempUserToken) {
+          try {
+            // Get pending proposals
+            const response = await fetch(`/api/pending-proposals?token=${tempUserToken}`)
+            if (!response.ok) {
+              throw new Error('Failed to fetch pending proposals')
+            }
+
+            const { data: pendingProposals } = await response.json()
+            if (pendingProposals?.length) {
+              // Save each pending proposal to the user's account
+              for (const proposal of pendingProposals) {
+                await fetch('/api/proposals', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    proposalData: {
+                      systemSize: proposal.system_size,
+                      numberOfPanels: proposal.panel_count,
+                      monthlyProduction: proposal.monthly_production,
+                      address: proposal.address,
+                      monthlyBill: proposal.monthly_bill,
+                      packageType: proposal.package_type,
+                      paymentType: proposal.payment_type,
+                      ...(proposal.financing ? {
+                        financingTerm: proposal.financing.term,
+                        downPayment: proposal.financing.down_payment,
+                        monthlyPayment: proposal.financing.monthly_payment
+                      } : {})
+                    }
+                  })
+                })
+              }
+
+              // Mark pending proposals as synced
+              await supabase
+                .from('pending_proposals')
+                .update({
+                  synced_to_user_id: authData.user.id,
+                  synced_at: new Date().toISOString()
+                })
+                .eq('temp_user_token', tempUserToken)
+            }
+
+            // Clear the temporary token
+            localStorage.removeItem('temp_user_token')
+          } catch (error) {
+            console.error('Error syncing pending proposals:', error)
+            // Don't throw here, as we still want to complete registration
+          }
         }
 
         // Check if email was sent
         if (authData.user.confirmation_sent_at) {
-          toast.success('Registration successful! Please check your email to confirm your account. Check your spam folder if you don\'t see it.')
+          toast.success('Registration successful! Please check your email to confirm your account.')
         } else {
-          toast.warning('Account created but there might be an issue with the verification email. Please contact support.')
+          toast.warning('Account created but there might be an issue with the verification email.')
         }
       }
 
-      router.push('/login')
+      // Redirect to the appropriate page
+      const returnUrl = searchParams.get('returnUrl') || '/dashboard'
+      router.push(returnUrl)
     } catch (error) {
       console.error('Registration error:', error)
       if (error instanceof Error && error.message === 'Email already registered') {
         toast.error('This email is already registered. Please try logging in instead.')
         router.push('/login')
       } else {
-        toast.error(error instanceof Error ? error.message : 'Error registering user')
+        toast.error('Error registering user')
       }
     } finally {
       setIsLoading(false)

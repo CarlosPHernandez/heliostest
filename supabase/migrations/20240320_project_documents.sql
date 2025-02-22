@@ -19,7 +19,7 @@ check (status in ('pending', 'in_progress', 'approved', 'completed', 'cancelled'
 
 alter table public.proposals 
 add column if not exists stage text default 'proposal' 
-check (stage in ('proposal', 'onboarding', 'design', 'permitting', 'installation', 'completed'));
+check (stage in ('proposal', 'site_survey', 'onboarding', 'design', 'permitting', 'installation', 'completed'));
 
 -- Enable RLS on project_documents
 alter table public.project_documents enable row level security;

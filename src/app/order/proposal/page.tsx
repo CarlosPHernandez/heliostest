@@ -12,6 +12,7 @@ import { calculateFinancingOptions, AVAILABLE_TERMS } from '@/lib/financing-calc
 import { setCookie } from '@/lib/cookies'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { Database } from '../../../types/database.types'
 
 const batteryOptions = {
   franklin: {
@@ -50,6 +51,47 @@ interface SystemInfo {
 
 type PaymentType = 'cash' | 'finance'
 type WarrantyPackage = 'standard' | 'extended'
+
+type PendingProposal = {
+  temp_user_token: string
+  system_size: number
+  panel_count: number
+  monthly_production: number
+  address: string
+  monthly_bill: number
+  package_type: string
+  payment_type: string
+  financing: {
+    term: number
+    down_payment: number
+    monthly_payment: number
+  } | null
+}
+
+type ProposalInsert = {
+  user_id: string
+  system_size: number
+  number_of_panels: number
+  total_price: number
+  address: string
+  package_type: string
+  include_battery: boolean
+  battery_type: string | null
+  battery_count: number | null
+  payment_type: string
+  down_payment: number | null
+  monthly_payment: number | null
+  financing_term: number | null
+  monthly_bill: number
+  monthly_production: number
+  status: 'pending'
+  stage: 'proposal'
+}
+
+type ProposalResponse = {
+  id: string
+  [key: string]: any
+}
 
 export default function ProposalPage() {
   const router = useRouter()
@@ -157,126 +199,104 @@ export default function ProposalPage() {
   }
 
   const handlePlaceOrder = async () => {
-    setIsSubmitting(true)
-    setError('')
-
     try {
+      setIsSubmitting(true);
+      setError('');
+
+      // Validate required data
       if (!systemInfo) {
-        throw new Error('Missing system information')
+        throw new Error('System information is missing. Please start over.');
       }
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-      if (sessionError) {
-        console.error('Session error:', sessionError)
-        // Clear any stale session data
-        await supabase.auth.signOut()
-        router.push('/login')
-        return
+      if (!address) {
+        throw new Error('Address is missing. Please start over.');
       }
 
-      if (!session?.user?.id) {
-        // Store proposal data in localStorage for unauthenticated users
-        console.log('No session, storing proposal data for later')
-        const proposalData = {
-          systemInfo: {
-            ...systemInfo,
-            totalPrice: systemInfo.totalPrice +
-              (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
-              (selectedWarranty === 'extended' ? 1500 : 0)
-          },
-          address,
-          monthlyBill,
-          packageType,
-          includeBattery,
-          batteryCount,
-          batteryType: selectedBattery,
-          warranty: selectedWarranty,
-          paymentType,
-          financing: paymentType === 'finance' ? {
+      // Get the temp user token from localStorage or generate a new one
+      let tempUserToken = localStorage.getItem('temp_user_token');
+      if (!tempUserToken) {
+        tempUserToken = crypto.randomUUID();
+        localStorage.setItem('temp_user_token', tempUserToken);
+      }
+
+      const proposalData = {
+        systemInfo,
+        systemSize: systemInfo.systemSize,
+        numberOfPanels: systemInfo.numberOfPanels,
+        monthlyProduction: systemInfo.monthlyProduction,
+        address,
+        monthlyBill,
+        packageType: packageType,
+        paymentType: paymentType,
+        ...(paymentType === 'finance' && {
+          selectedTerm,
+          downPayment,
+          monthlyPayment: financingOptions && financingOptions[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit
+        })
+      };
+
+      const response = await fetch('/api/pending-proposals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tempUserToken,
+          proposalData
+        })
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error('Error response:', responseData);
+        throw new Error(responseData.details || responseData.error || 'Failed to save proposal');
+      }
+
+      if (!responseData.data?.id) {
+        throw new Error('No proposal ID returned from server');
+      }
+
+      // Store proposal data in localStorage and cookies for later use
+      const proposalDataForStorage = {
+        id: responseData.data.id,
+        systemInfo,
+        address,
+        monthlyBill,
+        packageType,
+        paymentType,
+        ...(paymentType === 'finance' && {
+          financing: {
             term: selectedTerm,
             downPayment,
-            monthlyPayment: financingOptions?.monthlyPayment
-          } : null
-        }
+            monthlyPayment: financingOptions[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit
+          }
+        }),
+        includeBattery,
+        ...(includeBattery && {
+          batteryType: selectedBattery,
+          batteryCount
+        }),
+        warranty: selectedWarranty
+      };
 
-        // Store in cookie instead of localStorage for better security
-        document.cookie = `pendingProposal=${JSON.stringify(proposalData)}; path=/; max-age=3600; secure; samesite=strict`
+      localStorage.setItem('currentProposal', JSON.stringify(proposalDataForStorage));
+      setCookie('pendingProposal', JSON.stringify(proposalDataForStorage));
 
-        // Redirect to login with return URL
-        const returnUrl = '/order/proposal'
-        router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
-        return
-      }
+      toast.success('Proposal saved successfully!');
 
-      // Calculate total price including add-ons
-      const totalPrice = systemInfo.totalPrice +
-        (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
-        (selectedWarranty === 'extended' ? 1500 : 0)
-
-      console.log('Saving proposal to Supabase for user:', session.user.id)
-      const proposalData = {
-        user_id: session.user.id,
-        system_size: systemInfo.systemSize,
-        number_of_panels: systemInfo.numberOfPanels,
-        monthly_production: systemInfo.monthlyProduction,
-        total_price: totalPrice,
-        monthly_bill: monthlyBill,
-        address,
-        package_type: packageType,
-        include_battery: includeBattery,
-        battery_count: includeBattery ? batteryCount : 0,
-        battery_type: includeBattery ? selectedBattery : null,
-        warranty_package: selectedWarranty,
-        payment_type: paymentType,
-        financing_term: paymentType === 'finance' ? Number(selectedTerm) : null,
-        down_payment: paymentType === 'finance' ? Number(downPayment) : null,
-        monthly_payment: paymentType === 'finance' ? Number(financingOptions?.monthlyPayment) : null
-      }
-      console.log('Proposal data to save:', proposalData)
-
-      const { data: savedProposal, error: proposalError } = await supabase
-        .from('proposals')
-        .insert([proposalData])
-        .select('*')
-        .single()
-
-      if (proposalError) {
-        console.error('Error saving proposal:', {
-          code: proposalError.code,
-          message: proposalError.message,
-          details: proposalError.details,
-          hint: proposalError.hint
-        })
-
-        // If the error is related to auth, sign out and redirect
-        if (proposalError.code === 'PGRST301' || proposalError.message.includes('JWT')) {
-          await supabase.auth.signOut()
-          router.push('/login')
-          return
-        }
-
-        throw new Error(`Failed to save proposal: ${proposalError.message}`)
-      }
-
-      console.log('Proposal saved successfully:', savedProposal)
-
-      // Clear stored proposal data
-      document.cookie = 'pendingProposal=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-
-      toast.success('Proposal saved successfully!')
-      router.push('/dashboard')
+      // Redirect to register page with return URL to site survey
+      const returnUrl = encodeURIComponent(`/proposals/${responseData.data.id}/site-survey`);
+      router.push(`/register?returnUrl=${returnUrl}`);
     } catch (error) {
-      console.error('Error in handlePlaceOrder:', error instanceof Error ? {
-        message: error.message,
-        stack: error.stack
-      } : error)
-      setError(error instanceof Error ? error.message : 'Error saving proposal')
-      toast.error(error instanceof Error ? error.message : 'Error saving proposal. Please try again.')
+      console.error('Error saving proposal:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleBatteryChange = (include: boolean) => {
     setIncludeBattery(include)

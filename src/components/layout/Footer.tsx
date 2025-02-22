@@ -7,14 +7,11 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold mb-2 text-blue-100">Helios Nexus</h2>
+          <h2 className="text-3xl font-bold mb-2 text-white">Helios Nexus</h2>
           <p className="text-gray-300 text-lg mb-8">Shaping the Future of Sustainable Energy</p>
-          
+
           {/* Navigation Links */}
           <nav className="flex flex-wrap gap-6">
-            <Link href="/investors" className="text-gray-300 hover:text-white transition-colors font-medium">
-              Investors
-            </Link>
             <Link href="/about" className="text-gray-300 hover:text-white transition-colors font-medium">
               About Us
             </Link>

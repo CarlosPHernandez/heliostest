@@ -107,6 +107,42 @@ export default function ProjectsPage() {
     }
   }
 
+  const deleteProject = async (projectId: string) => {
+    try {
+      setLoading(true)
+      console.log('Starting deletion of project:', projectId)
+
+      // Delete the proposal
+      const { error: deleteError } = await supabase
+        .from('proposals')
+        .delete()
+        .eq('id', projectId)
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError)
+        throw deleteError
+      }
+
+      // Redirect to admin page to ensure fresh data load
+      window.location.href = '/admin'
+
+      toast.success('Project deleted successfully')
+
+    } catch (error) {
+      console.error('Error in delete process:', error)
+      toast.error('Failed to delete project: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteClick = (projectId: string) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this project? This action cannot be undone.')
+    if (confirmDelete) {
+      deleteProject(projectId)
+    }
+  }
+
   const filteredProjects = projects.filter(project =>
     project.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,6 +185,8 @@ export default function ProjectsPage() {
         return 'bg-yellow-100 text-yellow-800'
       case 'design':
         return 'bg-indigo-100 text-indigo-800'
+      case 'site_survey':
+        return 'bg-orange-100 text-orange-800'
       case 'onboarding':
         return 'bg-blue-100 text-blue-800'
       case 'proposal':
@@ -157,6 +195,14 @@ export default function ProjectsPage() {
         return 'bg-gray-100 text-gray-800'
     }
   }
+
+  // Add a cleanup effect
+  useEffect(() => {
+    return () => {
+      // Cleanup function
+      console.log('Component unmounting, cleaning up...')
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -285,12 +331,20 @@ export default function ProjectsPage() {
                         {new Date(project.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                        <Link
-                          href={`/proposals/${project.id}`}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          View Details
-                        </Link>
+                        <div className="flex items-center justify-end gap-4">
+                          <Link
+                            href={`/proposals/${project.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            View Details
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteClick(project.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

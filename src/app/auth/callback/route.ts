@@ -19,7 +19,58 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/login?error=auth', requestUrl.origin))
       }
 
-      // If returning from proposal page, check for pending proposal
+      // Create or update the user's profile first
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name || '',
+          updated_at: new Date().toISOString(),
+          is_admin: false // Explicitly set is_admin to false for new users
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false // We want to update if exists
+        })
+
+      if (profileError) {
+        console.error('Error creating profile:', {
+          code: profileError.code,
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint
+        })
+
+        // Try an insert if upsert failed
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || '',
+            updated_at: new Date().toISOString(),
+            is_admin: false
+          })
+
+        if (insertError) {
+          console.error('Insert fallback error:', insertError)
+          return NextResponse.redirect(new URL('/login?error=profile_creation', requestUrl.origin))
+        }
+      }
+
+      // Verify profile was created
+      const { data: profile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+
+      if (profileCheckError || !profile) {
+        console.error('Profile verification failed:', profileCheckError)
+        return NextResponse.redirect(new URL('/login?error=profile_verification', requestUrl.origin))
+      }
+
+      // If returning from proposal page, process the pending proposal
       if (returnUrl.includes('/order/proposal')) {
         try {
           // Get the proposal data from cookies
@@ -34,44 +85,34 @@ export async function GET(request: Request) {
               (proposalData.includeBattery ? (proposalData.batteryCount * (proposalData.batteryType === 'franklin' ? 8500 : 9200)) : 0) +
               (proposalData.warranty === 'extended' ? 1500 : 0)
 
-            // First check if profile exists
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('id', session.user.id)
-              .single()
-
-            if (profileError) {
-              console.error('Error checking profile:', profileError)
-              return NextResponse.redirect(new URL('/login?error=profile_not_found', requestUrl.origin))
-            }
-
             // Prepare proposal data with snake_case column names
             const proposalInsert = {
               user_id: session.user.id,
               system_size: proposalData.systemInfo.systemSize,
               number_of_panels: proposalData.systemInfo.numberOfPanels,
-              monthly_production: proposalData.systemInfo.monthlyProduction,
               total_price: totalPrice,
-              monthly_bill: proposalData.monthlyBill,
               address: proposalData.address,
               package_type: proposalData.packageType,
               include_battery: proposalData.includeBattery || false,
               battery_count: proposalData.batteryCount || 0,
               battery_type: proposalData.batteryType,
-              warranty_package: proposalData.warranty || 'standard',
               payment_type: proposalData.paymentType || 'cash',
               financing_term: proposalData.financing?.term || null,
               down_payment: proposalData.financing?.downPayment || null,
               monthly_payment: proposalData.financing?.monthlyPayment || null,
-              status: 'saved',
-              stage: 'proposal'
+              status: 'pending',
+              stage: 'design'
             }
 
+            console.log('Saving proposal for user:', session.user.id)
+            console.log('Proposal data:', proposalInsert)
+
             // Save proposal to Supabase
-            const { error: proposalError } = await supabase
+            const { data: savedProposal, error: proposalError } = await supabase
               .from('proposals')
               .insert([proposalInsert])
+              .select('*')
+              .single()
 
             if (proposalError) {
               console.error('Error saving proposal:', {
@@ -82,6 +123,8 @@ export async function GET(request: Request) {
               })
               return NextResponse.redirect(new URL(`/order/proposal?error=${encodeURIComponent(proposalError.message)}`, requestUrl.origin))
             }
+
+            console.log('Proposal saved successfully:', savedProposal)
 
             // Clear the stored proposal and redirect
             const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin))

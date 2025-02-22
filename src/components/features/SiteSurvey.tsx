@@ -109,32 +109,62 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
 
   const loadSurvey = async () => {
     try {
-      const { data: surveyData, error: surveyError } = await supabase
+      // First check if a survey already exists
+      let { data: surveyData, error: surveyError } = await supabase
         .from('site_surveys')
         .select('*')
         .eq('proposal_id', proposalId)
         .single()
 
-      if (surveyError) throw surveyError
-
-      if (surveyData) {
-        setSurvey(surveyData)
-
-        // Load images
-        const { data: imageData, error: imageError } = await supabase
-          .from('site_survey_images')
-          .select('*')
-          .eq('site_survey_id', surveyData.id)
-
-        if (imageError) throw imageError
-
-        const imageMap = imageData?.reduce((acc, img) => {
-          acc[img.image_type] = img
-          return acc
-        }, {} as Record<string, SurveyImage>)
-
-        setImages(imageMap || {})
+      if (surveyError && surveyError.code !== 'PGRST116') {
+        throw surveyError
       }
+
+      if (!surveyData) {
+        // Try to create a new survey, but handle the case where one might have been created
+        const { data: newSurvey, error: createError } = await supabase
+          .from('site_surveys')
+          .insert({
+            proposal_id: proposalId,
+            status: 'pending',
+            roof_obstructions: []
+          })
+          .select()
+          .single()
+
+        if (createError?.code === '23505') { // Unique violation error code
+          // Survey was created by another request, fetch it
+          const { data: existingSurvey, error: fetchError } = await supabase
+            .from('site_surveys')
+            .select('*')
+            .eq('proposal_id', proposalId)
+            .single()
+
+          if (fetchError) throw fetchError
+          surveyData = existingSurvey
+        } else if (createError) {
+          throw createError
+        } else {
+          surveyData = newSurvey
+        }
+      }
+
+      setSurvey(surveyData)
+
+      // Load images if survey exists
+      const { data: imageData, error: imageError } = await supabase
+        .from('site_survey_images')
+        .select('*')
+        .eq('site_survey_id', surveyData.id)
+
+      if (imageError) throw imageError
+
+      const imageMap = imageData?.reduce((acc, img) => {
+        acc[img.image_type] = img
+        return acc
+      }, {} as Record<string, SurveyImage>)
+
+      setImages(imageMap || {})
     } catch (error) {
       console.error('Error loading survey:', error)
       toast.error('Failed to load survey data')
@@ -330,7 +360,7 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
         return (
           <div className="space-y-4">
             <select
-              value={survey.attic_access === undefined ? '' : survey.attic_access.toString()}
+              value={survey.attic_access === undefined ? '' : (survey.attic_access ? 'true' : 'false')}
               onChange={(e) => setSurvey(prev => ({ ...prev, attic_access: e.target.value === 'true' }))}
               className="w-full bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
@@ -403,8 +433,8 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
                 <div
                   key={type}
                   className={`flex-1 h-1 rounded-full ${images[type] ? 'bg-green-500' :
-                      type === currentPhotoType ? 'bg-blue-500' :
-                        'bg-gray-800'
+                    type === currentPhotoType ? 'bg-blue-500' :
+                      'bg-gray-800'
                     }`}
                 />
               ))}
@@ -416,8 +446,8 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
                 <div
                   key={type}
                   className={`text-center p-3 rounded-lg border ${images[type] ? 'border-green-500/20 bg-green-500/5' :
-                      type === currentPhotoType ? 'border-blue-500/20 bg-blue-500/5' :
-                        'border-gray-800 bg-gray-900/20'
+                    type === currentPhotoType ? 'border-blue-500/20 bg-blue-500/5' :
+                      'border-gray-800 bg-gray-900/20'
                     }`}
                 >
                   <div className="text-sm font-medium capitalize mb-1">
@@ -619,52 +649,63 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="relative">
       {/* Progress Bar */}
-      <div className="max-w-4xl mx-auto pt-8 px-6">
-        <div className="flex justify-between mb-6">
+      <div className="sticky top-0 z-10 bg-[#111111] border-b border-gray-800 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-white">
+            {steps[currentStep].title}
+          </h2>
+          <div className="text-sm text-gray-400">
+            Step {currentStep + 1} of {steps.length}
+          </div>
+        </div>
+        <div className="flex space-x-1">
           {steps.map((step, index) => (
             <div
               key={step.id}
-              className={`flex-1 h-1 mx-1 ${index === currentStep ? 'bg-blue-500' :
-                index < currentStep ? 'bg-blue-500/50' :
-                  'bg-gray-800'
+              className={`flex-1 h-1 rounded-full transition-all duration-300 ${index === currentStep
+                ? 'bg-blue-500'
+                : index < currentStep
+                  ? 'bg-green-500'
+                  : 'bg-gray-800'
                 }`}
             />
           ))}
         </div>
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-white mb-4">{steps[currentStep].title}</h2>
-          <p className="text-lg text-gray-400">{steps[currentStep].description}</p>
-        </div>
       </div>
 
       {/* Step Content */}
-      <div className="max-w-2xl mx-auto px-6 mb-16">
+      <div className="px-6 py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-8"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
           >
             {renderStepContent()}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm border-t border-gray-800">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between">
+      {/* Navigation Footer */}
+      <div className="sticky bottom-0 left-0 right-0 bg-[#111111] border-t border-gray-800 px-6 py-4">
+        <div className="flex justify-between items-center">
           <button
             type="button"
             onClick={prevStep}
             disabled={currentStep === 0}
-            className="px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium transition-colors"
+            className={`
+              px-4 py-2 rounded-lg font-medium flex items-center gap-2
+              ${currentStep === 0
+                ? 'text-gray-500 cursor-not-allowed'
+                : 'text-white hover:bg-white/5'
+              }
+            `}
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="w-4 h-4" />
             Previous
           </button>
 
@@ -673,16 +714,16 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium transition-colors"
+              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Check className="w-5 h-5 mr-2" />
+                  <Check className="w-4 h-4" />
                   Submit Survey
                 </>
               )}
@@ -691,59 +732,67 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
             <button
               type="button"
               onClick={nextStep}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 flex items-center font-medium transition-colors"
+              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
             >
               Next
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Form Fields Styling Updates */}
+      {/* Form Fields Styling */}
       <style jsx global>{`
-        select, input[type="text"], input[type="number"] {
+        .form-input,
+        .form-select {
           width: 100%;
-          background-color: #000;
+          background-color: #1A1A1A;
           border: 1px solid #333;
-          padding: 1rem;
+          padding: 0.75rem 1rem;
           border-radius: 0.5rem;
           color: white;
-          font-size: 1.125rem;
+          font-size: 1rem;
           transition: all 0.2s;
         }
 
-        select:focus, input:focus {
-          border-color: #2563eb;
+        .form-input:focus,
+        .form-select:focus {
+          border-color: #3B82F6;
           outline: none;
-          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
 
-        select option {
-          background-color: #000;
+        .form-select option {
+          background-color: #1A1A1A;
           color: white;
           padding: 0.5rem;
         }
 
-        .label {
+        .form-label {
           color: #fff;
-          font-size: 1rem;
+          font-size: 0.875rem;
           font-weight: 500;
           margin-bottom: 0.5rem;
           display: block;
         }
 
-        input[type="checkbox"] {
+        .form-checkbox {
           width: 1.25rem;
           height: 1.25rem;
           border-radius: 0.25rem;
           border: 1px solid #333;
-          background-color: #000;
+          background-color: #1A1A1A;
+          cursor: pointer;
         }
 
-        input[type="checkbox"]:checked {
-          background-color: #2563eb;
-          border-color: #2563eb;
+        .form-checkbox:checked {
+          background-color: #3B82F6;
+          border-color: #3B82F6;
+        }
+
+        .form-checkbox:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
       `}</style>
     </div>

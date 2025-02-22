@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import NotificationBell from '@/components/features/NotificationBell'
+import { useAdmin } from '@/hooks/useAdmin'
 
 const Header = () => {
   const router = useRouter()
@@ -14,7 +15,7 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const { isAdmin, loading: adminLoading } = useAdmin(null)
 
   useEffect(() => {
     // Get initial user state
@@ -23,16 +24,6 @@ const Header = () => {
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', session.user.id)
-          .single()
-        setIsAdmin(data?.is_admin ?? false)
-      } else {
-        setIsAdmin(false)
-      }
       setLoading(false)
     })
 
@@ -46,14 +37,6 @@ const Header = () => {
       const { data: { session }, error } = await supabase.auth.getSession()
       if (error) throw error
       setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', session.user.id)
-          .single()
-        setIsAdmin(data?.is_admin ?? false)
-      }
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -90,7 +73,6 @@ const Header = () => {
   const publicNavItems = [
     { name: 'Discover', href: '/discover' },
     { name: 'Shop', href: '/shop' },
-    { name: 'Investors', href: '/investors' },
     { name: 'About Us', href: '/about' },
   ]
 
@@ -125,19 +107,21 @@ const Header = () => {
               </Link>
             ))}
 
+            {!loading && user && isAdmin && (
+              <Link
+                href="/admin"
+                className="bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
+              >
+                Admin Panel
+              </Link>
+            )}
+
             {!loading && (
               <>
                 {user ? (
                   <div className="flex items-center gap-4">
                     <NotificationBell />
-                    {isAdmin ? (
-                      <Link
-                        href="/admin/pending-requests"
-                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                      >
-                        Admin Requests
-                      </Link>
-                    ) : (
+                    {!isAdmin && (
                       <Link
                         href="/admin/register"
                         className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -203,6 +187,15 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
+              {!loading && user && isAdmin && (
+                <Link
+                  href="/admin"
+                  className="block w-full text-center px-3 py-2 rounded-md text-base font-medium bg-black text-white hover:bg-gray-800 mb-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Admin Panel
+                </Link>
+              )}
               {!loading && (
                 <>
                   {user ? (
@@ -210,6 +203,15 @@ const Header = () => {
                       <div className="px-3 py-2">
                         <NotificationBell />
                       </div>
+                      {!isAdmin && (
+                        <Link
+                          href="/admin/register"
+                          className="block w-full text-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Request Admin Access
+                        </Link>
+                      )}
                       <button
                         onClick={() => {
                           handleSignOut()

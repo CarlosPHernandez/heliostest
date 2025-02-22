@@ -28,9 +28,9 @@ export default function UserManagement() {
   const checkAdminAccess = async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
+
       if (sessionError) throw sessionError
-      
+
       if (!session) {
         router.push('/login?returnUrl=/admin/users')
         return
@@ -85,8 +85,8 @@ export default function UserManagement() {
       if (error) throw error
 
       // Update local state
-      setUsers(users.map(user => 
-        user.id === userId 
+      setUsers(users.map(user =>
+        user.id === userId
           ? { ...user, is_admin: !currentStatus }
           : user
       ))
@@ -98,9 +98,9 @@ export default function UserManagement() {
     }
   }
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = users.filter(user =>
+    (user?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (user?.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   )
 
   if (loading) {
@@ -131,53 +131,56 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-16">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin')}
-              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              className="p-2.5 hover:bg-gray-800 rounded-full transition-colors duration-200 hover:scale-105 active:scale-95"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-2xl font-medium">User Management</h1>
+            <h1 className="text-3xl font-semibold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              User Management
+            </h1>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <div className="relative w-full sm:w-auto">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-900 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-700"
+              className="w-full sm:w-80 pl-12 pr-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200"
             />
           </div>
         </div>
 
         {/* User List */}
-        <div className="space-y-4">
+        <div className="grid gap-6">
           {filteredUsers.map((user) => (
             <div
               key={user.id}
-              className="bg-gray-900 rounded-xl p-6"
+              className="bg-gradient-to-b from-gray-900 to-gray-900/50 rounded-2xl p-6 border border-gray-800/50 backdrop-blur-sm hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">{user.name}</h3>
-                  <p className="text-sm text-gray-400">{user.email}</p>
-                  <p className="text-sm text-gray-400 mt-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium text-white/90">{user.name}</h3>
+                  <p className="text-sm text-gray-400 flex items-center gap-2">
+                    {user.email}
+                  </p>
+                  <p className="text-xs text-gray-500">
                     Joined {new Date(user.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <button
                   onClick={() => toggleAdminStatus(user.id, user.is_admin)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    user.is_admin
-                      ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
-                      : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-                  }`}
+                  className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 ${user.is_admin
+                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
+                    : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                    }`}
                 >
                   {user.is_admin ? (
                     <>
@@ -194,6 +197,12 @@ export default function UserManagement() {
               </div>
             </div>
           ))}
+
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No users found matching your search.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

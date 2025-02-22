@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2, PlusCircle, FileText, MessageCircle, X, ClipboardCheck, Check } from 'lucide-react'
+import { ChevronRight, Sun, Battery, DollarSign, Calendar, ArrowRight, Loader2, PlusCircle, FileText, MessageCircle, X, ClipboardCheck, Check, Camera, PencilRuler, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
@@ -48,6 +48,9 @@ export default function DashboardPage() {
   const [selectedProposal, setSelectedProposal] = useState<string | null>(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
 
+  // Define stages array once at the component level
+  const stages = ['proposal', 'site_survey', 'design', 'permitting', 'installation', 'completed'] as const
+
   useEffect(() => {
     checkUser()
   }, [])
@@ -72,14 +75,39 @@ export default function DashboardPage() {
 
       setUser(session.user)
 
+      // Create or update user profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: session.user.id,
+          email: session.user.email || '',
+          full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'id'
+        })
+
+      if (profileError) {
+        console.error('Profile error:', profileError)
+        // Don't throw the error, try to fetch the profile anyway
+        console.log('Attempting to fetch profile despite upsert error...')
+      }
+
       // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error: profileFetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single()
 
-      if (profileError) throw profileError
+      if (profileFetchError) {
+        console.error('Profile fetch error:', profileFetchError)
+        throw profileFetchError
+      }
+
+      if (!profileData) {
+        throw new Error('Profile not found')
+      }
       setProfile(profileData)
 
       await loadProposals(session.user.id)
@@ -94,6 +122,7 @@ export default function DashboardPage() {
 
   async function loadProposals(userId: string) {
     try {
+      // First attempt to load proposals
       const { data, error } = await supabase
         .from('proposals')
         .select('*')
@@ -101,12 +130,43 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setProposals(data || [])
 
-      // Set the first active proposal as selected for documents
-      const activeProposal = data?.find(p => p.status !== 'cancelled' && p.status !== 'completed')
-      if (activeProposal) {
-        setSelectedProposal(activeProposal.id)
+      // If no proposals found and we came from a proposal creation
+      if (!data?.length && window.location.href.includes('returnUrl=/order/proposal')) {
+        console.log('No proposals found on first try, retrying...')
+
+        // Wait a moment and try again
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        const { data: retryData, error: retryError } = await supabase
+          .from('proposals')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+
+        if (retryError) throw retryError
+
+        if (!retryData?.length) {
+          console.log('Still no proposals found after retry')
+        } else {
+          console.log('Proposals found after retry:', retryData.length)
+        }
+
+        setProposals(retryData || [])
+
+        // Set the first active proposal as selected for documents
+        const activeProposal = retryData?.find(p => p.status !== 'cancelled' && p.status !== 'completed')
+        if (activeProposal) {
+          setSelectedProposal(activeProposal.id)
+        }
+      } else {
+        setProposals(data || [])
+
+        // Set the first active proposal as selected for documents
+        const activeProposal = data?.find(p => p.status !== 'cancelled' && p.status !== 'completed')
+        if (activeProposal) {
+          setSelectedProposal(activeProposal.id)
+        }
       }
     } catch (error) {
       console.error('Error loading proposals:', error)
@@ -306,200 +366,115 @@ export default function DashboardPage() {
             transition={{ delay: 0.7 }}
             className="relative z-30 mx-auto px-4 mt-8 max-w-4xl"
           >
-            <div className="bg-[#111111]/90 backdrop-blur-md border border-gray-800/50 rounded-2xl p-8 shadow-2xl">
-              <h3 className="text-lg font-semibold mb-6 text-white">Your Solar Journey</h3>
+            <div className="bg-[#111111]/90 backdrop-blur-md border border-gray-800/50 rounded-2xl p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-lg font-semibold text-white">Solar Journey Progress</h3>
+                <div className="text-sm text-blue-400">
+                  Stage {stages.indexOf(activeProposal.stage) + 1} of {stages.length}
+                </div>
+              </div>
 
               <div className="relative">
-                {/* Timeline Track */}
-                <div className="absolute top-[2.25rem] left-0 w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                  {/* Energy Surge Base Layer */}
+                {/* Main Timeline Track */}
+                <div className="absolute top-1/2 left-0 w-full h-[2px] bg-gray-800/50 transform -translate-y-1/2">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-blue-400/20 to-blue-500/20" />
-                  {/* Energy Surge Pulse */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/40 to-transparent animate-energy-surge" />
                 </div>
 
-                {/* Timeline Progress */}
+                {/* Progress Bar */}
                 <div
-                  className="absolute top-[2.25rem] left-0 h-1 overflow-hidden rounded-full transition-all duration-700 ease-in-out"
+                  className="absolute top-1/2 left-0 h-[2px] bg-gradient-to-r from-blue-500 to-blue-400 transform -translate-y-1/2 transition-all duration-700 ease-in-out"
                   style={{
-                    width: (() => {
-                      const stages = ['design', 'permitting', 'installation', 'completed'];
-                      const currentIndex = stages.indexOf(activeProposal.stage);
-                      return `${Math.max((currentIndex + 1) * (100 / stages.length), 25)}%`;
-                    })()
+                    width: `${Math.max((stages.indexOf(activeProposal.stage) + 1) * (100 / stages.length), 16.67)}%`
                   }}
                 >
-                  {/* Progress Bar with Energy Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500">
-                    {/* Electric Sparks Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-spark" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-spark-delayed" />
-                  </div>
-
-                  {/* Energy Particles */}
-                  <div className="absolute inset-0 opacity-50">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-400 via-transparent to-transparent animate-particle-1" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-300 via-transparent to-transparent animate-particle-2" />
-                  </div>
+                  <div className="absolute right-0 top-1/2 w-3 h-3 bg-blue-400 rounded-full transform -translate-y-1/2 translate-x-1/2 shadow-lg shadow-blue-500/50" />
                 </div>
 
                 {/* Timeline Steps */}
-                <div className="relative grid grid-cols-4 gap-4">
-                  {/* Design Stage */}
-                  <div className="text-center group">
+                <div className="relative grid grid-cols-6 gap-4">
+                  {[
+                    { stage: 'proposal', icon: FileText, label: 'Proposal' },
+                    { stage: 'site_survey', icon: Camera, label: 'Site Survey' },
+                    { stage: 'design', icon: PencilRuler, label: 'Design' },
+                    { stage: 'permitting', icon: ClipboardCheck, label: 'Permits' },
+                    { stage: 'installation', icon: Wrench, label: 'Installation' },
+                    { stage: 'completed', icon: Check, label: 'Complete' }
+                  ].map((item, index) => (
                     <motion.div
+                      key={item.stage}
+                      className="flex flex-col items-center"
                       whileHover={{ scale: 1.05 }}
-                      className={`relative w-12 h-12 mx-auto mb-2 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                      ${activeProposal.stage === 'design' ? 'border-blue-500 bg-blue-500/10 text-blue-400' :
-                          ['permitting', 'installation', 'completed'].includes(activeProposal.stage) ? 'border-green-500 bg-green-500/10 text-green-400' :
-                            'border-gray-700 bg-[#111111] text-gray-400'}`}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                      <FileText className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                      {activeProposal.stage === 'design' && (
-                        <>
-                          <div className="absolute -inset-1 bg-blue-500/20 rounded-full animate-pulse-slow" />
-                          <div className="absolute -inset-2 bg-blue-500/10 rounded-full animate-energy-ring" />
-                        </>
-                      )}
-                    </motion.div>
-                    <div className="text-sm font-medium text-white mb-1 transition-colors group-hover:text-blue-400">Design</div>
-                    <div className="text-xs text-gray-400 transition-colors group-hover:text-gray-300">System planning</div>
-                  </div>
+                      <motion.div
+                        className={`
+                          relative w-10 h-10 rounded-full flex items-center justify-center
+                          transition-all duration-300 cursor-pointer
+                          ${activeProposal.stage === item.stage ? 'bg-blue-500 text-white' :
+                            index <= stages.indexOf(activeProposal.stage) ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-gray-800/30 text-gray-500'}
+                          ${index <= stages.indexOf(activeProposal.stage) ? 'border-2 border-blue-500/50' : 'border-2 border-gray-700'}
+                          group hover:bg-blue-500/30 hover:border-blue-400
+                        `}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <item.icon className="w-4 h-4" />
 
-                  {/* Permitting Stage */}
-                  <div className="text-center group">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className={`relative w-12 h-12 mx-auto mb-2 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                      ${activeProposal.stage === 'permitting' ? 'border-blue-500 bg-blue-500/10 text-blue-400' :
-                          ['installation', 'completed'].includes(activeProposal.stage) ? 'border-green-500 bg-green-500/10 text-green-400' :
-                            'border-gray-700 bg-[#111111] text-gray-400'}`}
-                    >
-                      <ClipboardCheck className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                      {activeProposal.stage === 'permitting' && (
-                        <div className="absolute -inset-1 bg-blue-500/20 rounded-full animate-pulse-slow" />
-                      )}
-                    </motion.div>
-                    <div className="text-sm font-medium text-white mb-1 transition-colors group-hover:text-blue-400">Permits</div>
-                    <div className="text-xs text-gray-400 transition-colors group-hover:text-gray-300">Approvals</div>
-                  </div>
+                        {/* Hover Card */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                          <div className="bg-gray-900 text-white text-xs py-1 px-2 rounded shadow-lg whitespace-nowrap">
+                            {item.label}
+                          </div>
+                        </div>
 
-                  {/* Installation Stage */}
-                  <div className="text-center group">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className={`relative w-12 h-12 mx-auto mb-2 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                      ${activeProposal.stage === 'installation' ? 'border-blue-500 bg-blue-500/10 text-blue-400' :
-                          ['completed'].includes(activeProposal.stage) ? 'border-green-500 bg-green-500/10 text-green-400' :
-                            'border-gray-700 bg-[#111111] text-gray-400'}`}
-                    >
-                      <Sun className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                      {activeProposal.stage === 'installation' && (
-                        <div className="absolute -inset-1 bg-blue-500/20 rounded-full animate-pulse-slow" />
-                      )}
+                        {activeProposal.stage === item.stage && (
+                          <motion.div
+                            className="absolute inset-0 rounded-full border-2 border-blue-400"
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
+                        )}
+                      </motion.div>
                     </motion.div>
-                    <div className="text-sm font-medium text-white mb-1 transition-colors group-hover:text-blue-400">Installation</div>
-                    <div className="text-xs text-gray-400 transition-colors group-hover:text-gray-300">Setup & testing</div>
-                  </div>
-
-                  {/* Completion Stage */}
-                  <div className="text-center group">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className={`relative w-12 h-12 mx-auto mb-2 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                      ${activeProposal.stage === 'completed' ? 'border-green-500 bg-green-500/10 text-green-400' :
-                          'border-gray-700 bg-[#111111] text-gray-400'}`}
-                    >
-                      <Check className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                      {activeProposal.stage === 'completed' && (
-                        <div className="absolute -inset-1 bg-green-500/20 rounded-full animate-pulse-slow" />
-                      )}
-                    </motion.div>
-                    <div className="text-sm font-medium text-white mb-1 transition-colors group-hover:text-blue-400">Complete</div>
-                    <div className="text-xs text-gray-400 transition-colors group-hover:text-gray-300">System active</div>
-                  </div>
+                  ))}
                 </div>
-
-                {/* Add custom keyframes for animations */}
-                <style jsx global>{`
-                  @keyframes energy-surge {
-                    0% { 
-                      transform: translateX(-100%) scaleX(0.5);
-                      opacity: 0;
-                    }
-                    50% { 
-                      transform: translateX(0%) scaleX(2);
-                      opacity: 1;
-                    }
-                    100% { 
-                      transform: translateX(100%) scaleX(0.5);
-                      opacity: 0;
-                    }
-                  }
-
-                  @keyframes spark {
-                    0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
-                    25% { transform: translateX(-20%) skewX(-15deg); opacity: 1; }
-                    50% { transform: translateX(0%) skewX(-15deg); opacity: 0; }
-                    75% { transform: translateX(20%) skewX(-15deg); opacity: 1; }
-                    100% { transform: translateX(100%) skewX(-15deg); opacity: 0; }
-                  }
-
-                  @keyframes spark-delayed {
-                    0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
-                    50% { transform: translateX(0%) skewX(-15deg); opacity: 1; }
-                    100% { transform: translateX(100%) skewX(-15deg); opacity: 0; }
-                  }
-
-                  @keyframes particle-1 {
-                    0% { transform: translateX(-50%) translateY(-50%) scale(0); opacity: 0; }
-                    50% { transform: translateX(0%) translateY(0%) scale(1); opacity: 1; }
-                    100% { transform: translateX(50%) translateY(50%) scale(0); opacity: 0; }
-                  }
-
-                  @keyframes particle-2 {
-                    0% { transform: translateX(50%) translateY(50%) scale(0); opacity: 0; }
-                    50% { transform: translateX(0%) translateY(0%) scale(1); opacity: 1; }
-                    100% { transform: translateX(-50%) translateY(-50%) scale(0); opacity: 0; }
-                  }
-
-                  @keyframes energy-ring {
-                    0% { transform: scale(0.8); opacity: 0; }
-                    50% { transform: scale(1.2); opacity: 0.5; }
-                    100% { transform: scale(0.8); opacity: 0; }
-                  }
-
-                  .animate-energy-surge {
-                    animation: energy-surge 3s ease-in-out infinite;
-                  }
-
-                  .animate-spark {
-                    animation: spark 2s ease-out infinite;
-                  }
-
-                  .animate-spark-delayed {
-                    animation: spark-delayed 2s ease-out infinite;
-                    animation-delay: 1s;
-                  }
-
-                  .animate-particle-1 {
-                    animation: particle-1 3s ease-in-out infinite;
-                  }
-
-                  .animate-particle-2 {
-                    animation: particle-2 3s ease-in-out infinite;
-                    animation-delay: 1.5s;
-                  }
-
-                  .animate-energy-ring {
-                    animation: energy-ring 2s ease-in-out infinite;
-                  }
-
-                  .animate-pulse-slow {
-                    animation: pulse-slow 2s ease-in-out infinite;
-                  }
-                `}</style>
               </div>
+
+              {/* Stage Description */}
+              <motion.div
+                className="mt-8 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                key={activeProposal.stage}
+              >
+                <div className="text-blue-400 font-medium mb-2">
+                  {(() => {
+                    switch (activeProposal.stage) {
+                      case 'proposal': return 'Initial Review';
+                      case 'site_survey': return 'Property Assessment';
+                      case 'design': return 'System Planning';
+                      case 'permitting': return 'Permit Approvals';
+                      case 'installation': return 'System Installation';
+                      case 'completed': return 'Project Complete';
+                      default: return '';
+                    }
+                  })()}
+                </div>
+                <p className="text-gray-400 text-sm">
+                  {(() => {
+                    switch (activeProposal.stage) {
+                      case 'proposal': return 'We are reviewing your initial proposal and preparing for the next steps.';
+                      case 'site_survey': return 'Our team will assess your property and take necessary measurements.';
+                      case 'design': return 'Creating a custom solar system design for your home.';
+                      case 'permitting': return 'Obtaining necessary permits and approvals from local authorities.';
+                      case 'installation': return 'Installing and testing your solar system components.';
+                      case 'completed': return 'Your solar system is fully operational and producing clean energy!';
+                      default: return '';
+                    }
+                  })()}
+                </p>
+              </motion.div>
             </div>
           </motion.div>
         )}
