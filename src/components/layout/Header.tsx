@@ -71,8 +71,7 @@ const Header = () => {
   }
 
   const publicNavItems = [
-    { name: 'Discover', href: '/discover' },
-    { name: 'Shop', href: '/shop' },
+    { name: 'Services', href: '/services/solar-panel-cleaning' },
     { name: 'About Us', href: '/about' },
   ]
 

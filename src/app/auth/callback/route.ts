@@ -89,9 +89,11 @@ export async function GET(request: Request) {
             const proposalInsert = {
               user_id: session.user.id,
               system_size: proposalData.systemInfo.systemSize,
-              number_of_panels: proposalData.systemInfo.numberOfPanels,
+              panel_count: proposalData.systemInfo.numberOfPanels,
+              monthly_production: proposalData.systemInfo.monthlyProduction,
               total_price: totalPrice,
               address: proposalData.address,
+              monthly_bill: proposalData.monthlyBill || 0, // Add a default if not provided
               package_type: proposalData.packageType,
               include_battery: proposalData.includeBattery || false,
               battery_count: proposalData.batteryCount || 0,
@@ -100,8 +102,8 @@ export async function GET(request: Request) {
               financing_term: proposalData.financing?.term || null,
               down_payment: proposalData.financing?.downPayment || null,
               monthly_payment: proposalData.financing?.monthlyPayment || null,
-              status: 'pending',
-              stage: 'design'
+              status: 'saved',
+              stage: 'proposal'
             }
 
             console.log('Saving proposal for user:', session.user.id)

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
   CheckCircle2,
@@ -20,103 +19,113 @@ import {
   PencilRuler,
   ClipboardCheck,
   Wrench,
-  Camera
+  Camera,
+  CheckCircle,
+  XCircle
 } from 'lucide-react'
 import ProjectDocuments from '@/components/features/ProjectDocuments'
 import ProjectNotes from '@/components/features/ProjectNotes'
 import ProjectMessages from '@/components/features/ProjectMessages'
 import { Database } from '@/types/database.types'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+type Tables = Database['public']['Tables']
+type ProposalRow = Tables['proposals']['Row']
+type ProposalUpdate = Tables['proposals']['Update']
+type ProfileRow = Tables['profiles']['Row']
+
+type ProposalStage = ProposalRow['stage']
+type Status = ProposalRow['status']
 
 interface ProposalStatus {
-  status: string
+  status: Status
   label: string
   description: string
   icon: JSX.Element
   color: string
 }
 
-type Profile = Database['public']['Tables']['profiles']['Row']
-type Proposal = Database['public']['Tables']['proposals']['Row']
-
 const projectStages = [
   {
-    stage: 'proposal',
+    stage: 'proposal' as const,
     label: 'Proposal',
     description: 'Initial proposal and customer agreement',
     icon: <FileText className="w-5 h-5" />
   },
   {
-    stage: 'site_survey',
-    label: 'Site Survey',
-    description: 'Property assessment and measurements',
-    icon: <Camera className="w-5 h-5" />
-  },
-  {
-    stage: 'onboarding',
+    stage: 'onboarding' as const,
     label: 'Onboarding',
     description: 'Customer onboarding and initial setup',
     icon: <MapPin className="w-5 h-5" />
   },
   {
-    stage: 'design',
+    stage: 'design' as const,
     label: 'Design',
     description: 'System design and engineering',
     icon: <PencilRuler className="w-5 h-5" />
   },
   {
-    stage: 'permitting',
+    stage: 'permitting' as const,
     label: 'Permitting',
     description: 'Permit application and approval',
     icon: <ClipboardCheck className="w-5 h-5" />
   },
   {
-    stage: 'installation',
+    stage: 'installation' as const,
     label: 'Installation',
     description: 'System installation and testing',
     icon: <Wrench className="w-5 h-5" />
   },
   {
-    stage: 'completed',
+    stage: 'completed' as const,
     label: 'Completed',
     description: 'Project completed and system activated',
     icon: <CheckCircle2 className="w-5 h-5" />
   }
-]
+] as const
 
-const statusConfig: Record<string, ProposalStatus> = {
+const statusConfig: Record<Status, ProposalStatus> = {
   pending: {
     status: 'pending',
-    label: 'Order Received',
-    description: 'We have received your order and are reviewing the details.',
-    icon: <Clock className="w-6 h-6" />,
-    color: 'text-gray-500'
+    label: 'Pending',
+    description: 'Awaiting review or action',
+    icon: <Clock className="w-5 h-5" />,
+    color: 'text-yellow-500'
   },
   in_progress: {
     status: 'in_progress',
     label: 'In Progress',
-    description: 'Your project is actively being worked on.',
-    icon: <Calendar className="w-6 h-6" />,
+    description: 'Currently being worked on',
+    icon: <ArrowRight className="w-5 h-5" />,
     color: 'text-blue-500'
+  },
+  approved: {
+    status: 'approved',
+    label: 'Approved',
+    description: 'Approved and ready to proceed',
+    icon: <CheckCircle className="w-5 h-5" />,
+    color: 'text-green-500'
   },
   completed: {
     status: 'completed',
     label: 'Completed',
-    description: 'Your project has been completed.',
-    icon: <CheckCircle2 className="w-6 h-6" />,
-    color: 'text-green-500'
+    description: 'Work has been completed',
+    icon: <CheckCircle2 className="w-5 h-5" />,
+    color: 'text-green-700'
   },
   cancelled: {
     status: 'cancelled',
     label: 'Cancelled',
-    description: 'This project has been cancelled.',
-    icon: <AlertCircle className="w-6 h-6" />,
+    description: 'Project has been cancelled',
+    icon: <XCircle className="w-5 h-5" />,
     color: 'text-red-500'
   }
 }
 
 export default function ProposalDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const [proposal, setProposal] = useState<Proposal | null>(null)
+  const supabase = createClientComponentClient<Database>()
+  const [proposal, setProposal] = useState<ProposalRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [updating, setUpdating] = useState(false)
@@ -171,7 +180,7 @@ export default function ProposalDetailsPage({ params }: { params: { id: string }
         const { error: updateError } = await supabase
           .from('proposals')
           .update({
-            stage: 'site_survey' as const,
+            stage: 'onboarding' as const,
             status: 'in_progress' as const
           })
           .eq('id', params.id)

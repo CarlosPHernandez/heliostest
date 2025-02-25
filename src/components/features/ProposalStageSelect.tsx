@@ -12,7 +12,6 @@ interface ProposalStageSelectProps {
 
 const stages = [
   'proposal',
-  'site_survey',
   'onboarding',
   'design',
   'permitting',
