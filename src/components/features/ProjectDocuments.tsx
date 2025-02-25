@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Upload, File, Trash2, Loader2, Image as ImageIcon, FileText } from 'lucide-react'
+import { Upload, File, Trash2, Loader2, Image as ImageIcon, FileText, X, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useDropzone } from 'react-dropzone'
 
@@ -57,6 +57,8 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
   const [selectedType, setSelectedType] = useState<DocumentType>(DOCUMENT_TYPES.OTHER)
+  const [previewFile, setPreviewFile] = useState<{ url: string, type: string, name: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     loadDocuments()
@@ -68,11 +70,11 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
       const { data, error } = await supabase
         .from('project_documents')
         .select('*')
-        .eq('proposal_id', proposalId as string)
+        .eq('proposal_id', proposalId as any)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setDocuments((data || []) as ProjectDocument[])
+      setDocuments(data as unknown as ProjectDocument[] || [])
     } catch (error) {
       console.error('Error loading documents:', error)
       toast.error('Failed to load documents')
@@ -81,9 +83,16 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
     }
   }
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (!isAdmin) return
+  const getFileType = (file: File): string => {
+    if (file.type.startsWith('image/')) return 'image'
+    if (file.type === 'application/pdf') return 'pdf'
+    if (file.type.includes('word')) return 'word'
+    return 'other'
+  }
 
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return
+    
     try {
       setUploading(true)
       
@@ -100,12 +109,16 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
         const filePath = `project-documents/${proposalId}/${fileName}`
 
+        // Show upload progress toast
+        const toastId = toast.loading(`Uploading ${file.name}...`)
+
         // Upload file to Supabase Storage
         const uploadTask = supabase.storage
           .from('documents')
           .upload(filePath, file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: file.type
           })
 
         // Track upload progress
@@ -115,6 +128,9 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
             ...prev,
             [file.name]: percent
           }))
+          
+          // Update toast with progress
+          toast.loading(`Uploading ${file.name}... ${Math.round(percent)}%`, { id: toastId })
         }
 
         // Attach progress handler
@@ -122,9 +138,12 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
           (uploadTask as any).onUploadProgress = handleProgress
         }
 
-        const { error: uploadError } = await uploadTask
+        const { error: uploadError, data: uploadData } = await uploadTask
 
-        if (uploadError) throw uploadError
+        if (uploadError) {
+          toast.error(`Failed to upload ${file.name}`, { id: toastId })
+          throw uploadError
+        }
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
@@ -143,7 +162,10 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
             status: 'pending'
           } as any)
 
-        if (dbError) throw dbError
+        if (dbError) {
+          toast.error(`Failed to save ${file.name} to database`, { id: toastId })
+          throw dbError
+        }
 
         // Clear progress for this file
         setUploadProgress(prev => {
@@ -152,7 +174,7 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
           return newProgress
         })
 
-        toast.success(`${file.name} uploaded successfully`)
+        toast.success(`${file.name} uploaded successfully`, { id: toastId })
       }
 
       loadDocuments()
@@ -162,17 +184,24 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
     } finally {
       setUploading(false)
     }
-  }, [proposalId, selectedType, isAdmin])
+  }, [proposalId, selectedType])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: ACCEPTED_FILE_TYPES,
-    disabled: !isAdmin || uploading,
-    maxSize: MAX_FILE_SIZE
+    disabled: uploading,
+    maxSize: MAX_FILE_SIZE,
+    noClick: true,
+    noKeyboard: true
   })
 
   const deleteDocument = async (documentId: string, filePath: string) => {
     try {
+      // Show confirmation dialog
+      if (!confirm('Are you sure you want to delete this document?')) {
+        return
+      }
+      
       setLoading(true)
 
       // Extract the file path from the URL
@@ -189,7 +218,7 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
       const { error: dbError } = await supabase
         .from('project_documents')
         .delete()
-        .eq('id', documentId as string)
+        .eq('id', documentId as any)
 
       if (dbError) throw dbError
 
@@ -203,11 +232,23 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
     }
   }
 
-  const getFileIcon = (contentType: string | undefined) => {
-    if (!contentType) return <File className="h-5 w-5 text-blue-500" />
+  const getFileIcon = (contentType: string | undefined, name: string) => {
+    if (!contentType) {
+      // Try to determine from file extension
+      const ext = name.split('.').pop()?.toLowerCase()
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) {
+        return <ImageIcon className="h-5 w-5 text-green-500" />
+      }
+      if (ext === 'pdf') {
+        return <FileText className="h-5 w-5 text-red-500" />
+      }
+      return <File className="h-5 w-5 text-blue-500" />
+    }
+    
     if (contentType.startsWith('image/')) return <ImageIcon className="h-5 w-5 text-green-500" />
     if (contentType === 'application/pdf') return <FileText className="h-5 w-5 text-red-500" />
-    return <FileText className="h-5 w-5 text-blue-500" />
+    if (contentType.includes('word')) return <FileText className="h-5 w-5 text-blue-500" />
+    return <File className="h-5 w-5 text-gray-500" />
   }
 
   const formatFileSize = (bytes: number | undefined) => {
@@ -222,67 +263,85 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
     return `${size.toFixed(1)} ${units[unitIndex]}`
   }
 
+  const handlePreview = (url: string, type: string, name: string) => {
+    setPreviewFile({ url, type, name })
+  }
+
+  const closePreview = () => {
+    setPreviewFile(null)
+  }
+
+  const isImage = (url: string): boolean => {
+    const ext = url.split('.').pop()?.toLowerCase()
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')
+  }
+
   return (
-    <div className="space-y-4">
-      {isAdmin && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Project Documents</h2>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as DocumentType)}
-              className="select select-bordered"
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Project Documents</h2>
+        <select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value as DocumentType)}
+          className="select select-bordered"
+        >
+          {Object.entries(DOCUMENT_TYPES).map(([key, value]) => (
+            <option key={value} value={value}>
+              {key.charAt(0) + key.slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div
+        {...getRootProps()}
+        className={`
+          border-2 border-dashed rounded-lg p-8 text-center
+          transition-colors duration-200
+          ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+      >
+        <input {...getInputProps()} ref={fileInputRef} />
+        <Upload className="h-8 w-8 mx-auto mb-4 text-gray-400" />
+        {isDragActive ? (
+          <p className="text-blue-500 font-medium">Drop the files here</p>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-gray-600">Drag and drop files here</p>
+            <button
+              type="button"
+              onClick={open}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              disabled={uploading}
             >
-              {Object.entries(DOCUMENT_TYPES).map(([key, value]) => (
-                <option key={value} value={value}>
-                  {key.charAt(0) + key.slice(1).toLowerCase()}
-                </option>
-              ))}
-            </select>
+              Select Files
+            </button>
+            <p className="text-sm text-gray-500">
+              Supported formats: PDF, DOCX, JPG, PNG (Max 10MB)
+            </p>
           </div>
+        )}
+      </div>
 
-          <div
-            {...getRootProps()}
-            className={`
-              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-              transition-colors duration-200
-              ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-              ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
-          >
-            <input {...getInputProps()} />
-            <Upload className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-            {isDragActive ? (
-              <p className="text-blue-500">Drop the files here</p>
-            ) : (
-              <div className="space-y-2">
-                <p>Drag and drop files here, or click to select files</p>
-                <p className="text-sm text-gray-500">
-                  Supported formats: PDF, DOCX, JPG, PNG (Max 10MB)
-                </p>
+      {/* Upload Progress */}
+      {Object.entries(uploadProgress).length > 0 && (
+        <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+          <h3 className="font-medium text-gray-700">Uploading Files</h3>
+          {Object.entries(uploadProgress).map(([fileName, progress]) => (
+            <div key={fileName} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="truncate max-w-[80%]">{fileName}</span>
+                <span>{Math.round(progress)}%</span>
               </div>
-            )}
-          </div>
-
-          {/* Upload Progress */}
-          {Object.entries(uploadProgress).length > 0 && (
-            <div className="space-y-2">
-              {Object.entries(uploadProgress).map(([fileName, progress]) => (
-                <div key={fileName} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="truncate">{fileName}</span>
-                    <span>{Math.round(progress)}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-200"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-200"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
@@ -291,9 +350,13 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : documents.length === 0 ? (
-        <p className="text-center py-8 text-gray-500">
-          No documents available
-        </p>
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <File className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500">No documents available</p>
+          <p className="text-sm text-gray-400 mt-1">
+            Upload documents to share with your project team
+          </p>
+        </div>
       ) : (
         <div className="grid gap-4">
           {documents.map((doc) => (
@@ -302,7 +365,7 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
               className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                {getFileIcon(doc.content_type)}
+                {getFileIcon(doc.content_type, doc.name)}
                 <div>
                   <p className="font-medium">{doc.name}</p>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -318,7 +381,15 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {isImage(doc.file_url) && (
+                  <button
+                    onClick={() => handlePreview(doc.file_url, 'image', doc.name)}
+                    className="btn btn-ghost btn-sm"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                )}
                 <a
                   href={doc.file_url}
                   target="_blank"
@@ -327,7 +398,7 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
                 >
                   View
                 </a>
-                {isAdmin && (
+                {(isAdmin || doc.status === 'pending') && (
                   <button
                     onClick={() => deleteDocument(doc.id, doc.file_url)}
                     className="btn btn-ghost btn-sm text-red-500 hover:bg-red-50"
@@ -338,6 +409,36 @@ export default function ProjectDocuments({ proposalId, isAdmin = false }: Projec
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewFile && previewFile.type === 'image' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-medium truncate">{previewFile.name}</h3>
+              <button onClick={closePreview} className="text-gray-500 hover:text-gray-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+              <img 
+                src={previewFile.url} 
+                alt={previewFile.name} 
+                className="max-w-full max-h-[70vh] object-contain"
+              />
+            </div>
+            <div className="p-4 border-t flex justify-end">
+              <a
+                href={previewFile.url}
+                download
+                className="btn btn-primary btn-sm"
+              >
+                Download
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>
