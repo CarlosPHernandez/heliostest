@@ -1,111 +1,113 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, Camera, Loader2, Check, Trash2, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { toast } from 'sonner'
-import { Input } from '@/components/ui/input'
+import { Loader2, Check } from 'lucide-react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Label } from '@/components/ui/label'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { Database } from '@/types/database.types'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+
+type PendingProposal = Database['public']['Tables']['pending_proposals']['Row']
+type SiteSurvey = Database['public']['Tables']['site_surveys']['Row']
 
 interface SiteSurveyProps {
-  proposalId: string
+  proposal: PendingProposal
   onComplete?: () => void
 }
 
-interface SiteSurvey {
-  id: string
-  property_type: string
-  roof_age: number
-  roof_material: string
-  roof_obstructions: string[]
-  attic_access: boolean
-  electrical_panel_location: string
-  electrical_system_capacity: number
-  status: 'pending' | 'in_progress' | 'completed'
-  notes: string
+interface FormOption {
+  value: string
+  label: string
 }
 
-interface SurveyImage {
-  id: string
-  image_type: 'attic' | 'electrical_panel' | 'roof' | 'exterior'
-  file_url: string
-}
-
-const propertyTypes = [
-  'Single Family Home',
-  'Multi Family Home',
-  'Townhouse',
-  'Condominium',
-  'Other'
+const propertyTypes: FormOption[] = [
+  { value: 'single_family', label: 'Single Family Home' },
+  { value: 'multi_family', label: 'Multi-Family Home' },
+  { value: 'townhouse', label: 'Townhouse' },
+  { value: 'condo', label: 'Condominium' },
+  { value: 'commercial', label: 'Commercial Building' }
 ]
 
-const roofMaterials = [
-  'Asphalt Shingles',
-  'Metal',
-  'Tile',
-  'Slate',
-  'Wood Shake',
-  'Other'
+const ownershipTypes: FormOption[] = [
+  { value: 'own', label: 'Own' },
+  { value: 'rent', label: 'Rent' }
 ]
 
-const roofObstructions = [
-  'Chimney',
-  'Skylights',
-  'Vents',
-  'Satellite Dish',
-  'Other'
+const roofAgeOptions: FormOption[] = [
+  { value: '5', label: '0-5 years' },
+  { value: '10', label: '6-10 years' },
+  { value: '15', label: '11-15 years' },
+  { value: '20', label: '16-20 years' },
+  { value: '25', label: 'Over 20 years' }
+]
+
+const roofMaterials: FormOption[] = [
+  { value: 'asphalt', label: 'Asphalt Shingles' },
+  { value: 'metal', label: 'Metal' },
+  { value: 'tile', label: 'Tile' },
+  { value: 'slate', label: 'Slate' },
+  { value: 'wood', label: 'Wood Shake' }
+]
+
+const roofConditions: FormOption[] = [
+  { value: 'excellent', label: 'Excellent' },
+  { value: 'good', label: 'Good' },
+  { value: 'fair', label: 'Fair' },
+  { value: 'poor', label: 'Poor' },
+  { value: 'unknown', label: 'Unknown' }
+]
+
+const panelLocations: FormOption[] = [
+  { value: 'exterior_wall', label: 'Exterior Wall' },
+  { value: 'garage', label: 'Garage' },
+  { value: 'basement', label: 'Basement' },
+  { value: 'utility_room', label: 'Utility Room' }
+]
+
+const systemCapacities: FormOption[] = [
+  { value: '100', label: '100 Amperes' },
+  { value: '150', label: '150 Amperes' },
+  { value: '200', label: '200 Amperes' },
+  { value: '400', label: '400 Amperes' }
 ]
 
 const steps = [
   {
-    id: 'property_type',
     title: 'Property Type',
-    description: 'What type of property do you have?'
+    description: 'Tell us about your property'
   },
   {
-    id: 'roof_details',
-    title: 'Roof Information',
-    description: 'Tell us about your roof'
+    title: 'Property Details',
+    description: 'Additional property information'
   },
   {
-    id: 'attic_access',
-    title: 'Attic Access',
-    description: 'Is there access to the attic?'
+    title: 'Roof Details',
+    description: 'Information about your roof'
   },
   {
-    id: 'electrical',
     title: 'Electrical System',
-    description: 'Information about your electrical system'
+    description: 'Details about your electrical setup'
   },
   {
-    id: 'photos',
-    title: 'Required Photos',
-    description: 'Upload photos of key areas'
-  },
-  {
-    id: 'review',
     title: 'Review',
     description: 'Review your survey before submitting'
   }
 ]
 
-export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) {
+export default function SiteSurvey({ proposal, onComplete }: SiteSurveyProps) {
+  const router = useRouter()
   const [survey, setSurvey] = useState<Partial<SiteSurvey>>({})
-  const [images, setImages] = useState<Record<string, SurveyImage | null>>({
-    attic: null,
-    electrical_panel: null,
-    roof: null,
-    exterior: null
-  })
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [uploadingType, setUploadingType] = useState<string | null>(null)
+  const supabase = createClientComponentClient<Database>()
 
   useEffect(() => {
     loadSurvey()
-  }, [proposalId])
+  }, [proposal.id])
 
   const loadSurvey = async () => {
     try {
@@ -113,7 +115,7 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
       let { data: surveyData, error: surveyError } = await supabase
         .from('site_surveys')
         .select('*')
-        .eq('proposal_id', proposalId)
+        .eq('proposal_id', proposal.id)
         .single()
 
       if (surveyError && surveyError.code !== 'PGRST116') {
@@ -121,680 +123,380 @@ export default function SiteSurvey({ proposalId, onComplete }: SiteSurveyProps) 
       }
 
       if (!surveyData) {
-        // Try to create a new survey, but handle the case where one might have been created
+        // Create a new survey
         const { data: newSurvey, error: createError } = await supabase
           .from('site_surveys')
           .insert({
-            proposal_id: proposalId,
+            proposal_id: proposal.id,
             status: 'pending',
             roof_obstructions: []
           })
           .select()
           .single()
 
-        if (createError?.code === '23505') { // Unique violation error code
-          // Survey was created by another request, fetch it
-          const { data: existingSurvey, error: fetchError } = await supabase
-            .from('site_surveys')
-            .select('*')
-            .eq('proposal_id', proposalId)
-            .single()
-
-          if (fetchError) throw fetchError
-          surveyData = existingSurvey
-        } else if (createError) {
-          throw createError
-        } else {
-          surveyData = newSurvey
-        }
+        if (createError) throw createError
+        surveyData = newSurvey
       }
 
-      setSurvey(surveyData)
-
-      // Load images if survey exists
-      const { data: imageData, error: imageError } = await supabase
-        .from('site_survey_images')
-        .select('*')
-        .eq('site_survey_id', surveyData.id)
-
-      if (imageError) throw imageError
-
-      const imageMap = imageData?.reduce((acc, img) => {
-        acc[img.image_type] = img
-        return acc
-      }, {} as Record<string, SurveyImage>)
-
-      setImages(imageMap || {})
+      setSurvey(surveyData || {})
+      console.log('Loaded survey:', surveyData) // Debug log
     } catch (error) {
       console.error('Error loading survey:', error)
-      toast.error('Failed to load survey data')
+      toast.error('Failed to load survey')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleImageUpload = async (type: string, file: File) => {
-    try {
-      setUploadingType(type)
-
-      if (!survey.id) {
-        // Create survey first if it doesn't exist
-        const { data: newSurvey, error: surveyError } = await supabase
-          .from('site_surveys')
-          .insert({
-            proposal_id: proposalId,
-            status: 'in_progress'
-          })
-          .select()
-          .single()
-
-        if (surveyError) throw surveyError
-        setSurvey(newSurvey)
-      }
-
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${proposalId}/${type}_${Date.now()}.${fileExt}`
-
-      const { error: uploadError, data } = await supabase.storage
-        .from('site-survey-images')
-        .upload(fileName, file)
-
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('site-survey-images')
-        .getPublicUrl(fileName)
-
-      const { data: imageRecord, error: imageError } = await supabase
-        .from('site_survey_images')
-        .insert({
-          site_survey_id: survey.id,
-          image_type: type,
-          file_url: publicUrl
-        })
-        .select()
-        .single()
-
-      if (imageError) throw imageError
-
-      setImages(prev => ({
-        ...prev,
-        [type]: imageRecord
-      }))
-
-      toast.success(`${type} image uploaded successfully`)
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      toast.error('Failed to upload image')
-    } finally {
-      setUploadingType(null)
-    }
-  }
-
   const handleSubmit = async () => {
-    setSaving(true)
-
     try {
+      setSaving(true)
+      console.log('Starting survey submission...')
+      console.log('Current survey data:', survey)
+
+      // Validate required fields
+      if (!survey.property_type || !survey.ownership_type ||
+        !survey.roof_material || !survey.roof_condition ||
+        !survey.electrical_panel_location || !survey.electrical_system_capacity ||
+        survey.is_hoa === undefined) {
+        toast.error('Please fill in all required fields')
+        return
+      }
+
       const surveyData = {
-        ...survey,
-        proposal_id: proposalId,
-        status: 'completed'
+        proposal_id: proposal.id,
+        property_type: survey.property_type,
+        ownership_type: survey.ownership_type,
+        is_hoa: survey.is_hoa,
+        roof_age: survey.roof_age ? Number(survey.roof_age) : null,
+        roof_material: survey.roof_material,
+        roof_condition: survey.roof_condition,
+        electrical_panel_location: survey.electrical_panel_location,
+        electrical_system_capacity: Number(survey.electrical_system_capacity),
+        attic_access: survey.attic_access,
+        status: 'completed' as const,
+        roof_obstructions: survey.roof_obstructions || [],
+        is_editable: false,
+        submitted_at: new Date().toISOString()
       }
 
-      if (!survey.id) {
-        // Create new survey
-        const { data, error } = await supabase
-          .from('site_surveys')
-          .insert(surveyData)
-          .select()
-          .single()
+      console.log('Processed survey data:', surveyData)
 
-        if (error) throw error
-        setSurvey(data)
-      } else {
-        // Update existing survey
-        const { error } = await supabase
-          .from('site_surveys')
-          .update(surveyData)
-          .eq('id', survey.id)
+      // Save the survey
+      const { error: surveyError } = await supabase
+        .from('site_surveys')
+        .upsert(surveyData)
 
-        if (error) throw error
+      if (surveyError) {
+        console.error('Survey update/insert error:', surveyError)
+        throw surveyError
       }
 
-      toast.success('Site survey saved successfully')
-      onComplete?.()
-    } catch (error) {
-      console.error('Error saving survey:', error)
-      toast.error('Failed to save survey')
+      // Update the proposal stage and status
+      const { error: proposalError } = await supabase
+        .from('pending_proposals')
+        .update({
+          status: 'in_progress',
+          stage: 'site_survey_completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', proposal.id)
+
+      if (proposalError) {
+        console.error('Proposal update error:', proposalError)
+        throw proposalError
+      }
+
+      console.log('Survey and proposal updated successfully')
+      toast.success('Survey submitted successfully')
+      router.push('/dashboard')
+    } catch (error: any) {
+      console.error('Submission error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
+      toast.error(error.message || 'Failed to submit survey. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1)
-    }
-  }
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1)
-    }
-  }
-
-  const renderStepContent = () => {
-    switch (steps[currentStep].id) {
-      case 'property_type':
-        return (
-          <div className="space-y-6">
-            <select
-              value={survey.property_type || ''}
-              onChange={(e) => setSurvey(prev => ({ ...prev, property_type: e.target.value }))}
-              className="w-full bg-black border border-gray-800 rounded-lg px-4 py-4 text-white text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              required
-            >
-              <option value="">Select property type</option>
-              {propertyTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-        )
-
-      case 'roof_details':
-        return (
-          <div className="space-y-8">
-            <div>
-              <Label className="text-white text-lg mb-3">Roof Age (years)</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={survey.roof_age || ''}
-                onChange={(e) => setSurvey(prev => ({ ...prev, roof_age: parseInt(e.target.value) }))}
-                className="bg-black border-gray-800 text-white text-lg py-4"
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-white text-lg mb-3">Roof Material</Label>
-              <select
-                value={survey.roof_material || ''}
-                onChange={(e) => setSurvey(prev => ({ ...prev, roof_material: e.target.value }))}
-                className="w-full bg-black border border-gray-800 rounded-lg px-4 py-4 text-white text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">Select roof material</option>
-                {roofMaterials.map(material => (
-                  <option key={material} value={material}>{material}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label className="text-white text-lg mb-3">Roof Obstructions</Label>
-              <div className="grid grid-cols-2 gap-4">
-                {roofObstructions.map(obstruction => (
-                  <label key={obstruction} className="flex items-center space-x-3 p-4 border border-gray-800 rounded-lg hover:bg-gray-900 transition-colors cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={survey.roof_obstructions?.includes(obstruction) || false}
-                      onChange={(e) => {
-                        const current = survey.roof_obstructions || []
-                        const updated = e.target.checked
-                          ? [...current, obstruction]
-                          : current.filter(o => o !== obstruction)
-                        setSurvey(prev => ({ ...prev, roof_obstructions: updated }))
-                      }}
-                      className="h-5 w-5 rounded border-gray-800 text-blue-500 focus:ring-blue-500 bg-black"
-                    />
-                    <span className="text-white text-lg">{obstruction}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'attic_access':
-        return (
-          <div className="space-y-4">
-            <select
-              value={survey.attic_access === undefined ? '' : (survey.attic_access ? 'true' : 'false')}
-              onChange={(e) => setSurvey(prev => ({ ...prev, attic_access: e.target.value === 'true' }))}
-              className="w-full bg-[#1A1A1A] border border-gray-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Select option</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-          </div>
-        )
-
-      case 'electrical':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label className="text-white mb-2">Electrical Panel Location</Label>
-              <Input
-                value={survey.electrical_panel_location || ''}
-                onChange={(e) => setSurvey(prev => ({ ...prev, electrical_panel_location: e.target.value }))}
-                placeholder="e.g., Garage, Basement, Exterior Wall"
-                className="bg-[#1A1A1A] border-gray-800 text-white"
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-white mb-2">Electrical System Capacity (Amps)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="1"
-                value={survey.electrical_system_capacity || ''}
-                onChange={(e) => setSurvey(prev => ({ ...prev, electrical_system_capacity: parseInt(e.target.value) }))}
-                className="bg-[#1A1A1A] border-gray-800 text-white"
-                required
-              />
-            </div>
-          </div>
-        )
-
-      case 'photos':
-        const photoTypes = ['attic', 'electrical_panel', 'roof', 'exterior'] as const
-        const currentPhotoType = photoTypes[photoTypes.findIndex(type => !images[type])] || photoTypes[0]
-        const allPhotosUploaded = photoTypes.every(type => images[type])
-
-        const getPhotoTitle = (type: string) => {
-          switch (type) {
-            case 'attic': return 'Attic Photo'
-            case 'electrical_panel': return 'Electrical Panel Photo'
-            case 'roof': return 'Roof Photo'
-            case 'exterior': return 'Exterior Photo'
-            default: return ''
-          }
-        }
-
-        const getPhotoDescription = (type: string) => {
-          switch (type) {
-            case 'attic': return 'Take a clear photo of your attic space showing the overall area'
-            case 'electrical_panel': return 'Take a photo of your electrical panel with the cover open if possible'
-            case 'roof': return 'Take a photo of your roof showing its overall condition'
-            case 'exterior': return 'Take a photo of your house from the street view'
-            default: return ''
-          }
-        }
-
-        return (
-          <div className="space-y-8">
-            {/* Progress Indicators */}
-            <div className="flex space-x-2 mb-8">
-              {photoTypes.map((type) => (
-                <div
-                  key={type}
-                  className={`flex-1 h-1 rounded-full ${images[type] ? 'bg-green-500' :
-                    type === currentPhotoType ? 'bg-blue-500' :
-                      'bg-gray-800'
-                    }`}
-                />
-              ))}
-            </div>
-
-            {/* Photo Upload Status */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              {photoTypes.map((type) => (
-                <div
-                  key={type}
-                  className={`text-center p-3 rounded-lg border ${images[type] ? 'border-green-500/20 bg-green-500/5' :
-                    type === currentPhotoType ? 'border-blue-500/20 bg-blue-500/5' :
-                      'border-gray-800 bg-gray-900/20'
-                    }`}
-                >
-                  <div className="text-sm font-medium capitalize mb-1">
-                    {type.replace('_', ' ')}
-                  </div>
-                  {images[type] ? (
-                    <Check className="w-4 h-4 mx-auto text-green-500" />
-                  ) : type === currentPhotoType ? (
-                    <div className="w-4 h-4 mx-auto rounded-full bg-blue-500" />
-                  ) : (
-                    <div className="w-4 h-4 mx-auto rounded-full bg-gray-800" />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Current Photo Upload */}
-            {!allPhotosUploaded && (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    {getPhotoTitle(currentPhotoType)}
-                  </h3>
-                  <p className="text-gray-400">
-                    {getPhotoDescription(currentPhotoType)}
-                  </p>
-                </div>
-
-                <div className="mt-8">
-                  {images[currentPhotoType] ? (
-                    <div className="relative aspect-video">
-                      <img
-                        src={images[currentPhotoType]?.file_url}
-                        alt={`${currentPhotoType} photo`}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setImages(prev => ({ ...prev, [currentPhotoType]: null }))}
-                        className="absolute top-4 right-4 bg-red-500/90 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-red-600 transition-colors"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="relative block aspect-video cursor-pointer group">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) {
-                            handleImageUpload(currentPhotoType, file)
-                          }
-                        }}
-                        disabled={!!uploadingType}
-                      />
-                      <div className="w-full h-full border-2 border-dashed border-gray-800 rounded-lg flex flex-col items-center justify-center group-hover:border-blue-500/50 transition-colors">
-                        {uploadingType === currentPhotoType ? (
-                          <div className="text-center">
-                            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
-                            <p className="text-gray-400">Uploading photo...</p>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="bg-blue-500/10 rounded-full p-4 mb-4 group-hover:bg-blue-500/20 transition-colors">
-                              <Camera className="h-8 w-8 text-blue-500" />
-                            </div>
-                            <p className="text-lg text-white mb-2">Upload {getPhotoTitle(currentPhotoType)}</p>
-                            <p className="text-sm text-gray-400">Click to browse or drag and drop</p>
-                          </>
-                        )}
-                      </div>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* All Photos Complete Message */}
-            {allPhotosUploaded && (
-              <div className="text-center py-8">
-                <div className="bg-green-500/10 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-                  <Check className="h-8 w-8 text-green-500" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  All Photos Uploaded
-                </h3>
-                <p className="text-gray-400">
-                  You've successfully uploaded all required photos
-                </p>
-              </div>
-            )}
-
-            {/* Photo Preview Grid */}
-            {Object.values(images).some(img => img) && (
-              <div className="mt-8 border-t border-gray-800 pt-8">
-                <h4 className="text-lg font-medium text-white mb-4">Uploaded Photos</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  {photoTypes.map((type) => (
-                    images[type] && (
-                      <div key={type} className="relative aspect-video">
-                        <img
-                          src={images[type]?.file_url}
-                          alt={`${type} photo`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setImages(prev => ({ ...prev, [type]: null }))}
-                          className="absolute top-2 right-2 bg-red-500/90 backdrop-blur-sm text-white p-1.5 rounded-lg hover:bg-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )
-
-      case 'review':
-        return (
-          <div className="space-y-6">
-            <div className="border border-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-medium text-white mb-4">Property Information</h3>
-              <dl className="space-y-3">
-                <div className="flex justify-between">
-                  <dt className="text-gray-400">Type:</dt>
-                  <dd className="text-white">{survey.property_type}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-400">Roof Age:</dt>
-                  <dd className="text-white">{survey.roof_age} years</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-400">Roof Material:</dt>
-                  <dd className="text-white">{survey.roof_material}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-400">Attic Access:</dt>
-                  <dd className="text-white">{survey.attic_access ? 'Yes' : 'No'}</dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className="border border-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-medium text-white mb-4">Electrical Information</h3>
-              <dl className="space-y-3">
-                <div className="flex justify-between">
-                  <dt className="text-gray-400">Panel Location:</dt>
-                  <dd className="text-white">{survey.electrical_panel_location}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-400">System Capacity:</dt>
-                  <dd className="text-white">{survey.electrical_system_capacity} Amps</dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className="border border-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-medium text-white mb-4">Uploaded Photos</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(images).map(([type, image]) => (
-                  <div key={type} className="text-center p-4 border border-gray-800 rounded-lg">
-                    <div className="text-gray-300 mb-2 capitalize">{type.replace('_', ' ')}</div>
-                    {image ? (
-                      <div className="text-green-400 flex items-center justify-center">
-                        <Check className="w-4 h-4 mr-1" />
-                        Uploaded
-                      </div>
-                    ) : (
-                      <div className="text-red-400 flex items-center justify-center">
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        Missing
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )
-
-      default:
-        return null
-    }
-  }
+  const renderSelectField = (
+    id: string,
+    label: string,
+    options: FormOption[],
+    field: keyof SiteSurvey
+  ) => (
+    <div>
+      <Label htmlFor={id} className="text-white">{label}</Label>
+      <select
+        id={id}
+        value={String(survey[field] || '')}
+        onChange={(e) => setSurvey((prev) => ({ ...prev, [field]: e.target.value }))}
+        className="w-full p-2 rounded-md bg-gray-800 text-white border border-gray-700"
+      >
+        <option value="" className="text-white bg-gray-800">Select {label.toLowerCase()}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value} className="text-white bg-gray-800">
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     )
   }
 
+  const getDisplayValue = (field: keyof SiteSurvey, options: FormOption[]) => {
+    const value = survey[field]
+    if (!value) return 'Not specified'
+    const option = options.find(opt => opt.value === String(value))
+    return option ? option.label : 'Not specified'
+  }
+
   return (
-    <div className="relative">
-      {/* Progress Bar */}
-      <div className="sticky top-0 z-10 bg-[#111111] border-b border-gray-800 px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-white">
-            {steps[currentStep].title}
-          </h2>
-          <div className="text-sm text-gray-400">
-            Step {currentStep + 1} of {steps.length}
+    <div className="space-y-8">
+      {/* Progress Steps */}
+      <div className="grid grid-cols-2 gap-4 md:flex md:justify-between">
+        {steps.map((step, index) => (
+          <div
+            key={step.title}
+            className={`flex flex-col items-center text-center ${index === currentStep
+              ? 'text-white'
+              : index < currentStep
+                ? 'text-green-500'
+                : 'text-gray-500'
+              }`}
+          >
+            <div className="text-sm font-medium">{step.title}</div>
+            <div className="text-xs">{step.description}</div>
           </div>
-        </div>
-        <div className="flex space-x-1">
-          {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className={`flex-1 h-1 rounded-full transition-all duration-300 ${index === currentStep
-                ? 'bg-blue-500'
-                : index < currentStep
-                  ? 'bg-green-500'
-                  : 'bg-gray-800'
-                }`}
-            />
-          ))}
-        </div>
+        ))}
       </div>
 
-      {/* Step Content */}
-      <div className="px-6 py-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderStepContent()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation Footer */}
-      <div className="sticky bottom-0 left-0 right-0 bg-[#111111] border-t border-gray-800 px-6 py-4">
-        <div className="flex justify-between items-center">
-          <button
-            type="button"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            className={`
-              px-4 py-2 rounded-lg font-medium flex items-center gap-2
-              ${currentStep === 0
-                ? 'text-gray-500 cursor-not-allowed'
-                : 'text-white hover:bg-white/5'
-              }
-            `}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Previous
-          </button>
-
-          {currentStep === steps.length - 1 ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={saving}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  Submit Survey
-                </>
+      {/* Form Steps */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-6"
+        >
+          {currentStep === 0 && (
+            <div className="space-y-4">
+              {renderSelectField(
+                'property_type',
+                'Property Type',
+                propertyTypes,
+                'property_type'
               )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={nextStep}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
-            >
-              Next
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              {renderSelectField(
+                'ownership_type',
+                'Do you own or rent your home?',
+                ownershipTypes,
+                'ownership_type'
+              )}
+            </div>
           )}
-        </div>
+
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="is_hoa" className="text-white">Is this property part of an HOA community?</Label>
+                <select
+                  id="is_hoa"
+                  value={survey.is_hoa === undefined ? '' : String(survey.is_hoa)}
+                  onChange={(e) =>
+                    setSurvey((prev) => ({
+                      ...prev,
+                      is_hoa: e.target.value === 'true',
+                    }))
+                  }
+                  className="w-full p-2 rounded-md bg-gray-800 text-white border border-gray-700"
+                >
+                  <option value="" className="text-white bg-gray-800">Select option</option>
+                  <option value="true" className="text-white bg-gray-800">Yes</option>
+                  <option value="false" className="text-white bg-gray-800">No</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              {renderSelectField(
+                'roof_age',
+                'Roof Age',
+                roofAgeOptions,
+                'roof_age'
+              )}
+              {renderSelectField(
+                'roof_material',
+                'Roof Material',
+                roofMaterials,
+                'roof_material'
+              )}
+              {renderSelectField(
+                'roof_condition',
+                'Roof Condition',
+                roofConditions,
+                'roof_condition'
+              )}
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              {renderSelectField(
+                'electrical_panel_location',
+                'Electrical Panel Location',
+                panelLocations,
+                'electrical_panel_location'
+              )}
+              {renderSelectField(
+                'electrical_system_capacity',
+                'Electrical System Capacity',
+                systemCapacities,
+                'electrical_system_capacity'
+              )}
+              <div>
+                <Label htmlFor="attic_access" className="text-white">Attic Access</Label>
+                <select
+                  id="attic_access"
+                  value={survey.attic_access === undefined ? '' : String(survey.attic_access)}
+                  onChange={(e) =>
+                    setSurvey((prev) => ({
+                      ...prev,
+                      attic_access: e.target.value === 'true',
+                    }))
+                  }
+                  className="w-full p-2 rounded-md bg-gray-800 text-white border border-gray-700"
+                >
+                  <option value="" className="text-white bg-gray-800">Select option</option>
+                  <option value="true" className="text-white bg-gray-800">Yes</option>
+                  <option value="false" className="text-white bg-gray-800">No</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div className="space-y-6 bg-gray-900 p-6 rounded-lg">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
+                    Property Details
+                  </h3>
+                  <dl className="space-y-2">
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Property Type</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('property_type', propertyTypes)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Ownership</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('ownership_type', ownershipTypes)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">HOA Community</dt>
+                      <dd className="text-sm text-white">
+                        {survey.is_hoa === undefined ? 'Not specified' : (survey.is_hoa ? 'Yes' : 'No')}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
+                    Roof Details
+                  </h3>
+                  <dl className="space-y-2">
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Roof Age</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('roof_age', roofAgeOptions)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Roof Material</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('roof_material', roofMaterials)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Roof Condition</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('roof_condition', roofConditions)}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
+                    Electrical System
+                  </h3>
+                  <dl className="space-y-2">
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Panel Location</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('electrical_panel_location', panelLocations)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">System Capacity</dt>
+                      <dd className="text-sm text-white">{getDisplayValue('electrical_system_capacity', systemCapacities)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-sm text-white">Attic Access</dt>
+                      <dd className="text-sm text-white">
+                        {survey.attic_access === undefined ? 'Not specified' : (survey.attic_access ? 'Yes' : 'No')}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentStep((prev) => prev - 1)}
+          disabled={currentStep === 0}
+          className="text-white border-white hover:bg-white/10"
+        >
+          Previous
+        </Button>
+        <Button
+          onClick={() => {
+            if (currentStep === steps.length - 1) {
+              handleSubmit()
+            } else {
+              setCurrentStep((prev) => prev + 1)
+            }
+          }}
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          {currentStep === steps.length - 1 ? (
+            saving ? (
+              <span className="flex items-center">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Submitting...
+              </span>
+            ) : (
+              'Submit Survey'
+            )
+          ) : (
+            'Next'
+          )}
+        </Button>
       </div>
-
-      {/* Form Fields Styling */}
-      <style jsx global>{`
-        .form-input,
-        .form-select {
-          width: 100%;
-          background-color: #1A1A1A;
-          border: 1px solid #333;
-          padding: 0.75rem 1rem;
-          border-radius: 0.5rem;
-          color: white;
-          font-size: 1rem;
-          transition: all 0.2s;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-          border-color: #3B82F6;
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-
-        .form-select option {
-          background-color: #1A1A1A;
-          color: white;
-          padding: 0.5rem;
-        }
-
-        .form-label {
-          color: #fff;
-          font-size: 0.875rem;
-          font-weight: 500;
-          margin-bottom: 0.5rem;
-          display: block;
-        }
-
-        .form-checkbox {
-          width: 1.25rem;
-          height: 1.25rem;
-          border-radius: 0.25rem;
-          border: 1px solid #333;
-          background-color: #1A1A1A;
-          cursor: pointer;
-        }
-
-        .form-checkbox:checked {
-          background-color: #3B82F6;
-          border-color: #3B82F6;
-        }
-
-        .form-checkbox:focus {
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-      `}</style>
     </div>
   )
 } 

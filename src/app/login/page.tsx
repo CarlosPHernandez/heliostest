@@ -43,6 +43,19 @@ function LoginForm() {
         if (error.message.includes('rate limit')) {
           throw new Error('Too many login attempts. Please wait a few minutes before trying again.')
         }
+        if (error.message.includes('Email not confirmed')) {
+          // Add resend verification email functionality
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+          })
+
+          if (resendError) {
+            throw new Error('Failed to resend verification email. Please try again.')
+          }
+
+          throw new Error('Please verify your email address. We have sent another verification email.')
+        }
         throw error
       }
 

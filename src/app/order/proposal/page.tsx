@@ -212,82 +212,36 @@ export default function ProposalPage() {
         throw new Error('Address is missing. Please start over.');
       }
 
-      // Get the temp user token from localStorage or generate a new one
-      let tempUserToken = localStorage.getItem('temp_user_token');
-      if (!tempUserToken) {
-        tempUserToken = crypto.randomUUID();
-        localStorage.setItem('temp_user_token', tempUserToken);
-      }
-
-      const proposalData = {
-        systemInfo,
-        systemSize: systemInfo.systemSize,
-        numberOfPanels: systemInfo.numberOfPanels,
-        monthlyProduction: systemInfo.monthlyProduction,
+      const proposalData: ProposalInsert = {
+        user_id: '', // Set after registration
+        system_size: systemInfo.systemSize,
+        number_of_panels: systemInfo.numberOfPanels,
+        total_price: systemInfo.totalPrice +
+          (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+          (selectedWarranty === 'extended' ? 1500 : 0),
         address,
-        monthlyBill,
-        packageType: packageType,
-        paymentType: paymentType,
-        ...(paymentType === 'finance' && {
-          selectedTerm,
+        package_type: packageType,
+        include_battery: includeBattery,
+        battery_type: includeBattery ? selectedBattery : null,
+        battery_count: includeBattery ? batteryCount : null,
+        payment_type: paymentType,
+        down_payment: paymentType === 'finance' ? downPayment : null,
+        monthly_payment: paymentType === 'finance' ? calculateMonthlyPayment(
+          systemInfo.totalPrice +
+          (includeBattery ? batteryOptions[selectedBattery].price * batteryCount : 0) +
+          (selectedWarranty === 'extended' ? 1500 : 0),
           downPayment,
-          monthlyPayment: financingOptions && financingOptions[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit
-        })
+          selectedTerm
+        ) : null,
+        financing_term: paymentType === 'finance' ? selectedTerm : null,
+        monthly_bill: monthlyBill,
+        monthly_production: systemInfo.monthlyProduction,
+        status: 'pending',
+        stage: 'proposal',
       };
 
-      const response = await fetch('/api/pending-proposals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tempUserToken,
-          proposalData
-        })
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        console.error('Error response:', responseData);
-        throw new Error(responseData.details || responseData.error || 'Failed to save proposal');
-      }
-
-      if (!responseData.data?.id) {
-        throw new Error('No proposal ID returned from server');
-      }
-
-      // Store proposal data in localStorage and cookies for later use
-      const proposalDataForStorage = {
-        id: responseData.data.id,
-        systemInfo,
-        address,
-        monthlyBill,
-        packageType,
-        paymentType,
-        ...(paymentType === 'finance' && {
-          financing: {
-            term: selectedTerm,
-            downPayment,
-            monthlyPayment: financingOptions[selectedTerm]?.monthlyPaymentWithDownPaymentAndCredit
-          }
-        }),
-        includeBattery,
-        ...(includeBattery && {
-          batteryType: selectedBattery,
-          batteryCount
-        }),
-        warranty: selectedWarranty
-      };
-
-      localStorage.setItem('currentProposal', JSON.stringify(proposalDataForStorage));
-      setCookie('pendingProposal', JSON.stringify(proposalDataForStorage));
-
-      toast.success('Proposal saved successfully!');
-
-      // Redirect to register page with return URL to site survey
-      const returnUrl = encodeURIComponent(`/proposals/${responseData.data.id}/site-survey`);
-      router.push(`/register?returnUrl=${returnUrl}`);
+      const encodedProposal = encodeURIComponent(JSON.stringify(proposalData));
+      router.push(`/register?proposal=${encodedProposal}`);
     } catch (error) {
       console.error('Error saving proposal:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';

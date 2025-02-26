@@ -88,7 +88,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center">
+            <Link href={user ? '/dashboard' : '/'} className="flex items-center">
               <span className="text-xl font-bold text-gray-900">Helios Nexus</span>
             </Link>
           </div>
@@ -120,14 +120,6 @@ const Header = () => {
                 {user ? (
                   <div className="flex items-center gap-4">
                     <NotificationBell />
-                    {!isAdmin && (
-                      <Link
-                        href="/admin/register"
-                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                      >
-                        Request Admin Access
-                      </Link>
-                    )}
                     <button
                       onClick={handleSignOut}
                       className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -202,15 +194,6 @@ const Header = () => {
                       <div className="px-3 py-2">
                         <NotificationBell />
                       </div>
-                      {!isAdmin && (
-                        <Link
-                          href="/admin/register"
-                          className="block w-full text-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Request Admin Access
-                        </Link>
-                      )}
                       <button
                         onClick={() => {
                           handleSignOut()

@@ -70,6 +70,58 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/login?error=profile_verification', requestUrl.origin))
       }
 
+      // Check for any pending proposals that need to be moved
+      const { data: pendingProposals, error: pendingError } = await supabase
+        .from('pending_proposals')
+        .select('*')
+        .eq('temp_user_token', code)
+        .is('synced_to_user_id', null)
+
+      if (pendingError) {
+        console.error('Error checking pending proposals:', pendingError)
+      } else if (pendingProposals?.length > 0) {
+        console.log('Found pending proposals to sync:', pendingProposals.length)
+
+        // Move each pending proposal to the proposals table
+        for (const pendingProposal of pendingProposals) {
+          const proposalToInsert = {
+            user_id: session.user.id,
+            package_type: pendingProposal.package_type,
+            system_size: pendingProposal.system_size,
+            panel_count: pendingProposal.panel_count,
+            monthly_production: pendingProposal.monthly_production,
+            address: pendingProposal.address,
+            monthly_bill: pendingProposal.monthly_bill,
+            payment_type: pendingProposal.payment_type,
+            financing: pendingProposal.financing,
+            status: 'pending',
+            stage: 'proposal',
+            include_battery: pendingProposal.include_battery,
+            battery_type: pendingProposal.battery_type,
+            battery_count: pendingProposal.battery_count,
+            total_price: pendingProposal.total_price,
+            number_of_panels: pendingProposal.panel_count
+          }
+
+          const { error: insertError } = await supabase
+            .from('proposals')
+            .insert([proposalToInsert])
+
+          if (insertError) {
+            console.error('Error moving pending proposal to proposals:', insertError)
+          } else {
+            // Mark the pending proposal as synced
+            await supabase
+              .from('pending_proposals')
+              .update({
+                synced_to_user_id: session.user.id,
+                synced_at: new Date().toISOString()
+              })
+              .eq('id', pendingProposal.id)
+          }
+        }
+      }
+
       // If returning from proposal page, process the pending proposal
       if (returnUrl.includes('/order/proposal')) {
         try {

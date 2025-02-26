@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Loader2, ChevronLeft } from 'lucide-react'
 import SiteSurvey from '@/components/features/SiteSurvey'
 import Link from 'next/link'
+import type { Database } from '@/types/database.types'
 
 interface PageProps {
   params: {
@@ -13,11 +14,15 @@ interface PageProps {
   }
 }
 
+type Profile = Database['public']['Tables']['profiles']['Row']
+type PendingProposal = Database['public']['Tables']['pending_proposals']['Row']
+
 export default function SiteSurveyPage({ params }: PageProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
-  const [proposal, setProposal] = useState<any>(null)
+  const [proposal, setProposal] = useState<PendingProposal | null>(null)
+  const supabase = createClientComponentClient<Database>()
 
   useEffect(() => {
     checkAccess()
@@ -32,25 +37,45 @@ export default function SiteSurveyPage({ params }: PageProps) {
         return
       }
 
-      const { data: proposalData, error } = await supabase
-        .from('proposals')
-        .select('*, profiles(full_name)')
-        .eq('id', params.id)
-        .single()
-
-      if (error) throw error
-      setProposal(proposalData)
-
-      // Check if user owns the proposal or is an admin
-      const { data: profile } = await supabase
+      // First check if user is admin
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('id, is_admin')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (proposalData.user_id === user.id || profile?.is_admin) {
-        setHasAccess(true)
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error checking profile:', profileError)
+        throw profileError
+      }
+
+      const isAdmin = profile?.is_admin ?? false
+
+      // Only check pending_proposals since site survey is only for initial designs
+      const { data: pendingProposal, error: pendingError } = await supabase
+        .from('pending_proposals')
+        .select('*')
+        .eq('id', params.id)
+        .maybeSingle()
+
+      if (pendingError && pendingError.code !== 'PGRST116') {
+        throw pendingError
+      }
+
+      // If we found a pending proposal
+      if (pendingProposal) {
+        setProposal(pendingProposal)
+
+        // Check access rights
+        const isOwner = !pendingProposal.synced_to_user_id || pendingProposal.synced_to_user_id === user.id
+
+        if (isAdmin || isOwner) {
+          setHasAccess(true)
+        } else {
+          router.push('/dashboard')
+        }
       } else {
+        console.error('No pending proposal found with ID:', params.id)
         router.push('/dashboard')
       }
     } catch (error) {
@@ -63,44 +88,33 @@ export default function SiteSurveyPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#0A0A0A]">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <div className="min-h-screen bg-black">
+        <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+          <div className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        </div>
       </div>
     )
   }
 
-  if (!hasAccess) {
+  if (!hasAccess || !proposal) {
     return null
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] pb-32">
-      {/* Header */}
-      <div className="bg-[#111111] border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="p-2 hover:bg-white/5 rounded-full transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-white" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-white">Site Survey</h1>
-              <p className="text-sm text-gray-400">{proposal?.address}</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-black">
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+        <div className="mb-12">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-sm font-medium text-white hover:text-gray-200"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4 text-white" />
+            Back to Dashboard
+          </Link>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-[#111111] rounded-xl border border-gray-800 shadow-xl overflow-hidden">
-          <SiteSurvey
-            proposalId={params.id}
-            onComplete={() => router.push('/dashboard')}
-          />
-        </div>
+        <SiteSurvey proposal={proposal} />
       </div>
     </div>
   )

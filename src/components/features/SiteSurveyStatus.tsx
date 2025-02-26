@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { ClipboardCheck, AlertCircle, Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
+import type { Database } from '@/types/database.types'
 
 interface SiteSurveyStatusProps {
   proposalId: string
@@ -18,6 +19,8 @@ interface SiteSurvey {
 export default function SiteSurveyStatus({ proposalId }: SiteSurveyStatusProps) {
   const [survey, setSurvey] = useState<SiteSurvey | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isInitialDesign, setIsInitialDesign] = useState(false)
+  const supabase = createClientComponentClient<Database>()
 
   useEffect(() => {
     loadSurveyStatus()
@@ -32,6 +35,20 @@ export default function SiteSurveyStatus({ proposalId }: SiteSurveyStatusProps) 
         return
       }
 
+      // Check if this is an initial design (pending proposal)
+      const { data: pendingProposal, error: pendingError } = await supabase
+        .from('pending_proposals')
+        .select('id')
+        .eq('id', proposalId)
+        .maybeSingle()
+
+      if (pendingError && pendingError.code !== 'PGRST116') {
+        console.error('Error checking pending proposals:', pendingError)
+      }
+
+      setIsInitialDesign(!!pendingProposal)
+
+      // Get site survey status
       const { data, error } = await supabase
         .from('site_surveys')
         .select('id, status, created_at')
@@ -63,6 +80,11 @@ export default function SiteSurveyStatus({ proposalId }: SiteSurveyStatusProps) 
     )
   }
 
+  // If this is a final design, don't show the site survey section
+  if (!isInitialDesign) {
+    return null
+  }
+
   if (!survey) {
     return (
       <div className="bg-[#111111] p-4 rounded-lg border border-yellow-500/20">
@@ -74,7 +96,7 @@ export default function SiteSurveyStatus({ proposalId }: SiteSurveyStatusProps) 
             <h3 className="text-sm font-medium text-yellow-400">Site Survey Required</h3>
             <div className="mt-2">
               <p className="text-sm text-gray-300">
-                A site survey needs to be completed for your solar installation.
+                Complete a site survey to help us create your final design proposal.
               </p>
             </div>
             <div className="mt-4">
@@ -102,16 +124,8 @@ export default function SiteSurveyStatus({ proposalId }: SiteSurveyStatusProps) 
             <h3 className="text-sm font-medium text-green-400">Site Survey Completed</h3>
             <div className="mt-2">
               <p className="text-sm text-gray-300">
-                Your site survey has been completed. Our team will review the information provided.
+                Your site survey has been completed and submitted. Our team will review the information and prepare your final design proposal.
               </p>
-            </div>
-            <div className="mt-4">
-              <Link
-                href={`/proposals/${proposalId}/site-survey`}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-green-400 bg-green-400/10 hover:bg-green-400/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                View Survey
-              </Link>
             </div>
           </div>
         </div>
@@ -129,7 +143,7 @@ export default function SiteSurveyStatus({ proposalId }: SiteSurveyStatusProps) 
           <h3 className="text-sm font-medium text-blue-400">Site Survey In Progress</h3>
           <div className="mt-2">
             <p className="text-sm text-gray-300">
-              You have started the site survey but it's not yet complete. Please provide all required information.
+              Please complete the site survey to help us create your final design proposal.
             </p>
           </div>
           <div className="mt-4">

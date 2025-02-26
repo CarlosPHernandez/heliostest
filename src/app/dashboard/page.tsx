@@ -11,6 +11,48 @@ import ProjectDocuments from '@/components/features/ProjectDocuments'
 import SendMessage from '@/components/features/SendMessage'
 import { motion, AnimatePresence } from 'framer-motion'
 import SiteSurveyStatus from '@/components/features/SiteSurveyStatus'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Database } from '@/types/database.types'
+
+const supabaseClient = createClientComponentClient<Database>()
+
+type ProposalStage = 'proposal' | 'site_survey_completed' | 'design' | 'permitting' | 'installation' | 'completed'
+type ProposalStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
+
+interface BaseDesign {
+  id: string
+  address: string
+  system_size: number
+  monthly_production: number
+  total_price: number
+  payment_type: string
+  include_battery?: boolean
+  battery_count?: number
+  battery_type?: string
+  created_at: string
+  status: ProposalStatus
+  number_of_panels: number
+}
+
+interface InitialDesign extends BaseDesign {
+  designType: 'initial'
+  stage: 'proposal'
+  displayStatus: string
+  description: string
+  statusColor: string
+  canEdit: boolean
+}
+
+interface FinalDesign extends BaseDesign {
+  designType: 'final'
+  stage: ProposalStage
+  displayStatus: string
+  description: string
+  statusColor: string
+  canEdit: boolean
+}
+
+type Design = InitialDesign | FinalDesign
 
 interface Proposal {
   id: string
@@ -44,12 +86,12 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [proposals, setProposals] = useState<Proposal[]>([])
+  const [proposals, setProposals] = useState<Design[]>([])
   const [selectedProposal, setSelectedProposal] = useState<string | null>(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Define stages array once at the component level
-  const stages = ['proposal', 'site_survey', 'design', 'permitting', 'installation', 'completed'] as const
+  const stages = ['proposal', 'site_survey_completed', 'design', 'permitting', 'installation', 'completed'] as const
 
   useEffect(() => {
     checkUser()
@@ -60,7 +102,7 @@ export default function DashboardPage() {
       console.log('Checking user session...')
       setError(null)
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
 
       if (sessionError) {
         console.error('Session error:', sessionError)
@@ -76,7 +118,7 @@ export default function DashboardPage() {
       setUser(session.user)
 
       // Create or update user profile
-      const { error: profileError } = await supabase
+      const { error: profileError } = await supabaseClient
         .from('profiles')
         .upsert({
           id: session.user.id,
@@ -94,7 +136,7 @@ export default function DashboardPage() {
       }
 
       // Fetch user profile
-      const { data: profileData, error: profileFetchError } = await supabase
+      const { data: profileData, error: profileFetchError } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
@@ -120,65 +162,131 @@ export default function DashboardPage() {
     }
   }
 
-  async function loadProposals(userId: string) {
+  // Helper function to ensure stage is valid
+  const ensureValidStage = (stage: ProposalStage | undefined): ProposalStage => {
+    if (!stage || !['proposal', 'site_survey_completed', 'design', 'permitting', 'installation', 'completed'].includes(stage)) {
+      return 'proposal'
+    }
+    return stage
+  }
+
+  const loadProposals = async (userId: string) => {
     try {
-      // First attempt to load proposals
-      const { data, error } = await supabase
+      setError(null)
+
+      // Load initial designs (from pending_proposals)
+      const { data: initialDesigns, error: initialError } = await supabaseClient
+        .from('pending_proposals')
+        .select('*')
+        .is('synced_to_user_id', null)
+        .order('created_at', { ascending: false })
+
+      if (initialError) {
+        console.error('Error loading initial designs:', initialError)
+      }
+
+      // Load final designs (from proposals)
+      const { data: finalDesigns, error: finalError } = await supabaseClient
         .from('proposals')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (finalError) throw finalError
 
-      // If no proposals found and we came from a proposal creation
-      if (!data?.length && window.location.href.includes('returnUrl=/order/proposal')) {
-        console.log('No proposals found on first try, retrying...')
+      // Combine and normalize the designs
+      const allDesigns: Design[] = [
+        ...(initialDesigns?.map(design => ({
+          ...design,
+          id: design.id,
+          designType: 'initial' as const,
+          displayStatus: 'Initial Design',
+          description: 'Based on satellite imagery and preliminary assessment',
+          statusColor: 'blue',
+          canEdit: true,
+          stage: 'proposal' as const,
+          status: 'pending' as ProposalStatus,
+          number_of_panels: design.panel_count // Normalize panel count field
+        })) || []),
+        ...(finalDesigns?.map(design => {
+          const validStage = ensureValidStage(design.stage)
+          return {
+            ...design,
+            id: design.id,
+            designType: 'final' as const,
+            displayStatus: getDisplayStatus(validStage),
+            description: getStageDescription(validStage),
+            statusColor: getStatusColor(validStage),
+            canEdit: validStage !== 'completed',
+            stage: validStage
+          }
+        }) || [])
+      ]
 
-        // Wait a moment and try again
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      setProposals(allDesigns)
 
-        const { data: retryData, error: retryError } = await supabase
-          .from('proposals')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-
-        if (retryError) throw retryError
-
-        if (!retryData?.length) {
-          console.log('Still no proposals found after retry')
-        } else {
-          console.log('Proposals found after retry:', retryData.length)
-        }
-
-        setProposals(retryData || [])
-
-        // Set the first active proposal as selected for documents
-        const activeProposal = retryData?.find(p => p.status !== 'cancelled' && p.status !== 'completed')
-        if (activeProposal) {
-          setSelectedProposal(activeProposal.id)
-        }
-      } else {
-        setProposals(data || [])
-
-        // Set the first active proposal as selected for documents
-        const activeProposal = data?.find(p => p.status !== 'cancelled' && p.status !== 'completed')
-        if (activeProposal) {
-          setSelectedProposal(activeProposal.id)
-        }
+      // Set the first active design as selected for documents
+      const activeDesign = allDesigns.find(d =>
+        d.designType === 'final' && d.status !== 'cancelled' && d.status !== 'completed'
+      )
+      if (activeDesign) {
+        setSelectedProposal(activeDesign.id)
       }
     } catch (error) {
-      console.error('Error loading proposals:', error)
-      toast.error('Failed to load proposals')
+      console.error('Error loading designs:', error)
+      setError('Failed to load your solar designs')
+      toast.error('Failed to load your solar designs')
     }
+  }
+
+  // Helper functions for status display
+  const getDisplayStatus = (stage: ProposalStage) => {
+    const displayStatus: Record<ProposalStage, string> = {
+      proposal: 'Initial Review',
+      site_survey_completed: 'Site Survey Completed',
+      design: 'System Design',
+      permitting: 'Permit Approvals',
+      installation: 'System Installation',
+      completed: 'Project Complete'
+    }
+    return displayStatus[stage]
+  }
+
+  const getStageDescription = (stage: ProposalStage) => {
+    const descriptions: Record<ProposalStage, string> = {
+      proposal: 'We are reviewing your initial proposal and preparing for the next steps.',
+      site_survey_completed: 'Your site survey has been completed and is being reviewed by our team.',
+      design: 'Our team is creating your custom solar system design.',
+      permitting: 'Obtaining necessary permits and approvals from local authorities.',
+      installation: 'Installing and testing your solar system components.',
+      completed: 'Your solar system installation is complete!'
+    }
+    return descriptions[stage]
+  }
+
+  const getStatusColor = (stage: ProposalStage) => {
+    const colors: Record<ProposalStage, string> = {
+      proposal: 'text-blue-500',
+      site_survey_completed: 'text-green-500',
+      design: 'text-purple-500',
+      permitting: 'text-orange-500',
+      installation: 'text-yellow-500',
+      completed: 'text-green-500'
+    }
+    return colors[stage]
   }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  const formatNumber = (number: number) => {
+    return new Intl.NumberFormat('en-US').format(Math.round(number))
   }
 
   const containerVariants = {
@@ -208,6 +316,49 @@ export default function DashboardPage() {
   }
 
   const activeProposal = proposals.find(p => p.id === selectedProposal)
+
+  // Update stage based on current stage
+  const handleNext = async () => {
+    if (!activeProposal) return
+
+    let nextStage: ProposalStage = 'proposal'
+    switch (activeProposal.stage) {
+      case 'proposal':
+        nextStage = 'site_survey_completed'
+        break
+      case 'site_survey_completed':
+        nextStage = 'design'
+        break
+      case 'design':
+        nextStage = 'permitting'
+        break
+      case 'permitting':
+        nextStage = 'installation'
+        break
+      case 'installation':
+        nextStage = 'completed'
+        break
+      default:
+        nextStage = 'proposal'
+    }
+
+    try {
+      const { error } = await supabase
+        .from('proposals')
+        .update({
+          stage: nextStage,
+          status: 'in_progress',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeProposal.id)
+
+      if (error) throw error
+      loadProposals(user.id)
+    } catch (error) {
+      console.error('Error updating stage:', error)
+      toast.error('Failed to update proposal stage')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white relative">
@@ -394,7 +545,7 @@ export default function DashboardPage() {
                 <div className="relative grid grid-cols-6 gap-4">
                   {[
                     { stage: 'proposal', icon: FileText, label: 'Proposal' },
-                    { stage: 'site_survey', icon: Camera, label: 'Site Survey' },
+                    { stage: 'site_survey_completed', icon: Camera, label: 'Site Survey' },
                     { stage: 'design', icon: PencilRuler, label: 'Design' },
                     { stage: 'permitting', icon: ClipboardCheck, label: 'Permits' },
                     { stage: 'installation', icon: Wrench, label: 'Installation' },
@@ -452,8 +603,8 @@ export default function DashboardPage() {
                   {(() => {
                     switch (activeProposal.stage) {
                       case 'proposal': return 'Initial Review';
-                      case 'site_survey': return 'Property Assessment';
-                      case 'design': return 'System Planning';
+                      case 'site_survey_completed': return 'Site Survey Completed';
+                      case 'design': return 'System Design';
                       case 'permitting': return 'Permit Approvals';
                       case 'installation': return 'System Installation';
                       case 'completed': return 'Project Complete';
@@ -465,11 +616,11 @@ export default function DashboardPage() {
                   {(() => {
                     switch (activeProposal.stage) {
                       case 'proposal': return 'We are reviewing your initial proposal and preparing for the next steps.';
-                      case 'site_survey': return 'Our team will assess your property and take necessary measurements.';
-                      case 'design': return 'Creating a custom solar system design for your home.';
+                      case 'site_survey_completed': return 'Your site survey has been completed and is being reviewed by our team.';
+                      case 'design': return 'Our team is creating your custom solar system design.';
                       case 'permitting': return 'Obtaining necessary permits and approvals from local authorities.';
                       case 'installation': return 'Installing and testing your solar system components.';
-                      case 'completed': return 'Your solar system is fully operational and producing clean energy!';
+                      case 'completed': return 'Your solar system installation is complete!';
                       default: return '';
                     }
                   })()}
@@ -514,56 +665,84 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 space-y-8">
               {/* Project List */}
               <motion.div variants={itemVariants} className="space-y-6">
-                {proposals.map((proposal) => (
-                  <motion.div
-                    key={proposal.id}
-                    layoutId={proposal.id}
-                    onClick={() => setSelectedProposal(proposal.id)}
-                    whileHover={{ scale: 1.01 }}
-                    className={`bg-[#111111] rounded-xl shadow-xl p-8 cursor-pointer transition-colors border border-gray-800 relative
-                      ${selectedProposal === proposal.id ? 'ring-2 ring-white' : 'hover:bg-[#151515]'}`}
-                  >
-                    <div className="mb-6">
-                      <h2 className="text-xl font-semibold mb-2 text-white">{proposal.address}</h2>
-                      <p className="text-sm text-gray-400">
-                        Created on {new Date(proposal.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    {/* Site Survey Status */}
-                    <div className="mb-6">
-                      <SiteSurveyStatus proposalId={proposal.id} />
-                    </div>
-
-                    <div className="flex items-center gap-4 mb-12">
-                      <div className={`px-4 py-1.5 rounded-full text-sm font-medium
-                        ${proposal.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                          proposal.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                            proposal.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
-                              'bg-gray-500/20 text-gray-400'}`}
-                      >
-                        {proposal.status.replace('_', ' ')}
-                      </div>
-                      <div className={`px-4 py-1.5 rounded-full text-sm font-medium
-                        ${proposal.stage === 'completed' ? 'bg-green-500/20 text-green-400' :
-                          proposal.stage === 'installation' ? 'bg-purple-500/20 text-purple-400' :
-                            proposal.stage === 'permitting' ? 'bg-yellow-500/20 text-yellow-400' :
-                              proposal.stage === 'design' ? 'bg-indigo-500/20 text-indigo-400' :
-                                'bg-gray-500/20 text-gray-400'}`}
-                      >
-                        {proposal.stage.replace('_', ' ')}
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/proposals/${proposal.id}`}
-                      className="absolute bottom-8 right-8 inline-flex items-center px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white rounded-lg text-sm font-medium transition-all border border-white/10 hover:border-white/20 backdrop-blur-sm group"
+                {proposals.map((design) => {
+                  const validStage = ensureValidStage(design.stage)
+                  return (
+                    <motion.div
+                      key={design.id}
+                      layoutId={design.id}
+                      onClick={() => setSelectedProposal(design.id)}
+                      whileHover={{ scale: 1.01 }}
+                      className={`bg-[#111111] rounded-xl shadow-xl p-8 cursor-pointer transition-colors border border-gray-800 relative
+                        ${selectedProposal === design.id ? 'ring-2 ring-white' : 'hover:bg-[#151515]'}`}
                     >
-                      <span className="hidden sm:inline">View </span>Details
-                      <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  </motion.div>
-                ))}
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h2 className="text-xl font-semibold text-white">{design.address}</h2>
+                          {design.designType === 'initial' && (
+                            <span className="px-3 py-1 text-sm font-medium bg-blue-500/20 text-blue-400 rounded-full">
+                              Initial Design
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Created on {new Date(design.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      {design.designType === 'initial' && (
+                        <div className="mb-6 bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                          <p className="text-sm text-blue-400">
+                            This is your initial design based on satellite imagery. After your site survey,
+                            we'll create a detailed final design that accounts for your roof's exact specifications
+                            and shading analysis.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Site Survey Status */}
+                      <div className="mb-6">
+                        <SiteSurveyStatus proposalId={design.id} />
+                      </div>
+
+                      <div className="flex items-center gap-4 mb-12">
+                        <div className={`px-4 py-1.5 rounded-full text-sm font-medium
+                          ${design.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                            design.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                              design.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                                'bg-gray-500/20 text-gray-400'}`}
+                        >
+                          {design.status.replace('_', ' ')}
+                        </div>
+                        <div className={`px-4 py-1.5 rounded-full text-sm font-medium
+                          ${design.stage === 'completed' ? 'bg-green-500/20 text-green-400' :
+                            design.stage === 'installation' ? 'bg-purple-500/20 text-purple-400' :
+                              design.stage === 'permitting' ? 'bg-yellow-500/20 text-yellow-400' :
+                                design.stage === 'design' ? 'bg-indigo-500/20 text-indigo-400' :
+                                  'bg-gray-500/20 text-gray-400'}`}
+                        >
+                          {design.stage.replace('_', ' ')}
+                        </div>
+                      </div>
+
+                      {/* System Details */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-12">
+                        <div>
+                          <div className="text-sm text-gray-400 mb-1">System Size</div>
+                          <div className="text-lg font-semibold text-white">{design.system_size} kW</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-400 mb-1">Panels</div>
+                          <div className="text-lg font-semibold text-white">{design.number_of_panels}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-400 mb-1">Total Investment</div>
+                          <div className="text-lg font-semibold text-white">{formatCurrency(design.total_price)}</div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
               </motion.div>
             </div>
 

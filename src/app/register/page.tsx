@@ -4,7 +4,36 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Database } from '@/types/database.types'
+
+const supabase = createClientComponentClient<Database>()
+
+type Tables = Database['public']['Tables']
+type ProfileInsert = Tables['profiles']['Insert']
+type ProposalInsert = Tables['proposals']['Insert']
+
+type PendingProposalInsert = {
+  temp_user_token: string
+  system_size: number
+  panel_count: number
+  monthly_production: number
+  address: string
+  monthly_bill: number
+  package_type: 'standard' | 'premium'
+  payment_type: 'cash' | 'financing'
+  financing: {
+    term: number | null
+    down_payment: number | null
+    monthly_payment: number | null
+  } | null
+  status: 'pending'
+  total_price: number
+  include_battery: boolean
+  battery_type: string | null
+  battery_count: number | null
+  proposal_data: any
+}
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -22,6 +51,16 @@ export default function RegisterPage() {
 
     try {
       console.log('Starting registration process...')
+
+      // Get proposal data from URL if it exists
+      const urlParams = new URLSearchParams(window.location.search)
+      const proposalParam = urlParams.get('proposal')
+      console.log('Proposal param:', proposalParam)
+      const proposal: ProposalInsert | null = proposalParam ? JSON.parse(decodeURIComponent(proposalParam)) : null
+      console.log('Parsed proposal:', proposal)
+
+      // Generate a temp user token
+      const tempUserToken = crypto.randomUUID()
 
       // Sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -49,75 +88,43 @@ export default function RegisterPage() {
       if (authData.user) {
         console.log('User created successfully')
 
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              full_name: name,
-              email,
-            },
-          ])
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
-        }
-
-        // After successful registration, sync any pending proposals
-        const tempUserToken = localStorage.getItem('temp_user_token')
-        if (tempUserToken) {
-          try {
-            // Get pending proposals
-            const response = await fetch(`/api/pending-proposals?token=${tempUserToken}`)
-            if (!response.ok) {
-              throw new Error('Failed to fetch pending proposals')
-            }
-
-            const { data: pendingProposals } = await response.json()
-            if (pendingProposals?.length) {
-              // Save each pending proposal to the user's account
-              for (const proposal of pendingProposals) {
-                await fetch('/api/proposals', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    proposalData: {
-                      systemSize: proposal.system_size,
-                      numberOfPanels: proposal.panel_count,
-                      monthlyProduction: proposal.monthly_production,
-                      address: proposal.address,
-                      monthlyBill: proposal.monthly_bill,
-                      packageType: proposal.package_type,
-                      paymentType: proposal.payment_type,
-                      ...(proposal.financing ? {
-                        financingTerm: proposal.financing.term,
-                        downPayment: proposal.financing.down_payment,
-                        monthlyPayment: proposal.financing.monthly_payment
-                      } : {})
-                    }
-                  })
-                })
-              }
-
-              // Mark pending proposals as synced
-              await supabase
-                .from('pending_proposals')
-                .update({
-                  synced_to_user_id: authData.user.id,
-                  synced_at: new Date().toISOString()
-                })
-                .eq('temp_user_token', tempUserToken)
-            }
-
-            // Clear the temporary token
-            localStorage.removeItem('temp_user_token')
-          } catch (error) {
-            console.error('Error syncing pending proposals:', error)
-            // Don't throw here, as we still want to complete registration
+        // Save proposal if it exists
+        if (proposal && Object.keys(proposal).length > 0) {
+          console.log('Preparing to save proposal...')
+          const pendingProposalToInsert: PendingProposalInsert = {
+            temp_user_token: tempUserToken,
+            system_size: proposal.system_size,
+            panel_count: proposal.number_of_panels,
+            monthly_production: 0, // Will be calculated later
+            address: proposal.address,
+            monthly_bill: 0, // Will be updated later
+            package_type: proposal.package_type as 'standard' | 'premium',
+            payment_type: proposal.payment_type as 'cash' | 'financing',
+            financing: proposal.payment_type === 'finance' ? {
+              term: proposal.financing_term || null,
+              down_payment: proposal.down_payment || null,
+              monthly_payment: proposal.monthly_payment || null
+            } : null,
+            status: 'pending',
+            total_price: proposal.total_price,
+            include_battery: proposal.include_battery || false,
+            battery_type: proposal.battery_type || null,
+            battery_count: proposal.battery_count || null,
+            proposal_data: proposal // Store the original proposal data
           }
+          console.log('Inserting pending proposal:', pendingProposalToInsert)
+
+          const { data: insertedProposal, error: insertError } = await supabase
+            .from('pending_proposals')
+            .insert([pendingProposalToInsert])
+            .select()
+
+          if (insertError) {
+            console.error('Error saving pending proposal:', insertError)
+            throw insertError
+          }
+          console.log('Pending proposal saved:', insertedProposal)
+          toast.success('Proposal saved successfully!')
         }
 
         // Check if email was sent
@@ -126,18 +133,22 @@ export default function RegisterPage() {
         } else {
           toast.warning('Account created but there might be an issue with the verification email.')
         }
-      }
 
-      // Redirect to the appropriate page
-      const returnUrl = searchParams.get('returnUrl') || '/dashboard'
-      router.push(returnUrl)
+        // Redirect to the appropriate page
+        const returnUrl = searchParams.get('returnUrl') || '/dashboard'
+        router.push(returnUrl)
+      }
     } catch (error) {
       console.error('Registration error:', error)
-      if (error instanceof Error && error.message === 'Email already registered') {
-        toast.error('This email is already registered. Please try logging in instead.')
-        router.push('/login')
+      if (error instanceof Error) {
+        if (error.message === 'Email already registered') {
+          toast.error('This email is already registered. Please try logging in instead.')
+          router.push('/login')
+        } else {
+          toast.error(`Error: ${error.message}`)
+        }
       } else {
-        toast.error('Error registering user')
+        toast.error('An unexpected error occurred during registration')
       }
     } finally {
       setIsLoading(false)
