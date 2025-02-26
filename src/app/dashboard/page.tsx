@@ -178,11 +178,12 @@ export default function DashboardPage() {
       const { data: initialDesigns, error: initialError } = await supabaseClient
         .from('pending_proposals')
         .select('*')
-        .is('synced_to_user_id', null)
+        .eq('synced_to_user_id', userId)
         .order('created_at', { ascending: false })
 
       if (initialError) {
         console.error('Error loading initial designs:', initialError)
+        throw initialError
       }
 
       // Load final designs (from proposals)

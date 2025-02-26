@@ -33,6 +33,7 @@ type PendingProposalInsert = {
   battery_type: string | null
   battery_count: number | null
   proposal_data: any
+  synced_to_user_id: string
 }
 
 export default function RegisterPage() {
@@ -90,16 +91,16 @@ export default function RegisterPage() {
 
         // Save proposal if it exists
         if (proposal && Object.keys(proposal).length > 0) {
-          console.log('Preparing to save proposal...')
+          console.log('Preparing to save initial design...')
           const pendingProposalToInsert: PendingProposalInsert = {
             temp_user_token: tempUserToken,
             system_size: proposal.system_size,
             panel_count: proposal.number_of_panels,
-            monthly_production: 0, // Will be calculated later
+            monthly_production: 0, // Default to 0 since it's not in the proposal type
             address: proposal.address,
-            monthly_bill: 0, // Will be updated later
+            monthly_bill: 0, // Default to 0 since it's not in the proposal type
             package_type: proposal.package_type as 'standard' | 'premium',
-            payment_type: proposal.payment_type as 'cash' | 'financing',
+            payment_type: (proposal.payment_type === 'finance' ? 'financing' : proposal.payment_type || 'cash') as 'cash' | 'financing',
             financing: proposal.payment_type === 'finance' ? {
               term: proposal.financing_term || null,
               down_payment: proposal.down_payment || null,
@@ -110,9 +111,10 @@ export default function RegisterPage() {
             include_battery: proposal.include_battery || false,
             battery_type: proposal.battery_type || null,
             battery_count: proposal.battery_count || null,
-            proposal_data: proposal // Store the original proposal data
+            proposal_data: proposal, // Store the original proposal data
+            synced_to_user_id: authData.user.id // Link to the newly created user
           }
-          console.log('Inserting pending proposal:', pendingProposalToInsert)
+          console.log('Inserting initial design:', pendingProposalToInsert)
 
           const { data: insertedProposal, error: insertError } = await supabase
             .from('pending_proposals')
@@ -120,11 +122,11 @@ export default function RegisterPage() {
             .select()
 
           if (insertError) {
-            console.error('Error saving pending proposal:', insertError)
+            console.error('Error saving initial design:', insertError)
             throw insertError
           }
-          console.log('Pending proposal saved:', insertedProposal)
-          toast.success('Proposal saved successfully!')
+          console.log('Initial design saved:', insertedProposal)
+          toast.success('Initial design saved successfully!')
         }
 
         // Check if email was sent

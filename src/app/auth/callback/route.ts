@@ -80,115 +80,29 @@ export async function GET(request: Request) {
       if (pendingError) {
         console.error('Error checking pending proposals:', pendingError)
       } else if (pendingProposals?.length > 0) {
-        console.log('Found pending proposals to sync:', pendingProposals.length)
+        console.log('Found pending proposals to link:', pendingProposals.length)
 
-        // Move each pending proposal to the proposals table
+        // Update the pending proposals to link them to the user
         for (const pendingProposal of pendingProposals) {
-          const proposalToInsert = {
-            user_id: session.user.id,
-            package_type: pendingProposal.package_type,
-            system_size: pendingProposal.system_size,
-            panel_count: pendingProposal.panel_count,
-            monthly_production: pendingProposal.monthly_production,
-            address: pendingProposal.address,
-            monthly_bill: pendingProposal.monthly_bill,
-            payment_type: pendingProposal.payment_type,
-            financing: pendingProposal.financing,
-            status: 'pending',
-            stage: 'proposal',
-            include_battery: pendingProposal.include_battery,
-            battery_type: pendingProposal.battery_type,
-            battery_count: pendingProposal.battery_count,
-            total_price: pendingProposal.total_price,
-            number_of_panels: pendingProposal.panel_count
-          }
+          const { error: updateError } = await supabase
+            .from('pending_proposals')
+            .update({
+              synced_to_user_id: session.user.id,
+              synced_at: new Date().toISOString()
+            })
+            .eq('id', pendingProposal.id)
 
-          const { error: insertError } = await supabase
-            .from('proposals')
-            .insert([proposalToInsert])
-
-          if (insertError) {
-            console.error('Error moving pending proposal to proposals:', insertError)
-          } else {
-            // Mark the pending proposal as synced
-            await supabase
-              .from('pending_proposals')
-              .update({
-                synced_to_user_id: session.user.id,
-                synced_at: new Date().toISOString()
-              })
-              .eq('id', pendingProposal.id)
+          if (updateError) {
+            console.error('Error linking pending proposal to user:', updateError)
           }
         }
       }
 
-      // If returning from proposal page, process the pending proposal
+      // If returning from proposal page, clear the cookie
       if (returnUrl.includes('/order/proposal')) {
-        try {
-          // Get the proposal data from cookies
-          const cookieStore = cookies()
-          const pendingProposalCookie = cookieStore.get('pendingProposal')
-
-          if (pendingProposalCookie?.value) {
-            const proposalData = JSON.parse(pendingProposalCookie.value)
-
-            // Calculate total price including add-ons
-            const totalPrice = proposalData.systemInfo.totalPrice +
-              (proposalData.includeBattery ? (proposalData.batteryCount * (proposalData.batteryType === 'franklin' ? 8500 : 9200)) : 0) +
-              (proposalData.warranty === 'extended' ? 1500 : 0)
-
-            // Prepare proposal data with snake_case column names
-            const proposalInsert = {
-              user_id: session.user.id,
-              system_size: proposalData.systemInfo.systemSize,
-              panel_count: proposalData.systemInfo.numberOfPanels,
-              monthly_production: proposalData.systemInfo.monthlyProduction,
-              total_price: totalPrice,
-              address: proposalData.address,
-              monthly_bill: proposalData.monthlyBill || 0, // Add a default if not provided
-              package_type: proposalData.packageType,
-              include_battery: proposalData.includeBattery || false,
-              battery_count: proposalData.batteryCount || 0,
-              battery_type: proposalData.batteryType,
-              payment_type: proposalData.paymentType || 'cash',
-              financing_term: proposalData.financing?.term || null,
-              down_payment: proposalData.financing?.downPayment || null,
-              monthly_payment: proposalData.financing?.monthlyPayment || null,
-              status: 'saved',
-              stage: 'proposal'
-            }
-
-            console.log('Saving proposal for user:', session.user.id)
-            console.log('Proposal data:', proposalInsert)
-
-            // Save proposal to Supabase
-            const { data: savedProposal, error: proposalError } = await supabase
-              .from('proposals')
-              .insert([proposalInsert])
-              .select('*')
-              .single()
-
-            if (proposalError) {
-              console.error('Error saving proposal:', {
-                code: proposalError.code,
-                message: proposalError.message,
-                details: proposalError.details,
-                hint: proposalError.hint
-              })
-              return NextResponse.redirect(new URL(`/order/proposal?error=${encodeURIComponent(proposalError.message)}`, requestUrl.origin))
-            }
-
-            console.log('Proposal saved successfully:', savedProposal)
-
-            // Clear the stored proposal and redirect
-            const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
-            response.cookies.delete('pendingProposal')
-            return response
-          }
-        } catch (error) {
-          console.error('Error processing proposal:', error)
-          return NextResponse.redirect(new URL('/order/proposal?error=process', requestUrl.origin))
-        }
+        const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+        response.cookies.delete('pendingProposal')
+        return response
       }
 
       // Default redirect
