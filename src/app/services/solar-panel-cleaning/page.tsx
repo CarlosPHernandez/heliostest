@@ -146,15 +146,55 @@ const SolarCleaningPage = () => {
             <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
               Watch how our professional team delivers exceptional solar panel cleaning results
             </p>
-            <div className="max-w-4xl mx-auto rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-200">
-              <div className="relative aspect-video">
-                <iframe
-                  src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=0&muted=0"
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                  className="absolute top-0 left-0 w-full h-full"
-                  title="Helios Solar Panel Cleaning Process"
-                ></iframe>
+            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 overflow-hidden">
+              <div className="grid md:grid-cols-2 gap-0">
+                {/* Video on the left */}
+                <div className="p-4 md:p-6 flex items-center justify-center">
+                  <div className="w-full h-full relative" style={{ paddingBottom: '56.25%' }}>
+                    <iframe
+                      src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&muted=1&controls=0&background=1"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      className="absolute top-0 left-0 w-full h-full rounded-xl"
+                      title="Helios Solar Panel Cleaning Process"
+                    ></iframe>
+                  </div>
+                </div>
+
+                {/* Benefits checklist on the right */}
+                <div className="p-8 md:p-12 flex items-center">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-6 text-gray-900">
+                      Why Clean Your Solar Panels?
+                    </h3>
+                    <ul className="space-y-4">
+                      <li className="flex items-start gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-secondary-text">Increase energy production by up to 30%</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-secondary-text">Remove harmful debris that can damage panels</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-secondary-text">Extend the lifespan of your solar investment</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-secondary-text">Maintain manufacturer warranty requirements</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-secondary-text">Improve the appearance of your home</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-secondary-text">Reduce your carbon footprint with optimal efficiency</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
