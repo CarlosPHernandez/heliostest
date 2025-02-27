@@ -33,8 +33,8 @@ export function Footer() {
 
           <p className="text-gray-400 font-medium">
             We are committed to providing an accessible website experience for all users. If you encounter any issues, please contact us at{' '}
-            <a href="mailto:accessibility@heliosnexus.com" className="text-gray-300 hover:text-white transition-colors">
-              accessibility@heliosnexus.com
+            <a href="mailto:Support@heliosnexus.com" className="text-gray-300 hover:text-white transition-colors">
+              Support@heliosnexus.com
             </a>
           </p>
 
@@ -43,9 +43,13 @@ export function Footer() {
             <Link href="/privacy" className="text-gray-300 hover:text-white transition-colors">
               Privacy Policy
             </Link>
-            {' '}and{' '}
+            {', '}
             <Link href="/terms" className="text-gray-300 hover:text-white transition-colors">
               Order Terms
+            </Link>
+            {', and '}
+            <Link href="/payment-terms" className="text-gray-300 hover:text-white transition-colors">
+              Payment Terms
             </Link>
           </p>
 
