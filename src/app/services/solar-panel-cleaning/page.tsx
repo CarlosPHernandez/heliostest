@@ -138,6 +138,27 @@ const SolarCleaningPage = () => {
             </div>
           </div>
 
+          {/* Video Section - Moved to top for better user flow */}
+          <div className="mb-24">
+            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
+              See Our Process in Action
+            </h2>
+            <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
+              Watch how our professional team delivers exceptional solar panel cleaning results
+            </p>
+            <div className="max-w-4xl mx-auto rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-200">
+              <div className="relative aspect-video">
+                <iframe
+                  src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=0&muted=0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  className="absolute top-0 left-0 w-full h-full"
+                  title="Helios Solar Panel Cleaning Process"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+
           {/* Benefits Section */}
           <div className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
