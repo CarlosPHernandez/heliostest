@@ -60,6 +60,7 @@ export function GoogleMapsScript() {
     script.id = SCRIPT_ID
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
     script.async = true
+    script.defer = true
 
     // Handle script load
     script.onload = () => {

@@ -83,6 +83,11 @@ export default function AddressPage() {
         sessionToken: sessionTokenRef.current
       })
 
+      // Performance optimization - reduce network requests
+      autocomplete.setOptions({
+        debounce: 300 // Minimum time between network requests
+      })
+
       // Store the instance in ref
       autocompleteRef.current = autocomplete
 
@@ -162,12 +167,14 @@ export default function AddressPage() {
 
   // Debounced input change handler
   const debouncedHandleInputChange = debounce((value: string) => {
-    setAddress(value)
     setIsValidAddress(false)
     setError('')
   }, 300)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Update the input value immediately for responsive typing
+    setAddress(e.target.value)
+    // Only debounce the validation state changes
     debouncedHandleInputChange(e.target.value)
   }
 
