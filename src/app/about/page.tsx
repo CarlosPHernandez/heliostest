@@ -323,68 +323,86 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* Team Section */}
+      {/* Service Areas Section */}
       <section className="py-32 relative overflow-hidden bg-gray-50">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-100 to-white opacity-50" />
         <div className="absolute inset-0 bg-grid-gray-900/5" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold mb-6 text-gray-900">Leadership</h2>
+          <h2 className="text-4xl font-bold mb-6 text-gray-900">Our Service Areas</h2>
           <p className="text-xl text-gray-600 mb-20 max-w-3xl">
-            Meet the founders driving innovation at the intersection of solar technology and space exploration.
+            Helios Nexus is proud to serve communities across North Carolina, bringing sustainable solar energy solutions to homes and businesses throughout the state.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 max-w-6xl mx-auto">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
               {
-                name: 'Carlos Pacheco Hernandez',
-                role: 'Chief Executive Officer',
-                description: 'First-generation entrepreneur who built his way up from door-to-door sales to revolutionizing solar accessibility. Driven by a vision to transform how people access clean energy, combining grassroots experience with innovative problem-solving to create lasting impact.',
-                image: '/images/IMG_3144.jpg',
-                useInitial: false
+                region: 'Triangle Region',
+                cities: ['Raleigh', 'Durham', 'Chapel Hill', 'Cary', 'Apex', 'Wake Forest', 'Morrisville'],
+                icon: '🏙️',
+                description: 'Serving the vibrant Triangle area with innovative solar solutions for urban and suburban homes.'
               },
               {
-                name: 'Juan Silva-Mendoza',
-                role: 'Chief Financial Officer',
-                description: 'Finance whiz with a passion for sustainable technology and innovation. Dedicated to making solar energy financially accessible through data-driven solutions that simplify the path to clean energy.',
-                image: '/images/juan profile.jpg',
-                useInitial: false
+                region: 'Triad Region',
+                cities: ['Greensboro', 'Winston-Salem', 'High Point', 'Burlington', 'Kernersville'],
+                icon: '🏘️',
+                description: "Bringing sustainable energy to the Triad's diverse communities and historic neighborhoods."
               },
-            ].map((member) => (
-              <div key={member.name} className="group relative">
-                <div className="flex flex-col items-start gap-6">
-                  <div className="relative">
-                    <div className="w-40 h-40 relative rounded-xl overflow-hidden bg-white shadow-lg">
-                      {member.useInitial ? (
-                        <div className="absolute inset-0 flex items-center justify-center text-[120px] font-bold text-gray-200">
-                          {member.name.charAt(0)}
-                        </div>
-                      ) : (
-                        <Image
-                          src={member.image}
-                          alt={`${member.name} - ${member.role}`}
-                          fill
-                          className="object-cover"
-                          sizes="160px"
-                        />
-                      )}
-                    </div>
-                    {/* Glow Effect */}
-                    <div className="absolute -inset-2 bg-blue-500/10 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-
-                  <div className="relative text-left">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">
-                      {member.name}
-                    </h3>
-                    <p className="text-gray-600 text-lg mb-3">{member.role}</p>
-                    <p className="text-gray-500 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                      {member.description}
-                    </p>
-                    <div className="h-0.5 w-12 bg-blue-500/30 mt-4 group-hover:w-20 transition-all duration-300" />
-                  </div>
+              {
+                region: 'Charlotte Metro',
+                cities: ['Charlotte', 'Concord', 'Gastonia', 'Rock Hill', 'Huntersville', 'Matthews'],
+                icon: '🌆',
+                description: 'Empowering Charlotte and surrounding areas with clean energy solutions for urban and suburban living.'
+              },
+              {
+                region: 'Coastal Areas',
+                cities: ['Wilmington', 'Jacksonville', 'New Bern', 'Morehead City', 'Outer Banks'],
+                icon: '🌊',
+                description: 'Specialized solar installations designed to withstand coastal conditions while maximizing energy production.'
+              },
+              {
+                region: 'Western NC',
+                cities: ['Asheville', 'Boone', 'Hendersonville', 'Hickory', 'Brevard'],
+                icon: '⛰️',
+                description: "Custom solar solutions for mountain homes, taking advantage of the region's abundant sunshine."
+              },
+              {
+                region: 'Eastern NC',
+                cities: ['Greenville', 'Rocky Mount', 'Wilson', 'Goldsboro', 'Kinston'],
+                icon: '🌱',
+                description: 'Helping eastern North Carolina communities harness solar power for residential and agricultural applications.'
+              }
+            ].map((area) => (
+              <div key={area.region} className="group relative bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="text-4xl mb-4">{area.icon}</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                  {area.region}
+                </h3>
+                <p className="text-gray-500 mb-4 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                  {area.description}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {area.cities.map((city) => (
+                    <span key={city} className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      {city}
+                    </span>
+                  ))}
                 </div>
+                <div className="h-0.5 w-12 bg-blue-500/30 mt-6 group-hover:w-20 transition-all duration-300" />
               </div>
             ))}
+          </div>
+
+          <div className="mt-16 text-center">
+            <p className="text-lg text-gray-600 mb-6">
+              Don't see your area listed? We likely still serve your location!
+            </p>
+            <a
+              href="/contact"
+              className="inline-flex items-center px-6 py-3 text-base font-medium bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200"
+            >
+              Contact Us For Service Availability
+            </a>
           </div>
         </div>
       </section>

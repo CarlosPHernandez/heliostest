@@ -64,8 +64,20 @@ function LoginForm() {
         const params = new URLSearchParams(window.location.search)
         const returnUrl = params.get('returnUrl')
 
-        // Redirect to the return URL or dashboard
-        router.push(returnUrl || '/dashboard')
+        // Check user role to determine where to redirect
+        const { data: userData } = await supabase
+          .from('User')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+
+        // Redirect based on role
+        if (userData?.role === 'sales_rep') {
+          router.push(returnUrl || '/crm/dashboard')
+        } else {
+          // For regular users and admins
+          router.push(returnUrl || '/dashboard')
+        }
       }
     } catch (error) {
       console.error('Login error:', error)

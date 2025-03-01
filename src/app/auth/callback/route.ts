@@ -6,6 +6,16 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const returnUrl = requestUrl.searchParams.get('returnUrl') || '/dashboard'
+  const type = requestUrl.searchParams.get('type') || 'signup'
+
+  // Enhanced debug logging
+  console.log('Auth Callback - FULL Request URL:', request.url)
+  console.log('Auth Callback - All URL Parameters:', Object.fromEntries(requestUrl.searchParams.entries()))
+  console.log('Auth Callback - Parameters:', {
+    code: code ? 'present' : 'missing',
+    returnUrl,
+    type
+  })
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
@@ -18,6 +28,11 @@ export async function GET(request: Request) {
         console.error('Auth callback error:', sessionError)
         return NextResponse.redirect(new URL('/login?error=auth', requestUrl.origin))
       }
+
+      // More debug logging
+      console.log('Auth Callback - Session created for user:', session.user.id)
+      console.log('Auth Callback - Email verification status:', session.user.email_confirmed_at ? 'Confirmed' : 'Not confirmed')
+      console.log('Auth Callback - User metadata:', session.user.user_metadata)
 
       // Create or update the user's profile first
       const { error: profileError } = await supabase
@@ -98,11 +113,33 @@ export async function GET(request: Request) {
         }
       }
 
+      // If this is an email verification (signup), redirect to the verification confirmation page
+      if (type === 'signup') {
+        console.log('Auth Callback - TYPE IS SIGNUP - Redirecting to verification page')
+        const verifiedUrl = new URL('/auth/verified', requestUrl.origin)
+        console.log('Auth Callback - Redirecting to:', verifiedUrl.toString())
+        return NextResponse.redirect(verifiedUrl)
+      } else {
+        console.log('Auth Callback - TYPE IS NOT SIGNUP:', type)
+      }
+
       // If returning from proposal page, clear the cookie
       if (returnUrl.includes('/order/proposal')) {
         const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
         response.cookies.delete('pendingProposal')
         return response
+      }
+
+      // Check user role for proper redirection
+      const { data: userData, error: userError } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+      if (!userError && userData?.role === 'sales_rep') {
+        console.log('Auth Callback - User is a sales rep, redirecting to CRM dashboard')
+        return NextResponse.redirect(new URL('/crm/dashboard', requestUrl.origin))
       }
 
       // Default redirect
