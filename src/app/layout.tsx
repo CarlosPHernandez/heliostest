@@ -7,6 +7,7 @@ import Script from 'next/script'
 import { Suspense } from 'react'
 import { Providers } from './providers'
 import Loading from './loading'
+import { Analytics } from '@vercel/analytics/react'
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -57,6 +58,7 @@ export default function RootLayout({
             <Footer />
           </Suspense>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

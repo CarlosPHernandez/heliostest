@@ -15,8 +15,8 @@ export function Footer() {
             <Link href="/about" className="text-gray-300 hover:text-white transition-colors font-medium">
               About Us
             </Link>
-            <Link href="/news" className="text-gray-300 hover:text-white transition-colors font-medium">
-              News
+            <Link href="/services/solar-panel-cleaning" className="text-gray-300 hover:text-white transition-colors font-medium">
+              Services
             </Link>
             <Link href="/contact" className="text-gray-300 hover:text-white transition-colors font-medium">
               Contact

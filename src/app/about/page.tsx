@@ -377,7 +377,7 @@ const AboutPage = () => {
                 <div className="text-4xl mb-4">{area.icon}</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
                   {area.region}
-                </h3>
+                    </h3>
                 <p className="text-gray-500 mb-4 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
                   {area.description}
                 </p>

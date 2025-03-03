@@ -64,28 +64,6 @@ const CorporateLayout = ({ children, sections }: CorporateLayoutProps) => {
         <div className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </div>
-
-        {/* Contact Information */}
-        <aside className="w-full md:w-64 bg-gray-50 border-l p-4">
-          <div className="sticky top-16 space-y-6">
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Contact Us</h3>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>1234 Solar Street</p>
-                <p>Sunshine City, SC 12345</p>
-                <p>contact@heliosnexus.com</p>
-                <p>(555) 123-4567</p>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Office Hours</h3>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>Monday - Friday</p>
-                <p>9:00 AM - 5:00 PM EST</p>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
     </MainLayout>
   )

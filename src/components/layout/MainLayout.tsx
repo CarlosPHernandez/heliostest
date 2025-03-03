@@ -18,7 +18,7 @@ const MainLayout = ({ children, showBreadcrumbs = true }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-white md:hidden">
@@ -82,8 +82,6 @@ const MainLayout = ({ children, showBreadcrumbs = true }: MainLayoutProps) => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>1234 Solar Street</li>
-                <li>Sunshine City, SC 12345</li>
                 <li>contact@heliosnexus.com</li>
                 <li>(555) 123-4567</li>
               </ul>

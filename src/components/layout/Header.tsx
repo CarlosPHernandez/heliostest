@@ -87,14 +87,14 @@ const Header = () => {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 -ml-2 sm:-ml-3 md:-ml-4 lg:-ml-6">
             <Link href={user ? '/dashboard' : '/'} className="flex items-center">
               <span className="text-xl font-bold text-gray-900">Helios Nexus</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-6">
+          <div className="hidden md:flex md:items-center md:space-x-10 md:justify-end md:flex-1 md:pr-0 lg:pr-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
