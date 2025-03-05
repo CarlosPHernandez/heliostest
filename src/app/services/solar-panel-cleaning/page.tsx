@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { CheckCircle, Droplets, Shield, Zap, Clock } from 'lucide-react'
 import Head from 'next/head'
 import SolarQuoteForm from '@/components/SolarQuoteForm'
+import { useState, useEffect } from 'react'
 
 // Structured data for rich results
 const structuredData = {
@@ -69,6 +70,18 @@ const cleaningProcess = [
 ]
 
 const SolarCleaningPage = () => {
+  const [videoLoaded, setVideoLoaded] = useState(false);
+
+  // Load video after page has loaded
+  useEffect(() => {
+    // Minimal delay to ensure smooth loading
+    const timer = setTimeout(() => {
+      setVideoLoaded(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const scrollToBooking = () => {
     const bookingSection = document.getElementById('booking-section')
     if (bookingSection) {
@@ -88,6 +101,9 @@ const SolarCleaningPage = () => {
           name="keywords"
           content="solar panel cleaning, North Carolina solar cleaning, professional solar maintenance, solar efficiency, Charlotte solar panel cleaning, NC solar services, solar panel maintenance"
         />
+        <link rel="preconnect" href="https://player.vimeo.com" />
+        <link rel="preconnect" href="https://i.vimeocdn.com" />
+        <link rel="preconnect" href="https://f.vimeocdn.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -104,6 +120,9 @@ const SolarCleaningPage = () => {
               fill
               className="object-cover"
               priority
+              sizes="100vw"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
           </div>
@@ -150,14 +169,27 @@ const SolarCleaningPage = () => {
                 {/* Video on the left */}
                 <div className="p-4 md:p-6 flex items-center justify-center">
                   <div className="w-full h-full relative" style={{ paddingBottom: '56.25%' }}>
-                    <iframe
-                      src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&background=1"
-                      frameBorder="0"
-                      allow="autoplay; fullscreen; picture-in-picture"
-                      allowFullScreen
-                      className="absolute top-0 left-0 w-full h-full rounded-xl"
-                      title="Solar Panel Cleaning Process"
-                    ></iframe>
+                    {/* Optimized autoplay video */}
+                    <div className="absolute top-0 left-0 w-full h-full rounded-xl overflow-hidden">
+                      {/* Simple loading placeholder */}
+                      {!videoLoaded && (
+                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-0">
+                          <div className="animate-pulse text-gray-400">Loading video...</div>
+                        </div>
+                      )}
+                      {/* Iframe with loading="lazy" for better performance */}
+                      {videoLoaded && (
+                        <iframe
+                          src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&background=1&muted=1"
+                          frameBorder="0"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          loading="lazy"
+                          className="absolute top-0 left-0 w-full h-full rounded-xl z-10"
+                          title="Solar Panel Cleaning Process"
+                        ></iframe>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -252,6 +284,9 @@ const SolarCleaningPage = () => {
                   alt="Our pure water cleaning process in action"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-white/50 via-transparent to-transparent md:hidden" />
               </div>
@@ -273,6 +308,9 @@ const SolarCleaningPage = () => {
                   alt="Recent solar panel cleaning project in North Carolina"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -286,6 +324,9 @@ const SolarCleaningPage = () => {
                   alt="Aerial view of solar panel cleaning in progress"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
