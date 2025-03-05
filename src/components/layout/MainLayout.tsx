@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import Header from './Header'
-import { UserNav } from '@/components/layout/UserNav'
 import NotificationBell from '@/components/features/NotificationBell'
 
 interface MainLayoutProps {

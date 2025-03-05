@@ -1,20 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format, addDays, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { ChevronDown } from 'lucide-react'
-
-const TIME_SLOTS = [
-  '09:00 AM',
-  '10:00 AM',
-  '11:00 AM',
-  '12:00 PM',
-  '01:00 PM',
-  '02:00 PM',
-  '03:00 PM',
-  '04:00 PM',
-]
 
 interface BookingCalendarProps {
   onDateTimeSelect: (date: Date | undefined, time: string | undefined) => void
@@ -28,8 +17,14 @@ export default function BookingCalendar({
   selectedTime,
 }: BookingCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(selectedDate)
-  const [time, setTime] = useState<string | undefined>(selectedTime)
   const [isOpen, setIsOpen] = useState(false)
+
+  // Update the parent component with the selected date, but don't trigger form submission
+  useEffect(() => {
+    if (date) {
+      onDateTimeSelect(date, undefined)
+    }
+  }, [date])
 
   const getAvailableDates = () => {
     const dates: Date[] = []
@@ -49,15 +44,12 @@ export default function BookingCalendar({
 
   const availableDates = getAvailableDates()
 
-  const handleDateSelect = (newDate: Date) => {
-    setDate(newDate)
-    onDateTimeSelect(newDate, time)
-    setIsOpen(false)
-  }
-
-  const handleTimeSelect = (newTime: string) => {
-    setTime(newTime)
-    onDateTimeSelect(date, newTime)
+  const handleDateSelect = (e: React.MouseEvent, newDate: Date) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
+    setDate(newDate);
+    setIsOpen(false);
+    onDateTimeSelect(newDate, undefined);
   }
 
   const formatDateOption = (date: Date) => {
@@ -75,8 +67,12 @@ export default function BookingCalendar({
         <div className="w-full max-w-sm mx-auto">
           <div className="relative">
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="w-full flex items-center justify-between bg-white px-6 py-4 rounded-xl text-black border border-blue-100 hover:border-blue-200 transition-colors"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsOpen(!isOpen);
+              }}
+              className="w-full flex items-center justify-between bg-white px-6 py-4 rounded-xl text-black border border-gray-200 hover:border-gray-300 transition-colors"
             >
               <span className="text-lg font-medium">
                 {date ? formatDateOption(date) : 'Select a date'}
@@ -88,15 +84,16 @@ export default function BookingCalendar({
             </button>
 
             {isOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-blue-100 rounded-xl shadow-lg z-10 max-h-[280px] overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-[280px] overflow-y-auto">
                 {availableDates.map((availableDate) => (
                   <button
                     key={availableDate.toISOString()}
-                    onClick={() => handleDateSelect(availableDate)}
+                    type="button"
+                    onClick={(e) => handleDateSelect(e, availableDate)}
                     className={cn(
                       'w-full text-left px-6 py-3 text-lg transition-colors',
                       isSameDay(availableDate, date as Date)
-                        ? 'bg-blue-50 text-black font-medium'
+                        ? 'bg-gray-100 text-black font-medium'
                         : 'text-black hover:bg-gray-50'
                     )}
                   >
@@ -105,32 +102,6 @@ export default function BookingCalendar({
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Time Selection */}
-        <div className="w-full max-w-2xl mx-auto">
-          <h2 className="text-xl font-semibold mb-6 text-black">
-            Select a Time
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {TIME_SLOTS.map((slot) => (
-              <button
-                key={slot}
-                onClick={() => handleTimeSelect(slot)}
-                disabled={!date}
-                className={cn(
-                  'flex items-center justify-center h-14 text-base rounded-xl transition-all duration-200',
-                  !date
-                    ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                    : time === slot
-                      ? 'bg-blue-50 text-black font-medium border-2 border-black'
-                      : 'bg-blue-50/30 text-black hover:bg-blue-50'
-                )}
-              >
-                {slot}
-              </button>
-            ))}
           </div>
         </div>
       </div>

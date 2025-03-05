@@ -4,6 +4,8 @@ import { loadStripe } from '@stripe/stripe-js'
 import { useState, useEffect } from 'react'
 import { ArrowRight, Info } from 'lucide-react'
 import BookingCalendar from './BookingCalendar'
+import { sendBookingNotifications } from '@/lib/notificationService'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -64,6 +66,7 @@ const pricingOptions: PricingOption[] = [
 ]
 
 export default function StripeCheckout() {
+  const { user } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
   const [panelCount, setPanelCount] = useState<string>('')
   const [showPricing, setShowPricing] = useState(false)
@@ -121,8 +124,8 @@ export default function StripeCheckout() {
 
   const handleCheckout = async (plan: PricingOption) => {
     try {
-      if (!selectedDate || !selectedTime) {
-        setError('Please select a date and time for your cleaning')
+      if (!selectedDate) {
+        setError('Please select a date for your cleaning')
         return
       }
 
@@ -142,6 +145,16 @@ export default function StripeCheckout() {
         time: selectedTime
       });
 
+      // Send booking notifications
+      await sendBookingNotifications({
+        date: selectedDate,
+        time: selectedTime,
+        customerName: user?.user_metadata?.full_name || 'Customer',
+        email: user?.email,
+        panelCount,
+        service: `Solar Panel Cleaning (${plan.name})`,
+      });
+
       // Create checkout session
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -153,7 +166,7 @@ export default function StripeCheckout() {
           panelCount: parseInt(panelCount),
           totalAmount: calculatedTotal,
           appointmentDate: selectedDate?.toISOString(),
-          appointmentTime: selectedTime
+          appointmentTime: selectedTime || 'No specific time'
         }),
       })
 

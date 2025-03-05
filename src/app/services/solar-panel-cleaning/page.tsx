@@ -3,8 +3,7 @@
 import Image from 'next/image'
 import { CheckCircle, Droplets, Shield, Zap, Clock } from 'lucide-react'
 import Head from 'next/head'
-import SolarCleaningBooking from '@/components/SolarCleaningBooking'
-import StripeCheckout from '@/components/StripeCheckout'
+import SolarQuoteForm from '@/components/SolarQuoteForm'
 
 // Structured data for rich results
 const structuredData = {
@@ -111,10 +110,10 @@ const SolarCleaningPage = () => {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
             <div className="text-center">
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-sm mb-6">
-                Pure Water Solar Panel Cleaning
+                North Carolina's #1 Fastest Growing Solar Panel Cleaning
               </h1>
               <p className="text-xl sm:text-2xl leading-8 text-white/90 max-w-2xl mx-auto drop-shadow-sm font-semibold">
-                North Carolina's premier solar cleaning service using 100% deionized water
+                Top-rated solar cleaning service using 100% pure deionized water technology
               </p>
               <div className="mt-8 flex justify-center">
                 <button
@@ -132,7 +131,7 @@ const SolarCleaningPage = () => {
           {/* Location Coverage Section */}
           <div className="mb-16 text-center">
             <div className="inline-block bg-white px-6 py-3 rounded-full shadow-sm ring-1 ring-gray-200">
-              <p className="text-lg text-secondary-text">
+              <p className="text-lg text-gray-600">
                 Serving Charlotte, Raleigh, Durham, Winston-Salem, and all surrounding areas in North Carolina
               </p>
             </div>
@@ -143,7 +142,7 @@ const SolarCleaningPage = () => {
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
               See Our Process in Action
             </h2>
-            <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
               Watch how our professional team delivers exceptional solar panel cleaning results
             </p>
             <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 overflow-hidden">
@@ -152,11 +151,12 @@ const SolarCleaningPage = () => {
                 <div className="p-4 md:p-6 flex items-center justify-center">
                   <div className="w-full h-full relative" style={{ paddingBottom: '56.25%' }}>
                     <iframe
-                      src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&muted=1&controls=0&background=1"
+                      src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&background=1"
+                      frameBorder="0"
                       allow="autoplay; fullscreen; picture-in-picture"
                       allowFullScreen
                       className="absolute top-0 left-0 w-full h-full rounded-xl"
-                      title="Helios Solar Panel Cleaning Process"
+                      title="Solar Panel Cleaning Process"
                     ></iframe>
                   </div>
                 </div>
@@ -170,27 +170,27 @@ const SolarCleaningPage = () => {
                     <ul className="space-y-4">
                       <li className="flex items-start gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-secondary-text">Increase energy production by up to 30%</span>
+                        <span className="text-gray-600">Increase energy production by up to 30%</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-secondary-text">Remove harmful debris that can damage panels</span>
+                        <span className="text-gray-600">Remove harmful debris that can damage panels</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-secondary-text">Extend the lifespan of your solar investment</span>
+                        <span className="text-gray-600">Extend the lifespan of your solar investment</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-secondary-text">Maintain manufacturer warranty requirements</span>
+                        <span className="text-gray-600">Maintain manufacturer warranty requirements</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-secondary-text">Improve the appearance of your home</span>
+                        <span className="text-gray-600">Improve the appearance of your home</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-secondary-text">Reduce your carbon footprint with optimal efficiency</span>
+                        <span className="text-gray-600">Reduce your carbon footprint with optimal efficiency</span>
                       </li>
                     </ul>
                   </div>
@@ -202,9 +202,9 @@ const SolarCleaningPage = () => {
           {/* Benefits Section */}
           <div className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              The Pure Water Advantage
+              North Carolina's #1 Fastest Growing Solar Panel Cleaning Solution
             </h2>
-            <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
               Our deionized water cleaning system delivers superior results while protecting your investment
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -217,7 +217,7 @@ const SolarCleaningPage = () => {
                     <benefit.icon className="h-6 w-6 text-gray-900" />
                   </div>
                   <h3 className="text-lg font-semibold mb-3 text-gray-900">{benefit.title}</h3>
-                  <p className="text-secondary-text">{benefit.description}</p>
+                  <p className="text-gray-600">{benefit.description}</p>
                 </div>
               ))}
             </div>
@@ -229,7 +229,7 @@ const SolarCleaningPage = () => {
               <div className="p-8 md:p-12 flex items-center">
                 <div>
                   <h2 className="text-3xl font-bold mb-6 text-gray-900">
-                    Our Pure Water Cleaning Process
+                    Top-Rated Solar Panel Cleaning Process in North Carolina
                   </h2>
                   <div className="space-y-6">
                     {cleaningProcess.map((step, index) => (
@@ -239,7 +239,7 @@ const SolarCleaningPage = () => {
                         </div>
                         <div>
                           <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
-                          <p className="text-secondary-text">{step.description}</p>
+                          <p className="text-gray-600">{step.description}</p>
                         </div>
                       </div>
                     ))}
@@ -263,7 +263,7 @@ const SolarCleaningPage = () => {
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
               Our Recent Work
             </h2>
-            <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
               See the difference our pure water cleaning system makes
             </p>
             <div className="grid md:grid-cols-2 gap-8">
@@ -299,33 +299,33 @@ const SolarCleaningPage = () => {
           {/* FAQ Section */}
           <div className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              Common Questions
+              Frequently Asked Questions About Solar Panel Cleaning in NC
             </h2>
-            <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
-              Learn more about our professional cleaning service
+            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+              Learn more about our professional solar panel cleaning services
             </p>
             <div className="grid gap-8 md:grid-cols-2">
               <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
                 <h3 className="text-xl font-semibold mb-3">Why do you use deionized water?</h3>
-                <p className="text-secondary-text">Deionized water is pure H2O with all minerals removed. This means it leaves no spots or residue on your panels, ensuring maximum sunlight absorption and energy production.</p>
+                <p className="text-gray-600">Deionized water is pure H2O with all minerals removed. This means it leaves no spots or residue on your panels, ensuring maximum sunlight absorption and energy production.</p>
               </div>
               <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
                 <h3 className="text-xl font-semibold mb-3">How often should I clean my panels?</h3>
-                <p className="text-secondary-text">Due to North Carolina's climate, we recommend professional cleaning 2-3 times per year to maintain optimal efficiency and prevent pollen, dust, and organic matter buildup.</p>
+                <p className="text-gray-600">Due to North Carolina's climate, we recommend professional cleaning 2-3 times per year to maintain optimal efficiency and prevent pollen, dust, and organic matter buildup.</p>
               </div>
             </div>
           </div>
 
-          {/* Booking Form Section */}
+          {/* Quote Form Section */}
           <div id="booking-section">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              Choose Your Cleaning Plan
+              Request a Free Quote
             </h2>
-            <p className="text-center text-lg text-secondary-text mb-12 max-w-2xl mx-auto">
-              Select the perfect plan for your solar panel cleaning needs
+            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+              Fill out the form below to receive a personalized quote for your solar panel cleaning needs
             </p>
-            <div className="max-w-7xl mx-auto">
-              <StripeCheckout />
+            <div className="max-w-4xl mx-auto">
+              <SolarQuoteForm />
             </div>
           </div>
         </div>

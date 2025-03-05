@@ -1,29 +1,35 @@
+import { sendEmailAction, generateBookingNotificationEmail as generateEmail } from '@/app/actions';
+
 interface EmailData {
   to: string
   subject: string
   body: string
+  html?: string
 }
 
 export async function sendEmail(data: EmailData) {
-  // In a real application, you would integrate with an email service provider
-  // like SendGrid, AWS SES, or similar
-  
-  // This is a mock implementation
-  console.log('Sending email:', {
-    to: data.to,
-    subject: data.subject,
-    body: data.body
-  })
+  try {
+    console.log('Email service: Preparing to send email to:', data.to);
+    console.log('Email service: Subject:', data.subject);
 
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000))
+    // Use the server action to send email
+    const result = await sendEmailAction(data.to, data.subject, data.body, data.html);
 
-  return {
-    success: true,
-    messageId: `mock_${Date.now()}`
+    console.log('Email service: Result from server action:', result);
+    return result;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
 }
 
+// Re-export the email generation function from the server action
+export const generateBookingNotificationEmail = generateEmail;
+
+// Keep the other email generation functions for backward compatibility
 export function generateStatusUpdateEmail(customerName: string, projectId: string, stage: string) {
   return {
     subject: `Project Update: ${projectId}`,
