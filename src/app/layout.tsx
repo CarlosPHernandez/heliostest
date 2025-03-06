@@ -60,7 +60,9 @@ export default function RootLayout({
           </Suspense>
         </Providers>
         <Analytics />
-        <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <GoogleAnalytics />
+        </Suspense>
       </body>
     </html>
   );

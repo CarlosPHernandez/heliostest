@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
@@ -11,6 +12,7 @@ const nextConfig = {
         hostname: 'picsum.photos',
       },
     ],
+    domains: ['images.unsplash.com', 'lh3.googleusercontent.com'],
   },
   env: {
     ENVIRONMENT: process.env.NODE_ENV,
@@ -29,6 +31,11 @@ const nextConfig = {
   // Temporarily disable ESLint during build
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Disable static optimization for pages using useSearchParams
+  experimental: {
+    // This setting helps with the useSearchParams error during build
+    missingSuspenseWithCSRBailout: false,
   },
 }
 

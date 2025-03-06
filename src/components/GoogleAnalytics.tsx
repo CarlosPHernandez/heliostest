@@ -2,11 +2,12 @@
 
 import Script from 'next/script'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 const GA_MEASUREMENT_ID = 'G-4J1B31H3TM'
 
-export default function GoogleAnalytics() {
+// Client-only wrapper component to safely use hooks
+function Analytics() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -19,6 +20,23 @@ export default function GoogleAnalytics() {
     }
   }, [pathname, searchParams])
 
+  return null
+}
+
+// ClientOnly component to prevent hydration issues
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  return <>{children}</>
+}
+
+export default function GoogleAnalytics() {
   return (
     <>
       {/* Global Site Tag (gtag.js) - Google Analytics */}
@@ -40,6 +58,9 @@ export default function GoogleAnalytics() {
           `,
         }}
       />
+      <ClientOnly>
+        <Analytics />
+      </ClientOnly>
     </>
   )
 }
