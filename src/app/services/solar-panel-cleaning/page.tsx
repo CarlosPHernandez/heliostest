@@ -129,7 +129,7 @@ const SolarCleaningPage = () => {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
             <div className="text-center">
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-sm mb-6">
-                North Carolina's #1 Fastest Growing Solar Panel Cleaning
+                Maximize Your Solar Savings
               </h1>
               <p className="text-xl sm:text-2xl leading-8 text-white/90 max-w-2xl mx-auto drop-shadow-sm font-semibold">
                 Top-rated solar cleaning service using 100% pure deionized water technology
@@ -139,7 +139,7 @@ const SolarCleaningPage = () => {
                   onClick={scrollToBooking}
                   className="bg-white text-black px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
                 >
-                  Get Started
+                  Get Your Quote
                 </button>
               </div>
             </div>
@@ -153,6 +153,19 @@ const SolarCleaningPage = () => {
               <p className="text-lg text-gray-600">
                 Serving Charlotte, Raleigh, Durham, Winston-Salem, and all surrounding areas in North Carolina
               </p>
+            </div>
+          </div>
+
+          {/* Quote Form Section - Moved to top */}
+          <div id="booking-section" className="mb-24">
+            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
+              Request a Free Quote
+            </h2>
+            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+              Fill out the form below to receive a personalized quote for your solar panel cleaning needs
+            </p>
+            <div className="max-w-4xl mx-auto">
+              <SolarQuoteForm />
             </div>
           </div>
 
@@ -255,84 +268,49 @@ const SolarCleaningPage = () => {
             </div>
           </div>
 
-          {/* Process Section */}
-          <div className="mb-24 bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 overflow-hidden">
-            <div className="grid md:grid-cols-2 gap-0">
-              <div className="p-8 md:p-12 flex items-center">
-                <div>
-                  <h2 className="text-3xl font-bold mb-6 text-gray-900">
-                    Top-Rated Solar Panel Cleaning Process in North Carolina
-                  </h2>
-                  <div className="space-y-6">
-                    {cleaningProcess.map((step, index) => (
-                      <div key={index} className="flex gap-4">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
-                          <span className="font-semibold text-gray-900">{index + 1}</span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
-                          <p className="text-gray-600">{step.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="relative aspect-[4/3] md:aspect-auto">
-                <Image
-                  src="/images/IMG_8577.jpg"
-                  alt="Our pure water cleaning process in action"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-white/50 via-transparent to-transparent md:hidden" />
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Work Section */}
+          {/* Customer Reviews Section */}
           <div className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              Our Recent Work
+              What Our Customers Say
             </h2>
             <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              See the difference our pure water cleaning system makes
+              Read what our satisfied customers have to say about our solar panel cleaning service
             </p>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="relative aspect-video rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-200">
-                <Image
-                  src="/images/IMG_8577.jpg"
-                  alt="Recent solar panel cleaning project in North Carolina"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-lg font-semibold text-white mb-1">Solar Panel Cleaning</p>
-                  <p className="text-white/90">Professional cleaning for maximum efficiency</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* First Review */}
+              <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
+                <div className="flex items-center mb-4">
+                  <div className="flex text-yellow-400 mr-2">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-gray-600">5.0</span>
                 </div>
+                <p className="text-gray-600 mb-4">
+                  "I was skeptical about how much difference cleaning would make, but wow! My 22-panel system was covered in pollen and bird droppings. The crew arrived on time, finished in about an hour, and were super professional. I checked my SolarEdge app the next day and saw a 19% increase in production. Definitely worth every penny!"
+                </p>
+                <div className="font-semibold">John D.</div>
               </div>
-              <div className="relative aspect-video rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-200">
-                <Image
-                  src="/images/dji_fly_20250215_093358_0_1739630038935_photo_low_quality.JPEG"
-                  alt="Aerial view of solar panel cleaning in progress"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-lg font-semibold text-white mb-1">Aerial Inspection</p>
-                  <p className="text-white/90">Thorough assessment of panel condition</p>
+
+              {/* Second Review */}
+              <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
+                <div className="flex items-center mb-4">
+                  <div className="flex text-yellow-400 mr-2">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-gray-600">5.0</span>
                 </div>
+                <p className="text-gray-600 mb-4">
+                  "My 5kW system hadn't been cleaned since installation two years ago. I called Helios after noticing my production dropping. No pushy sales tactics, just honest service. They explained everything they were doing and why. After cleaning, I saw my Duke Energy bill drop by $42 the first month! I've already scheduled my next cleaning for the fall."
+                </p>
+                <div className="font-semibold">Sarah M.</div>
               </div>
             </div>
           </div>
@@ -354,19 +332,6 @@ const SolarCleaningPage = () => {
                 <h3 className="text-xl font-semibold mb-3">How often should I clean my panels?</h3>
                 <p className="text-gray-600">Due to North Carolina's climate, we recommend professional cleaning 2-3 times per year to maintain optimal efficiency and prevent pollen, dust, and organic matter buildup.</p>
               </div>
-            </div>
-          </div>
-
-          {/* Quote Form Section */}
-          <div id="booking-section">
-            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              Request a Free Quote
-            </h2>
-            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              Fill out the form below to receive a personalized quote for your solar panel cleaning needs
-            </p>
-            <div className="max-w-4xl mx-auto">
-              <SolarQuoteForm />
             </div>
           </div>
         </div>
