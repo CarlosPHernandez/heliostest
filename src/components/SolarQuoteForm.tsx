@@ -1,7 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { sendBookingNotifications } from '@/lib/notificationService'
+
+// Create a utility function for analytics tracking
+const trackEvent = (eventName: string, properties?: Record<string, any>) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, properties || {});
+  }
+};
 
 interface QuoteFormData {
   name: string
@@ -23,9 +30,65 @@ export default function SolarQuoteForm() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const [formInteracted, setFormInteracted] = useState(false)
+  const startTimeRef = useRef<number>(0)
+  const fieldInteractionsRef = useRef<Set<string>>(new Set())
+
+  // Track when the component mounts
+  useEffect(() => {
+    startTimeRef.current = Date.now()
+
+    // Track form view
+    trackEvent('form_view', { form_name: 'solar_quote_form' })
+
+    // Track form abandonment
+    const handleBeforeUnload = () => {
+      if (formInteracted && !submitted) {
+        const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
+        const filledFields = Array.from(fieldInteractionsRef.current)
+
+        trackEvent('form_abandoned', {
+          form_name: 'solar_quote_form',
+          time_spent_seconds: timeSpent,
+          fields_interacted: filledFields.join(','),
+          fields_count: filledFields.length,
+          form_completion_percentage: calculateCompletionPercentage()
+        })
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [formInteracted, submitted])
+
+  // Calculate form completion percentage
+  const calculateCompletionPercentage = () => {
+    const requiredFields = ['name', 'phone', 'address', 'panelCount']
+    const filledRequiredFields = requiredFields.filter(field => formData[field as keyof QuoteFormData]?.trim() !== '')
+    return Math.round((filledRequiredFields.length / requiredFields.length) * 100)
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+
+    // Track first interaction with the form
+    if (!formInteracted) {
+      setFormInteracted(true)
+      trackEvent('form_started', { form_name: 'solar_quote_form' })
+    }
+
+    // Track field interaction if it's the first time
+    if (!fieldInteractionsRef.current.has(name)) {
+      fieldInteractionsRef.current.add(name)
+      trackEvent('field_interaction', {
+        form_name: 'solar_quote_form',
+        field_name: name
+      })
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -48,6 +111,13 @@ export default function SolarQuoteForm() {
       if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
         throw new Error('Please enter a valid phone number')
       }
+
+      // Track form submission attempt
+      const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
+      trackEvent('form_submit_attempt', {
+        form_name: 'solar_quote_form',
+        time_spent_seconds: timeSpent
+      })
 
       console.log('Submitting quote request for:', formData.name);
 
@@ -72,6 +142,16 @@ export default function SolarQuoteForm() {
       // For now, we'll just simulate a successful submission
       await new Promise(resolve => setTimeout(resolve, 1500))
 
+      // Track successful submission
+      trackEvent('form_submit_success', {
+        form_name: 'solar_quote_form',
+        time_spent_seconds: timeSpent,
+        fields_filled: Object.entries(formData)
+          .filter(([_, value]) => value.trim() !== '')
+          .map(([key]) => key)
+          .join(',')
+      })
+
       // Show success message
       setSubmitted(true)
 
@@ -84,6 +164,12 @@ export default function SolarQuoteForm() {
         message: '',
       })
     } catch (err) {
+      // Track submission error
+      trackEvent('form_submit_error', {
+        form_name: 'solar_quote_form',
+        error_message: err instanceof Error ? err.message : 'Unknown error'
+      })
+
       setError(err instanceof Error ? err.message : 'Failed to submit form. Please try again.')
     } finally {
       setLoading(false)
@@ -103,7 +189,14 @@ export default function SolarQuoteForm() {
           Thank you for your interest in our solar panel cleaning services. Our team will review your information and contact you within 24 hours with a personalized quote.
         </p>
         <button
-          onClick={() => setSubmitted(false)}
+          onClick={() => {
+            setSubmitted(false)
+            // Reset tracking for new form
+            startTimeRef.current = Date.now()
+            fieldInteractionsRef.current = new Set()
+            setFormInteracted(false)
+            trackEvent('form_reset', { form_name: 'solar_quote_form' })
+          }}
           className="bg-black text-white px-6 py-2.5 rounded-xl font-medium hover:bg-gray-800 transition-colors"
         >
           Submit Another Request
