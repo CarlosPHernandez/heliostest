@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { sendBookingNotifications } from '@/lib/notificationService'
-
-// Create a utility function for analytics tracking
-const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', eventName, properties || {});
-  }
-};
+import { trackFormInteraction } from '@/lib/analytics'
 
 interface QuoteFormData {
   name: string
@@ -39,7 +33,7 @@ export default function SolarQuoteForm() {
     startTimeRef.current = Date.now()
 
     // Track form view
-    trackEvent('form_view', { form_name: 'solar_quote_form' })
+    trackFormInteraction('solar_quote_form', 'view')
 
     // Track form abandonment
     const handleBeforeUnload = () => {
@@ -47,8 +41,7 @@ export default function SolarQuoteForm() {
         const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
         const filledFields = Array.from(fieldInteractionsRef.current)
 
-        trackEvent('form_abandoned', {
-          form_name: 'solar_quote_form',
+        trackFormInteraction('solar_quote_form', 'abandoned', {
           time_spent_seconds: timeSpent,
           fields_interacted: filledFields.join(','),
           fields_count: filledFields.length,
@@ -77,14 +70,13 @@ export default function SolarQuoteForm() {
     // Track first interaction with the form
     if (!formInteracted) {
       setFormInteracted(true)
-      trackEvent('form_started', { form_name: 'solar_quote_form' })
+      trackFormInteraction('solar_quote_form', 'started')
     }
 
     // Track field interaction if it's the first time
     if (!fieldInteractionsRef.current.has(name)) {
       fieldInteractionsRef.current.add(name)
-      trackEvent('field_interaction', {
-        form_name: 'solar_quote_form',
+      trackFormInteraction('solar_quote_form', 'field_interaction', {
         field_name: name
       })
     }
@@ -114,8 +106,7 @@ export default function SolarQuoteForm() {
 
       // Track form submission attempt
       const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000)
-      trackEvent('form_submit_attempt', {
-        form_name: 'solar_quote_form',
+      trackFormInteraction('solar_quote_form', 'submit_attempt', {
         time_spent_seconds: timeSpent
       })
 
@@ -143,8 +134,7 @@ export default function SolarQuoteForm() {
       await new Promise(resolve => setTimeout(resolve, 1500))
 
       // Track successful submission
-      trackEvent('form_submit_success', {
-        form_name: 'solar_quote_form',
+      trackFormInteraction('solar_quote_form', 'submit_success', {
         time_spent_seconds: timeSpent,
         fields_filled: Object.entries(formData)
           .filter(([_, value]) => value.trim() !== '')
@@ -165,8 +155,7 @@ export default function SolarQuoteForm() {
       })
     } catch (err) {
       // Track submission error
-      trackEvent('form_submit_error', {
-        form_name: 'solar_quote_form',
+      trackFormInteraction('solar_quote_form', 'submit_error', {
         error_message: err instanceof Error ? err.message : 'Unknown error'
       })
 
@@ -195,7 +184,7 @@ export default function SolarQuoteForm() {
             startTimeRef.current = Date.now()
             fieldInteractionsRef.current = new Set()
             setFormInteracted(false)
-            trackEvent('form_reset', { form_name: 'solar_quote_form' })
+            trackFormInteraction('solar_quote_form', 'reset')
           }}
           className="bg-black text-white px-6 py-2.5 rounded-xl font-medium hover:bg-gray-800 transition-colors"
         >

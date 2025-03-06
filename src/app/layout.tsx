@@ -8,6 +8,7 @@ import { Suspense } from 'react'
 import { Providers } from './providers'
 import Loading from './loading'
 import { Analytics } from '@vercel/analytics/react'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -59,6 +60,7 @@ export default function RootLayout({
           </Suspense>
         </Providers>
         <Analytics />
+        <GoogleAnalytics />
       </body>
     </html>
   );
