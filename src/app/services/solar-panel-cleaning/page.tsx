@@ -73,34 +73,50 @@ const SolarCleaningPage = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [videoVisible, setVideoVisible] = useState(false);
   const videoSectionRef = useRef<HTMLDivElement>(null);
+  const videoIframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Use Intersection Observer to detect when video section is visible
+  // Preload video as early as possible
   useEffect(() => {
+    // Start loading after a short delay to prioritize initial page render
+    const timer = setTimeout(() => {
+      setVideoLoaded(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Use Intersection Observer with more sensitive detection
+  useEffect(() => {
+    if (!videoLoaded) return;
+
     const options = {
-      root: null, // Use the viewport as the root
-      rootMargin: '0px 0px 100px 0px', // Start loading when video is 100px away from viewport
-      threshold: 0.1 // Trigger when 10% of the element is visible
+      root: null,
+      // Larger margin to start transition earlier
+      rootMargin: '100px 0px 100px 0px',
+      // Lower threshold to start transition sooner
+      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
     };
 
+    let prevRatio = 0;
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        // When video section enters viewport
-        if (entry.isIntersecting) {
-          // Start loading the video
-          setVideoLoaded(true);
+        // Get intersection ratio (0 to 1)
+        const currentRatio = entry.intersectionRatio;
 
-          // After a short delay, set it to visible (playing)
-          setTimeout(() => {
+        // Only update if ratio has changed significantly
+        if (Math.abs(currentRatio - prevRatio) > 0.1) {
+          // Smoothly adjust visibility based on intersection ratio
+          if (currentRatio > 0.2) {
             setVideoVisible(true);
-          }, 500);
+          } else if (currentRatio < 0.1) {
+            setVideoVisible(false);
+          }
 
-          // Disconnect observer after triggering
-          observer.disconnect();
+          prevRatio = currentRatio;
         }
       });
     }, options);
 
-    // Start observing the video section
     if (videoSectionRef.current) {
       observer.observe(videoSectionRef.current);
     }
@@ -108,7 +124,7 @@ const SolarCleaningPage = () => {
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [videoLoaded]);
 
   const scrollToBooking = () => {
     const bookingSection = document.getElementById('booking-section')
@@ -261,37 +277,30 @@ const SolarCleaningPage = () => {
                 {/* Video on the left */}
                 <div className="p-4 md:p-6 flex items-center justify-center">
                   <div className="w-full h-full relative" style={{ paddingBottom: '56.25%' }}>
-                    {/* Optimized autoplay video with lazy loading */}
+                    {/* Optimized autoplay video with seamless loading */}
                     <div className="absolute top-0 left-0 w-full h-full rounded-xl overflow-hidden">
-                      {/* Loading placeholder */}
+                      {/* Initial loading state */}
                       {!videoLoaded && (
                         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-0">
-                          <div className="animate-pulse text-gray-400">Video will load when visible</div>
+                          <div className="animate-pulse text-gray-400">Preparing video...</div>
                         </div>
                       )}
 
-                      {/* Loaded but paused state */}
-                      {videoLoaded && !videoVisible && (
-                        <div className="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center z-10">
-                          <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <div className="text-gray-500">Loading video...</div>
-                        </div>
-                      )}
-
-                      {/* Iframe - only visible when section is in view */}
+                      {/* Video iframe with seamless transition */}
                       {videoLoaded && (
                         <iframe
-                          src={`https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=${videoVisible ? '1' : '0'}&loop=1&background=1&muted=1`}
+                          ref={videoIframeRef}
+                          src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&background=1&muted=1&dnt=1&quality=auto"
                           frameBorder="0"
                           allow="autoplay; fullscreen; picture-in-picture"
                           allowFullScreen
-                          loading="lazy"
-                          className={`absolute top-0 left-0 w-full h-full rounded-xl ${videoVisible ? 'z-20' : 'z-0 opacity-0'}`}
+                          loading="eager"
+                          className="absolute top-0 left-0 w-full h-full rounded-xl transition-opacity duration-1000"
+                          style={{
+                            opacity: videoVisible ? 1 : 0.3,
+                            filter: videoVisible ? 'none' : 'blur(2px) brightness(0.7)'
+                          }}
                           title="Solar Panel Cleaning Process"
-                          onLoad={() => console.log("Video iframe loaded")}
                         ></iframe>
                       )}
                     </div>
