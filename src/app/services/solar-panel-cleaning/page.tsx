@@ -156,7 +156,7 @@ const SolarCleaningPage = () => {
             </div>
           </div>
 
-          {/* Quote Form Section - Moved to top */}
+          {/* Quote Form Section */}
           <div id="booking-section" className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
               Request a Free Quote
@@ -169,7 +169,7 @@ const SolarCleaningPage = () => {
             </div>
           </div>
 
-          {/* Video Section - Moved to top for better user flow */}
+          {/* Video Section */}
           <div className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
               See Our Process in Action
@@ -244,6 +244,154 @@ const SolarCleaningPage = () => {
             </div>
           </div>
 
+          {/* Customer Reviews Section - Moved after Video Section */}
+          <div className="mb-24">
+            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
+              What Our Customers Say
+            </h2>
+            <p className="text-center text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+              Read what our satisfied customers have to say about our solar panel cleaning service
+            </p>
+
+            {/* Swipeable carousel for all screen sizes */}
+            <div className="relative">
+              <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-6 gap-4 md:gap-6">
+                {/* First Review */}
+                <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 flex-shrink-0 w-[85vw] md:w-[400px] snap-center">
+                  <div className="flex flex-col">
+                    {/* Customer Image */}
+                    <div className="w-full h-48 relative">
+                      <div className="w-full h-full rounded-t-xl overflow-hidden">
+                        <Image
+                          src="/images/cleansolarpanels.jpg"
+                          alt="Clean solar panels testimonial"
+                          fill
+                          className="object-cover rounded-t-xl"
+                          sizes="(max-width: 768px) 85vw, 400px"
+                          priority
+                        />
+                      </div>
+                    </div>
+                    {/* Review Content */}
+                    <div className="p-6">
+                      <div className="flex items-center mb-4">
+                        <div className="flex text-yellow-400 mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span className="text-gray-600">5.0</span>
+                      </div>
+                      <p className="text-gray-600 mb-4">
+                        "I was skeptical about how much difference cleaning would make, but wow! My 22-panel system was covered in pollen and bird droppings. The crew arrived on time, finished in about an hour, and were super professional. I checked my SolarEdge app the next day and saw a 19% increase in production. Definitely worth every penny!"
+                      </p>
+                      <div className="font-semibold">John D.</div>
+                      <div className="text-sm text-gray-500">Charlotte, NC</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Second Review */}
+                <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 flex-shrink-0 w-[85vw] md:w-[400px] snap-center">
+                  <div className="flex flex-col">
+                    {/* Customer Image */}
+                    <div className="w-full h-48 relative">
+                      <div className="w-full h-full rounded-t-xl overflow-hidden">
+                        <Image
+                          src="/images/IMG_8855.jpeg"
+                          alt="Before and after solar panel cleaning"
+                          fill
+                          className="object-cover rounded-t-xl"
+                          sizes="(max-width: 768px) 85vw, 400px"
+                        />
+                      </div>
+                    </div>
+                    {/* Review Content */}
+                    <div className="p-6">
+                      <div className="flex items-center mb-4">
+                        <div className="flex text-yellow-400 mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span className="text-gray-600">5.0</span>
+                      </div>
+                      <p className="text-gray-600 mb-4">
+                        "My 5kW system hadn't been cleaned since installation two years ago. I called Helios after noticing my production dropping. No pushy sales tactics, just honest service. They explained everything they were doing and why. After cleaning, I saw my Duke Energy bill drop by $42 the first month! I've already scheduled my next cleaning for the fall."
+                      </p>
+                      <div className="font-semibold">Sarah M.</div>
+                      <div className="text-sm text-gray-500">Raleigh, NC</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Third Review */}
+                <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 flex-shrink-0 w-[85vw] md:w-[400px] snap-center">
+                  <div className="flex flex-col">
+                    {/* Customer Image */}
+                    <div className="w-full h-48 relative">
+                      <div className="w-full h-full rounded-t-xl overflow-hidden">
+                        {/* Using the new solarclean3.jpg image */}
+                        <Image
+                          src="/images/solarclean3.jpg"
+                          alt="Solar panel cleaning results"
+                          fill
+                          className="object-cover rounded-t-xl"
+                          sizes="(max-width: 768px) 85vw, 400px"
+                        />
+                      </div>
+                    </div>
+                    {/* Review Content */}
+                    <div className="p-6">
+                      <div className="flex items-center mb-4">
+                        <div className="flex text-yellow-400 mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span className="text-gray-600">5.0</span>
+                      </div>
+                      <p className="text-gray-600 mb-4">
+                        "The team at Helios did an amazing job cleaning our solar panels. We've had them for 3 years and never cleaned them. The difference in energy production was immediate and significant. Very professional service from start to finish!"
+                      </p>
+                      <div className="font-semibold">Michael T.</div>
+                      <div className="text-sm text-gray-500">Durham, NC</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Swipe indicator - subtle hint for mobile users */}
+              <div className="md:hidden absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
+            </div>
+
+            {/* Navigation Dots */}
+            <div className="flex justify-center mt-6 gap-2">
+              <button className="w-3 h-3 rounded-full bg-green-600"></button>
+              <button className="w-3 h-3 rounded-full bg-gray-300"></button>
+              <button className="w-3 h-3 rounded-full bg-gray-300"></button>
+            </div>
+
+            <style jsx global>{`
+              /* Hide scrollbar for Chrome, Safari and Opera */
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+              
+              /* Hide scrollbar for IE, Edge and Firefox */
+              .scrollbar-hide {
+                -ms-overflow-style: none;  /* IE and Edge */
+                scrollbar-width: none;  /* Firefox */
+              }
+            `}</style>
+          </div>
+
           {/* Benefits Section */}
           <div className="mb-24">
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
@@ -265,73 +413,6 @@ const SolarCleaningPage = () => {
                   <p className="text-gray-600">{benefit.description}</p>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Customer Reviews Section */}
-          <div className="mb-24">
-            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              What Our Customers Say
-            </h2>
-            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              Read what our satisfied customers have to say about our solar panel cleaning service
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* First Review */}
-              <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
-                <div className="flex items-center mb-4">
-                  <div className="flex text-yellow-400 mr-2">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-gray-600">5.0</span>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "I was skeptical about how much difference cleaning would make, but wow! My 22-panel system was covered in pollen and bird droppings. The crew arrived on time, finished in about an hour, and were super professional. I checked my SolarEdge app the next day and saw a 19% increase in production. Definitely worth every penny!"
-                </p>
-                <div className="font-semibold">John D.</div>
-              </div>
-
-              {/* Second Review */}
-              <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
-                <div className="flex items-center mb-4">
-                  <div className="flex text-yellow-400 mr-2">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-gray-600">5.0</span>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "My 5kW system hadn't been cleaned since installation two years ago. I called Helios after noticing my production dropping. No pushy sales tactics, just honest service. They explained everything they were doing and why. After cleaning, I saw my Duke Energy bill drop by $42 the first month! I've already scheduled my next cleaning for the fall."
-                </p>
-                <div className="font-semibold">Sarah M.</div>
-              </div>
-            </div>
-          </div>
-
-          {/* FAQ Section */}
-          <div className="mb-24">
-            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              Frequently Asked Questions About Solar Panel Cleaning in NC
-            </h2>
-            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              Learn more about our professional solar panel cleaning services
-            </p>
-            <div className="grid gap-8 md:grid-cols-2">
-              <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
-                <h3 className="text-xl font-semibold mb-3">Why do you use deionized water?</h3>
-                <p className="text-gray-600">Deionized water is pure H2O with all minerals removed. This means it leaves no spots or residue on your panels, ensuring maximum sunlight absorption and energy production.</p>
-              </div>
-              <div className="bg-white p-8 rounded-xl shadow-sm ring-1 ring-gray-200">
-                <h3 className="text-xl font-semibold mb-3">How often should I clean my panels?</h3>
-                <p className="text-gray-600">Due to North Carolina's climate, we recommend professional cleaning 2-3 times per year to maintain optimal efficiency and prevent pollen, dust, and organic matter buildup.</p>
-              </div>
             </div>
           </div>
         </div>
