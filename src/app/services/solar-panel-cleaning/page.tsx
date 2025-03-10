@@ -366,9 +366,6 @@ const SolarCleaningPage = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Swipe indicator - subtle hint for mobile users */}
-              <div className="md:hidden absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
             </div>
 
             {/* Navigation Dots */}
