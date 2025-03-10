@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { CheckCircle, Droplets, Shield, Zap, Clock } from 'lucide-react'
 import Head from 'next/head'
 import SolarQuoteForm from '@/components/SolarQuoteForm'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Structured data for rich results
 const structuredData = {
@@ -71,15 +71,43 @@ const cleaningProcess = [
 
 const SolarCleaningPage = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoVisible, setVideoVisible] = useState(false);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
 
-  // Load video after page has loaded
+  // Use Intersection Observer to detect when video section is visible
   useEffect(() => {
-    // Minimal delay to ensure smooth loading
-    const timer = setTimeout(() => {
-      setVideoLoaded(true);
-    }, 300);
+    const options = {
+      root: null, // Use the viewport as the root
+      rootMargin: '0px 0px 100px 0px', // Start loading when video is 100px away from viewport
+      threshold: 0.1 // Trigger when 10% of the element is visible
+    };
 
-    return () => clearTimeout(timer);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        // When video section enters viewport
+        if (entry.isIntersecting) {
+          // Start loading the video
+          setVideoLoaded(true);
+
+          // After a short delay, set it to visible (playing)
+          setTimeout(() => {
+            setVideoVisible(true);
+          }, 500);
+
+          // Disconnect observer after triggering
+          observer.disconnect();
+        }
+      });
+    }, options);
+
+    // Start observing the video section
+    if (videoSectionRef.current) {
+      observer.observe(videoSectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   const scrollToBooking = () => {
@@ -221,7 +249,7 @@ const SolarCleaningPage = () => {
           </div>
 
           {/* Video Section */}
-          <div className="mb-24">
+          <div className="mb-24" ref={videoSectionRef}>
             <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
               See Our Process in Action
             </h2>
@@ -233,24 +261,37 @@ const SolarCleaningPage = () => {
                 {/* Video on the left */}
                 <div className="p-4 md:p-6 flex items-center justify-center">
                   <div className="w-full h-full relative" style={{ paddingBottom: '56.25%' }}>
-                    {/* Optimized autoplay video */}
+                    {/* Optimized autoplay video with lazy loading */}
                     <div className="absolute top-0 left-0 w-full h-full rounded-xl overflow-hidden">
-                      {/* Simple loading placeholder */}
+                      {/* Loading placeholder */}
                       {!videoLoaded && (
                         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-0">
-                          <div className="animate-pulse text-gray-400">Loading video...</div>
+                          <div className="animate-pulse text-gray-400">Video will load when visible</div>
                         </div>
                       )}
-                      {/* Iframe with loading="lazy" for better performance */}
+
+                      {/* Loaded but paused state */}
+                      {videoLoaded && !videoVisible && (
+                        <div className="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center z-10">
+                          <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="text-gray-500">Loading video...</div>
+                        </div>
+                      )}
+
+                      {/* Iframe - only visible when section is in view */}
                       {videoLoaded && (
                         <iframe
-                          src="https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=1&loop=1&background=1&muted=1"
+                          src={`https://player.vimeo.com/video/1060941397?h=b74272ae15&autoplay=${videoVisible ? '1' : '0'}&loop=1&background=1&muted=1`}
                           frameBorder="0"
                           allow="autoplay; fullscreen; picture-in-picture"
                           allowFullScreen
                           loading="lazy"
-                          className="absolute top-0 left-0 w-full h-full rounded-xl z-10"
+                          className={`absolute top-0 left-0 w-full h-full rounded-xl ${videoVisible ? 'z-20' : 'z-0 opacity-0'}`}
                           title="Solar Panel Cleaning Process"
+                          onLoad={() => console.log("Video iframe loaded")}
                         ></iframe>
                       )}
                     </div>
