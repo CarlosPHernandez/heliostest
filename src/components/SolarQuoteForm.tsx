@@ -12,7 +12,11 @@ interface QuoteFormData {
   message: string
 }
 
-export default function SolarQuoteForm() {
+interface SolarQuoteFormProps {
+  isMobile?: boolean
+}
+
+export default function SolarQuoteForm({ isMobile = false }: SolarQuoteFormProps) {
   const [formData, setFormData] = useState<QuoteFormData>({
     name: '',
     phone: '',
@@ -167,7 +171,7 @@ export default function SolarQuoteForm() {
 
   if (submitted) {
     return (
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-8 text-center">
+      <div className="bg-white rounded-xl p-6 text-center">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -186,7 +190,7 @@ export default function SolarQuoteForm() {
             setFormInteracted(false)
             trackFormInteraction('solar_quote_form', 'reset')
           }}
-          className="bg-black text-white px-6 py-2.5 rounded-xl font-medium hover:bg-gray-800 transition-colors"
+          className="bg-black text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors"
         >
           Submit Another Request
         </button>
@@ -195,78 +199,82 @@ export default function SolarQuoteForm() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-6 md:p-8">
-      <form onSubmit={handleSubmit} noValidate className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name*
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleInputChange}
-              className="block w-full rounded-xl py-2.5 px-4 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6"
-              placeholder="Your name"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number*
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              required
-              value={formData.phone}
-              onChange={handleInputChange}
-              className="block w-full rounded-xl py-2.5 px-4 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6"
-              placeholder="(123) 456-7890"
-            />
-          </div>
-        </div>
-
+    <form onSubmit={handleSubmit} noValidate className={`space-y-${isMobile ? '3' : '4'}`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-            Address*
+          <label htmlFor="name" className={`block ${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-700 mb-1`}>
+            Full Name*
           </label>
           <input
             type="text"
-            id="address"
-            name="address"
+            id="name"
+            name="name"
             required
-            value={formData.address}
+            value={formData.name}
             onChange={handleInputChange}
-            className="block w-full rounded-xl py-2.5 px-4 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6"
-            placeholder="123 Main St, City, State, ZIP"
+            className={`block w-full rounded-lg border-0 ${isMobile ? 'py-2 text-sm' : 'py-3'} px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm`}
+            placeholder="Your name"
           />
         </div>
 
         <div>
-          <label htmlFor="panelCount" className="block text-sm font-medium text-gray-700 mb-1">
-            Number of Solar Panels*
+          <label htmlFor="phone" className={`block ${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-700 mb-1`}>
+            Phone Number*
           </label>
           <input
-            type="number"
-            id="panelCount"
-            name="panelCount"
+            type="tel"
+            id="phone"
+            name="phone"
             required
-            min="1"
-            value={formData.panelCount}
+            value={formData.phone}
             onChange={handleInputChange}
-            className="block w-full rounded-xl py-2.5 px-4 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6"
-            placeholder="Enter number of panels"
+            className={`block w-full rounded-lg border-0 ${isMobile ? 'py-2 text-sm' : 'py-3'} px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm`}
+            placeholder="(123) 456-7890"
           />
         </div>
+      </div>
 
+      <div>
+        <label htmlFor="address" className={`block ${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-700 mb-1`}>
+          Address*
+        </label>
+        <input
+          type="text"
+          id="address"
+          name="address"
+          required
+          value={formData.address}
+          onChange={handleInputChange}
+          className={`block w-full rounded-lg border-0 ${isMobile ? 'py-2 text-sm' : 'py-3'} px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm`}
+          placeholder="Your address"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="panelCount" className={`block ${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-700 mb-1`}>
+          Number of Solar Panels*
+        </label>
+        <select
+          id="panelCount"
+          name="panelCount"
+          required
+          value={formData.panelCount}
+          onChange={handleInputChange}
+          className={`block w-full rounded-lg border-0 ${isMobile ? 'py-2 text-sm' : 'py-3'} px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm`}
+        >
+          <option value="">Select number of panels</option>
+          <option value="1-10">1-10 panels</option>
+          <option value="11-20">11-20 panels</option>
+          <option value="21-30">21-30 panels</option>
+          <option value="31-40">31-40 panels</option>
+          <option value="41+">41+ panels</option>
+        </select>
+      </div>
+
+      {!isMobile && (
         <div>
           <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-            Additional Notes (Optional)
+            Additional Information (Optional)
           </label>
           <textarea
             id="message"
@@ -274,51 +282,43 @@ export default function SolarQuoteForm() {
             rows={3}
             value={formData.message}
             onChange={handleInputChange}
-            className="block w-full rounded-xl py-2.5 px-4 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:text-sm sm:leading-6"
-            placeholder="Any special instructions or questions?"
-          />
+            className="block w-full rounded-lg border-0 py-3 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm"
+            placeholder="Any specific details or questions?"
+          ></textarea>
         </div>
+      )}
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-xl">
-            {error}
-          </div>
-        )}
-
-        <div className="bg-gray-50 rounded-xl p-4 ring-1 ring-gray-200">
-          <p className="text-gray-700 mb-2">
-            By submitting this form, you'll receive:
-          </p>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
-              <svg className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>A personalized quote within 24 hours</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <svg className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Flexible scheduling options</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <svg className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>No obligation to proceed with service</span>
-            </li>
-          </ul>
+      {error && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          {error}
         </div>
+      )}
 
+      <div>
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center bg-black text-white py-3 px-4 rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+          className={`mx-auto ${isMobile ? 'w-full text-sm py-2' : 'max-w-xs py-3'} bg-black text-white px-8 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center`}
         >
-          {loading ? 'Submitting...' : 'Request a Quote'}
+          {loading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </>
+          ) : (
+            'Get Your Free Quote'
+          )}
         </button>
-      </form>
-    </div>
+      </div>
+
+      {!isMobile && (
+        <p className="text-xs text-center text-gray-500 mt-4">
+          By submitting this form, you agree to be contacted about our services. We respect your privacy and will never share your information.
+        </p>
+      )}
+    </form>
   )
 } 

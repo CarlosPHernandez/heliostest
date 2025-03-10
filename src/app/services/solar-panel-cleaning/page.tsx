@@ -111,8 +111,8 @@ const SolarCleaningPage = () => {
       </Head>
 
       <div className="min-h-screen bg-[#FBFBFB]">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden mb-16">
+        {/* Hero Section with Form Above the Fold */}
+        <div className="relative overflow-hidden mb-6 md:mb-16">
           <div className="absolute inset-0">
             <Image
               src="/images/IMG_8577.jpg"
@@ -124,48 +124,99 @@ const SolarCleaningPage = () => {
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/80" />
           </div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-            <div className="text-center">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-sm mb-6">
-                Maximize Your Solar Savings
-              </h1>
-              <p className="text-xl sm:text-2xl leading-8 text-white/90 max-w-2xl mx-auto drop-shadow-sm font-semibold">
-                Top-rated solar cleaning service using 100% pure deionized water technology
-              </p>
-              <div className="mt-8 flex justify-center">
-                <button
-                  onClick={scrollToBooking}
-                  className="bg-white text-black px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
-                >
-                  Get Your Quote
-                </button>
+          <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-12 pb-4 sm:pt-14 sm:pb-10 md:pt-20 md:pb-16">
+            {/* Mobile: Stack form on top for immediate visibility */}
+            <div className="flex flex-col md:hidden mb-6">
+              {/* Heading text now above the form with more top padding */}
+              <div className="text-center px-1 mb-4 pt-6">
+                <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-sm mb-2">
+                  Maximize Your Solar Savings
+                </h1>
+                <p className="text-sm leading-5 text-white/90 drop-shadow-sm font-semibold mb-3">
+                  Top-rated solar cleaning service using 100% pure deionized water
+                </p>
+                <div className="flex justify-center">
+                  <div className="inline-flex items-center gap-1 text-white bg-black/30 px-3 py-1.5 rounded-full text-xs">
+                    <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" />
+                    <span>Increase production by up to 30%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form below the heading */}
+              <div id="booking-section-mobile" className="bg-white rounded-xl shadow-xl p-4 mb-5 border border-gray-100 max-w-md mx-auto w-full">
+                <h2 className="text-lg font-bold text-center mb-2 text-gray-900">
+                  Request a Free Quote
+                </h2>
+                <p className="text-center text-xs text-gray-600 mb-3">
+                  Fill out the form below
+                </p>
+                <SolarQuoteForm isMobile={true} />
+              </div>
+            </div>
+
+            {/* Desktop: Side-by-side layout */}
+            <div className="hidden md:grid md:grid-cols-2 gap-8 items-center">
+              {/* Hero Content - Left Side */}
+              <div className="text-left">
+                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-sm mb-6">
+                  Maximize Your Solar Savings
+                </h1>
+                <p className="text-xl leading-8 text-white/90 max-w-2xl drop-shadow-sm font-semibold mb-6">
+                  Top-rated solar cleaning service using 100% pure deionized water technology
+                </p>
+                <ul className="space-y-3 text-white mb-8">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
+                    <span>Increase energy production by up to 30%</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
+                    <span>Maintain manufacturer warranty requirements</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
+                    <span>Extend the lifespan of your solar investment</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Quote Form - Right Side */}
+              <div id="booking-section" className="bg-white rounded-2xl shadow-xl p-7 md:p-8 border border-gray-100 mt-4 md:mt-8">
+                <h2 className="text-2xl font-bold text-center mb-4 text-gray-900">
+                  Request a Free Quote
+                </h2>
+                <p className="text-center text-gray-600 mb-6">
+                  Fill out the form below to receive a personalized quote
+                </p>
+                <SolarQuoteForm />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-          {/* Location Coverage Section */}
-          <div className="mb-16 text-center">
-            <div className="inline-block bg-white px-6 py-3 rounded-full shadow-sm ring-1 ring-gray-200">
-              <p className="text-lg text-gray-600">
-                Serving Charlotte, Raleigh, Durham, Winston-Salem, and all surrounding areas in North Carolina
-              </p>
-            </div>
-          </div>
-
-          {/* Quote Form Section */}
-          <div id="booking-section" className="mb-24">
-            <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">
-              Request a Free Quote
-            </h2>
-            <p className="text-center text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-              Fill out the form below to receive a personalized quote for your solar panel cleaning needs
-            </p>
-            <div className="max-w-4xl mx-auto">
-              <SolarQuoteForm />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:pb-24">
+          {/* Location Coverage Section - Mobile Optimized */}
+          <div className="mb-12 md:mb-16">
+            <h3 className="text-center text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 md:hidden">
+              Service Areas
+            </h3>
+            <div className="flex flex-wrap justify-center gap-2 md:gap-0 md:block md:text-center">
+              <div className="md:inline-block bg-white px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-full shadow-sm ring-1 ring-gray-200">
+                <div className="flex items-center md:block">
+                  <div className="flex md:hidden items-center justify-center w-6 h-6 bg-gray-100 rounded-full mr-2 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm md:text-lg text-gray-600">
+                    <span className="font-medium">Serving:</span> Charlotte, Raleigh, Durham, Winston-Salem, and all surrounding areas in North Carolina
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
