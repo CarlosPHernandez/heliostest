@@ -223,4 +223,299 @@
   .form-helper {
     @apply mt-1 text-sm text-gray-500;
   }
+
+  /* Custom banner with angled edge */
+  .clip-path-banner {
+    position: relative;
+    clip-path: polygon(40px 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* Mobile responsive banner adjustments */
+  @media (max-width: 640px) {
+    [data-banner]>div>div {
+      flex-direction: column;
+    }
+
+    [data-banner]>div>div>div:first-child {
+      width: 100%;
+      padding: 0.15rem 1rem;
+      text-align: center;
+    }
+
+    [data-banner]>div>div>div:last-child {
+      width: 100%;
+      padding: 0.15rem 1rem;
+      text-align: center;
+      clip-path: none;
+      background-color: transparent !important;
+      color: white !important;
+    }
+
+    [data-banner]>div>div>div:last-child a {
+      color: white !important;
+      text-decoration: underline;
+      font-weight: bold;
+    }
+  }
+
+  /* Banner spacing adjustment */
+  body.has-banner header:not([data-banner]) {
+    border-top: none !important;
+  }
+
+  /* Remove any potential gap between banner and header */
+  [data-banner] {
+    border-bottom: none !important;
+  }
+
+  /* Banner animations */
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-slide-in {
+    animation: fadeSlideIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.7s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.7s ease-out forwards;
+  }
+
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  /* Hero content positioning adjustments */
+  @media (min-width: 1024px) {
+    .hero-content-wrapper {
+      padding-top: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .hero-content-wrapper {
+      padding-top: 3rem;
+    }
+  }
+
+  /* Form container adjustments for desktop */
+  @media (min-width: 640px) {
+    .form-container {
+      /* Override the inline padding to create more space */
+      padding: 1.75rem !important;
+    }
+
+    .form-container form {
+      margin: 0.5rem 0;
+    }
+
+    .form-container button {
+      padding-left: 2rem !important;
+      padding-right: 2rem !important;
+      font-weight: 600;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .form-container {
+      padding: 2.25rem !important;
+    }
+
+    .form-container button {
+      padding-left: 2.5rem !important;
+      padding-right: 2.5rem !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .form-container {
+      padding: 2.5rem !important;
+    }
+  }
+
+  /* Hero content positioning adjustments */
+  @media (min-width: 1024px) {
+    .hero-content-wrapper {
+      padding-top: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .hero-content-wrapper {
+      padding-top: 3rem;
+    }
+  }
+
+  /* Input field styling enhancements */
+  @media (min-width: 640px) {
+    .form-container input {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+    }
+
+    .form-container form {
+      gap: 1rem !important;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .form-container form {
+      gap: 1.25rem !important;
+    }
+  }
+
+  /* Mobile banner layout adjustments */
+  @media (max-width: 640px) {
+
+    /* Ensure the banner text is properly sized and spaced */
+    [data-banner] p {
+      font-size: 0.875rem !important;
+      line-height: 1.25 !important;
+    }
+
+    /* Add more padding to the banner on mobile */
+    [data-banner]>div>div>div {
+      padding: 0.5rem 1rem !important;
+    }
+
+    /* Ensure the logo in the header is visible */
+    header:not([data-banner]) .logo {
+      display: block;
+      position: relative;
+      z-index: 45;
+    }
+  }
+
+  /* Hero content positioning adjustments */
+  @media (min-width: 1024px) {
+    .hero-content-wrapper {
+      padding-top: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .hero-content-wrapper {
+      padding-top: 3rem;
+    }
+  }
+
+  /* Fix header positioning on mobile */
+  @media (max-width: 640px) {
+
+    /* Adjust main content to account for fixed elements */
+    body.has-banner main {
+      padding-top: 0.5rem;
+    }
+  }
+
+  /* Banner and header positioning */
+  [data-banner] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+    border-bottom: none !important;
+  }
+
+  /* Ensure the main header is properly positioned below the banner */
+  header:not([data-banner]) {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9998 !important;
+    border-top: none !important;
+  }
+
+  /* Adjust main content to account for fixed elements */
+  body.has-banner main {
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  /* Remove any gaps between elements */
+  body.has-banner header:not([data-banner]) {
+    border-top: none !important;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  [data-banner] {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Ensure image starts right at the top of the main content */
+  body.has-banner main .absolute {
+    top: 0 !important;
+  }
+
+  /* Mobile banner adjustments */
+  @media (max-width: 640px) {
+    [data-banner] p {
+      font-size: 0.875rem !important;
+      line-height: 1.25 !important;
+    }
+  }
+
+  /* Hero content positioning adjustments */
+  @media (min-width: 1024px) {
+    .hero-content-wrapper {
+      padding-top: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .hero-content-wrapper {
+      padding-top: 3rem;
+    }
+  }
 }
