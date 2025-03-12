@@ -166,7 +166,7 @@ const SolarCleaningPage = () => {
               priority
               sizes="100vw"
               placeholder="blur"
-              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/80" />
           </div>
@@ -176,10 +176,10 @@ const SolarCleaningPage = () => {
               {/* Heading text now above the form with more top padding */}
               <div className="text-center px-1 mb-4 pt-6">
                 <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-sm mb-2">
-                  Maximize Your Solar Savings
+                  Get Your Free Solar Cleaning Estimate
                 </h1>
                 <p className="text-sm leading-5 text-white/90 drop-shadow-sm font-semibold mb-3">
-                  Top-rated solar cleaning service using 100% pure deionized water
+                  Top-rated solar panel cleaning service in North Carolina
                 </p>
                 <div className="flex justify-center">
                   <div className="inline-flex items-center gap-1 text-white bg-black/30 px-3 py-1.5 rounded-full text-xs">
@@ -206,10 +206,10 @@ const SolarCleaningPage = () => {
               {/* Hero Content - Left Side */}
               <div className="text-left">
                 <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-sm mb-6">
-                  Maximize Your Solar Savings
+                  Get Your Free Solar Cleaning Estimate
                 </h1>
                 <p className="text-xl leading-8 text-white/90 max-w-2xl drop-shadow-sm font-semibold mb-6">
-                  Top-rated solar cleaning service using 100% pure deionized water technology
+                  Top-rated solar panel cleaning service in North Carolina
                 </p>
                 <ul className="space-y-3 text-white mb-8">
                   <li className="flex items-center gap-2">
