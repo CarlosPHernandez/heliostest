@@ -77,16 +77,14 @@ export default function HomePage() {
     e.preventDefault()
 
     // Basic validation
-    if (!monthlyBill || isNaN(Number(monthlyBill.replace('$', '')))) {
+    if (!monthlyBill || isNaN(Number(monthlyBill))) {
       setError('Please enter a valid amount')
       return
     }
 
-    const billAmount = monthlyBill.replace('$', '')
-
     try {
       // Store the monthly bill in localStorage
-      localStorage.setItem('monthlyBill', billAmount)
+      localStorage.setItem('monthlyBill', monthlyBill)
 
       // Navigate to address input step
       router.push('/order/address')
@@ -104,11 +102,11 @@ export default function HomePage() {
     const parts = digits.split('.')
     if (parts.length > 2) return monthlyBill
 
-    // Format with dollar sign and limit decimal places
+    // Format without dollar sign and limit decimal places
     if (parts.length === 2) {
-      return `$${parts[0]}.${parts[1].slice(0, 2)}`
+      return `${parts[0]}.${parts[1].slice(0, 2)}`
     }
-    return `$${digits}`
+    return digits
   }
 
   return (

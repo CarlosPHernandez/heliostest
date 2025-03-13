@@ -116,23 +116,28 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   // Handle swipe navigation
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX)
+    setTouchEnd(e.targetTouches[0].clientX) // Initialize touchEnd with the same value
+    console.log('Touch start:', e.targetTouches[0].clientX)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX)
+    console.log('Touch move:', e.targetTouches[0].clientX)
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isMobile) return
+
+    console.log('Touch end - start:', touchStart, 'end:', touchEnd, 'diff:', touchEnd - touchStart)
 
     const minSwipeDistance = 50
     if (touchStart - touchEnd > minSwipeDistance) {
       // Swiped left, go to premium
+      console.log('Swiped left, switching to premium')
       setActivePackage('premium')
-    }
-
-    if (touchEnd - touchStart > minSwipeDistance) {
+    } else if (touchEnd - touchStart > minSwipeDistance) {
       // Swiped right, go to standard
+      console.log('Swiped right, switching to standard')
       setActivePackage('standard')
     }
   }
@@ -308,11 +313,35 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
       {/* Swipe Instructions for Mobile */}
       {isMobile && (
-        <div className="text-center mb-4 text-xs text-gray-500 flex items-center justify-center">
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          <span>Swipe to compare packages</span>
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </div>
+        <>
+          <div className="text-center mb-2 text-xs text-gray-500 flex items-center justify-center">
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            <span>Swipe to compare packages</span>
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </div>
+
+          {/* Manual navigation buttons */}
+          <div className="flex justify-center space-x-4 mb-4">
+            <button
+              onClick={() => setActivePackage('standard')}
+              className={`px-4 py-1 rounded-full text-xs font-medium transition-all ${activePackage === 'standard'
+                  ? 'bg-sky-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+            >
+              Standard
+            </button>
+            <button
+              onClick={() => setActivePackage('premium')}
+              className={`px-4 py-1 rounded-full text-xs font-medium transition-all ${activePackage === 'premium'
+                  ? 'bg-sky-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+            >
+              Premium
+            </button>
+          </div>
+        </>
       )}
 
       <div
@@ -321,6 +350,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         <PackageCard type="standard" />
         <PackageCard type="premium" />
