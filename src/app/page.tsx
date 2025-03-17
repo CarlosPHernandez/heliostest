@@ -29,15 +29,11 @@ export default function HomePage() {
     const hasSeenToast = sessionStorage.getItem('hasSeenIrishGreeting');
 
     if (!hasSeenToast) {
-      // Show toast after 2 seconds
-      const timer = setTimeout(() => {
-        const randomGreeting = irishGreetings[Math.floor(Math.random() * irishGreetings.length)];
-        setGreeting(randomGreeting);
-        setShowToast(true);
-        sessionStorage.setItem('hasSeenIrishGreeting', 'true');
-      }, 2000);
-
-      return () => clearTimeout(timer);
+      // Show toast immediately instead of after 2 seconds
+      const randomGreeting = irishGreetings[Math.floor(Math.random() * irishGreetings.length)];
+      setGreeting(randomGreeting);
+      setShowToast(true);
+      sessionStorage.setItem('hasSeenIrishGreeting', 'true');
     }
   }, []);
 
@@ -243,7 +239,7 @@ export default function HomePage() {
                 onClick={() => setShowToast(false)}
               />
 
-              <div className="fixed sm:top-40 top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-lg w-full animate-slide-down">
+              <div className="fixed sm:top-40 top-60 left-1/2 transform -translate-x-1/2 z-50 max-w-lg w-full animate-slide-down">
                 <div className="mx-4 bg-green-50 border border-green-300 rounded-lg overflow-hidden shadow-xl">
                   {/* Close button positioned at top-right of GIF */}
                   <button
