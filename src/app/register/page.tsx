@@ -80,7 +80,7 @@ export default function RegisterPage() {
   }
 
   // Handle field blur for validation
-  const handleFieldBlur = (field: string) => {
+  const handleFieldBlur = (field: 'name' | 'email' | 'password' | 'terms') => {
     setTouchedFields({
       ...touchedFields,
       [field]: true
@@ -89,7 +89,7 @@ export default function RegisterPage() {
   }
 
   // Validate a specific field
-  const validateField = (field: string) => {
+  const validateField = (field: 'name' | 'email' | 'password' | 'terms') => {
     const newErrors = { ...formErrors }
 
     switch (field) {
@@ -172,7 +172,8 @@ export default function RegisterPage() {
 
     // Validate all fields
     let isValid = true
-    ['name', 'email', 'password', 'terms'].forEach(field => {
+    const fieldsToValidate: Array<'name' | 'email' | 'password' | 'terms'> = ['name', 'email', 'password', 'terms']
+    fieldsToValidate.forEach((field) => {
       if (!validateField(field)) {
         isValid = false
       }
@@ -339,6 +340,14 @@ export default function RegisterPage() {
         {/* Bottom-left solar-themed gradient */}
         <div className="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] bg-gradient-to-tr from-amber-100/20 via-amber-50/10 to-transparent rounded-full blur-3xl" />
       </div>
+
+      {/* Backdrop blur overlay for mobile when summary is open */}
+      {summaryOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-sky-500/20 backdrop-blur-sm z-20 transition-opacity duration-300"
+          onClick={() => setSummaryOpen(false)}
+        />
+      )}
 
       {/* Secure Checkout Header */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 py-4 px-4 sm:px-6 lg:px-8 shadow-sm relative z-10">
@@ -620,11 +629,19 @@ export default function RegisterPage() {
                         <span className="text-gray-700 font-medium">Monthly Payment:</span>
                         <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment)}/mo</span>
                       </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-gray-700 text-sm">After Tax Credit:</span>
+                        <span className="text-green-600 font-medium">{formatCurrency(proposal.monthly_payment * 0.7)}/mo</span>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 <div className="p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Installation Address:</span>
+                    <span className="text-gray-900 font-medium text-right">{proposal.address}</span>
+                  </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">System Size:</span>
                     <span className="text-gray-900 font-medium">{proposal.system_size} kW</span>
@@ -649,9 +666,10 @@ export default function RegisterPage() {
 
                   <div className="pt-3 mt-3 border-t border-gray-200">
                     <div className="flex justify-between">
-                      <span className="font-medium text-gray-900">Total System Cost:</span>
-                      <span className="font-medium text-gray-900">{formatCurrency(proposal.total_price)}</span>
+                      <span className="font-medium text-green-700">After Tax Credit*:</span>
+                      <span className="font-medium text-green-700">{formatCurrency(proposal.total_price * 0.7)}</span>
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">*Estimated price after applying the 30% federal tax credit. Eligibility requirements apply.</p>
                   </div>
                 </div>
               </div>
@@ -662,7 +680,7 @@ export default function RegisterPage() {
 
       {/* Mobile Order Summary Toggle */}
       {proposal && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 shadow-lg z-10">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 shadow-lg z-30">
           <div
             className="p-4 flex justify-between items-center cursor-pointer"
             onClick={() => setSummaryOpen(!summaryOpen)}
@@ -675,7 +693,7 @@ export default function RegisterPage() {
             {proposal.payment_type === 'finance' && proposal.monthly_payment ? (
               <div className="flex flex-col items-end">
                 <span className="font-bold text-sky-600">{formatCurrency(proposal.monthly_payment)}/mo</span>
-                <span className="text-xs text-gray-500">Total: {formatCurrency(proposal.total_price)}</span>
+                <span className="text-xs text-green-600">After Tax Credit: {formatCurrency(proposal.monthly_payment * 0.7)}/mo</span>
               </div>
             ) : (
               <span className="font-bold text-gray-900">{formatCurrency(proposal.total_price)}</span>
@@ -684,7 +702,7 @@ export default function RegisterPage() {
 
           {/* Sliding Summary Panel with bounce animation */}
           <div
-            className={`fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 rounded-t-2xl shadow-xl transform transition-all duration-300 ease-bounce ${summaryOpen ? 'translate-y-0' : 'translate-y-full'
+            className={`fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 rounded-t-2xl shadow-xl transform transition-all duration-300 ease-bounce z-40 ${summaryOpen ? 'translate-y-0' : 'translate-y-full'
               }`}
             style={{ maxHeight: '80vh', overflowY: 'auto' }}
           >
@@ -708,6 +726,10 @@ export default function RegisterPage() {
                       <span className="text-gray-700 font-medium">Monthly Payment:</span>
                       <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment)}/mo</span>
                     </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-gray-700 text-sm">After Tax Credit:</span>
+                      <span className="text-green-600 font-medium">{formatCurrency(proposal.monthly_payment * 0.7)}/mo</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -717,6 +739,10 @@ export default function RegisterPage() {
                   <h3 className="font-medium text-gray-900">{proposal.package_type === 'premium' ? 'Premium' : 'Standard'} Solar Package</h3>
                 </div>
                 <div className="p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Installation Address:</span>
+                    <span className="text-gray-900 font-medium text-right">{proposal.address}</span>
+                  </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">System Size:</span>
                     <span className="text-gray-900 font-medium">{proposal.system_size} kW</span>
@@ -741,9 +767,10 @@ export default function RegisterPage() {
 
                   <div className="pt-3 mt-3 border-t border-gray-200">
                     <div className="flex justify-between">
-                      <span className="font-medium text-gray-900">Total System Cost:</span>
-                      <span className="font-medium text-gray-900">{formatCurrency(proposal.total_price)}</span>
+                      <span className="font-medium text-green-700">After Tax Credit*:</span>
+                      <span className="font-medium text-green-700">{formatCurrency(proposal.total_price * 0.7)}</span>
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">*Estimated price after applying the 30% federal tax credit. Eligibility requirements apply.</p>
                   </div>
                 </div>
               </div>
