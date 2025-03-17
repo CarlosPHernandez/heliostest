@@ -315,6 +315,77 @@ export default function RegisterPage() {
     }).format(amount)
   }
 
+  // Calculate estimated savings over 25 years
+  const calculateLifetimeSavings = () => {
+    if (!proposal) return 0
+
+    // Estimate average monthly utility bill without solar
+    const estimatedMonthlyUtility = 250 // Average monthly utility bill
+
+    // For financed systems, use the monthly payment
+    const monthlySolarCost = proposal.payment_type === 'finance' && proposal.monthly_payment
+      ? proposal.monthly_payment * 0.7 // After tax credit
+      : (proposal.total_price * 0.7) / 300 // Approximate monthly cost for cash purchase over 25 years
+
+    // Monthly savings
+    const monthlySavings = estimatedMonthlyUtility - monthlySolarCost
+
+    // Calculate 25-year savings (25 years × 12 months)
+    return Math.max(0, monthlySavings * 12 * 25)
+  }
+
+  // Calculate the 12-month promotion savings
+  const calculatePromotionSavings = () => {
+    if (!proposal) return 0
+
+    // For financed systems, use the monthly payment
+    if (proposal.payment_type === 'finance' && proposal.monthly_payment) {
+      return proposal.monthly_payment * 0.7 * 12 // 12 months of payments after tax credit
+    } else {
+      // For cash purchases, estimate what 12 months of payments would be
+      return (proposal.total_price * 0.7) / 25 // Approximate 1 year of payments (25 year system life)
+    }
+  }
+
+  // Calculate days remaining until April 12th
+  const calculateDaysRemaining = () => {
+    const today = new Date()
+    const endDate = new Date(today.getFullYear(), 3, 12) // April is month 3 (0-indexed)
+
+    // If today is past April 12th of this year, use next year's date
+    if (today > endDate) {
+      endDate.setFullYear(endDate.getFullYear() + 1)
+    }
+
+    const diffTime = endDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    // Calculate hours, minutes, seconds
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60))
+    const diffSeconds = Math.floor((diffTime % (1000 * 60)) / 1000)
+
+    return {
+      days: diffDays,
+      hours: diffHours,
+      minutes: diffMinutes,
+      seconds: diffSeconds,
+      total: diffTime
+    }
+  }
+
+  // Add this new state for the countdown timer
+  const [timeRemaining, setTimeRemaining] = useState(calculateDaysRemaining())
+
+  // Add this useEffect for the countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeRemaining(calculateDaysRemaining())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
   // Get strength label and color
   const getStrengthInfo = () => {
     const labels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very strong']
@@ -619,23 +690,108 @@ export default function RegisterPage() {
                   <h3 className="font-medium text-gray-900">{proposal.package_type === 'premium' ? 'Premium' : 'Standard'} Solar Package</h3>
                 </div>
 
-                {/* Payment Information - Highlighted at the top with animation */}
-                {proposal.payment_type === 'finance' && proposal.monthly_payment && (
-                  <div className="p-4 bg-sky-50 border-b border-gray-200 relative overflow-hidden animate-pulse-subtle">
-                    <div className="absolute inset-0 bg-gradient-to-r from-sky-100/0 via-sky-100/50 to-sky-100/0 animate-shimmer"
-                      style={{ backgroundSize: '200% 100%' }}></div>
-                    <div className="relative z-10">
+                {/* 12 Months Solar On Us Promotion - Desktop */}
+                <div className="relative overflow-hidden mb-6 border-b border-sky-200 shadow-sm">
+                  <div className="bg-white">
+                    {/* Header */}
+                    <div className="bg-sky-600 text-white p-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-700 font-medium">Monthly Payment:</span>
-                        <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment)}/mo</span>
+                        <h3 className="text-xl font-bold text-white">12 MONTHS SOLAR ON US</h3>
+                        <div className="text-xs font-medium bg-white/20 rounded-full px-3 py-1">
+                          Limited Time Offer - Ends April 12th
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-gray-700 text-sm">After Tax Credit:</span>
-                        <span className="text-green-600 font-medium">{formatCurrency(proposal.monthly_payment * 0.7)}/mo</span>
+                    </div>
+
+                    {/* Content area */}
+                    <div className="p-5">
+                      {/* Pricing Display */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <div className="text-xs text-sky-600 font-medium mb-1">For the first year</div>
+                          <div className="text-3xl text-sky-800 font-bold">$0<span className="text-lg">/mo</span></div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 font-medium mb-1">Regular price</div>
+                          <div className="line-through text-gray-400 text-xl">${Math.round((proposal as any)?.financing?.monthly_payment || (proposal.monthly_payment || 97))}/mo</div>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-sky-100 my-4"></div>
+
+                      {/* Savings Message */}
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <div className="w-2 h-2 rounded-full bg-sky-500 mr-2"></div>
+                          <p className="text-gray-700">We'll cover your first 12 monthly payments - that's</p>
+                        </div>
+
+                        <div className="bg-sky-50 rounded-lg p-4 mt-3 border border-sky-100">
+                          <p className="text-2xl font-bold text-sky-800">
+                            ${Math.round(calculatePromotionSavings())} in savings!
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-3 text-right">
+                          Terms and conditions apply.
+                        </p>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* 12 Months Solar On Us Promotion - Mobile */}
+                <div className="md:hidden relative overflow-hidden mb-6 border-b border-sky-200 shadow-sm">
+                  <div className="bg-white">
+                    {/* Header */}
+                    <div className="bg-sky-600 text-white p-3">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-base font-bold text-white">12 MONTHS SOLAR ON US</h3>
+                        <div className="text-xs font-medium bg-white/20 rounded-full px-2 py-0.5">
+                          Limited Time
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content area */}
+                    <div className="p-4">
+                      {/* Pricing Display */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <div className="text-xs text-sky-600 font-medium mb-1">For the first year</div>
+                          <div className="text-2xl text-sky-800 font-bold">$0<span className="text-sm">/mo</span></div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 font-medium mb-1">Regular price</div>
+                          <div className="line-through text-gray-400">${Math.round((proposal as any)?.financing?.monthly_payment || (proposal.monthly_payment || 97))}/mo</div>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-sky-100 my-3"></div>
+
+                      {/* Savings Message */}
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-2 flex-shrink-0"></div>
+                          <p className="text-sm text-gray-700">We'll cover your first 12 monthly payments</p>
+                        </div>
+
+                        <div className="bg-sky-50 rounded-lg p-3 mt-2 border border-sky-100">
+                          <p className="text-sm text-sky-700 font-medium">Total Savings:</p>
+                          <p className="text-xl font-bold text-sky-800">
+                            {formatCurrency(calculatePromotionSavings())}
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-2 text-right">
+                          Offer ends April 12th. Terms apply.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="p-4 space-y-3">
                   <div className="flex justify-between text-sm">
@@ -666,10 +822,26 @@ export default function RegisterPage() {
 
                   <div className="pt-3 mt-3 border-t border-gray-200">
                     <div className="flex justify-between">
-                      <span className="font-medium text-green-700">After Tax Credit*:</span>
-                      <span className="font-medium text-green-700">{formatCurrency(proposal.total_price * 0.7)}</span>
+                      <span className="font-medium text-sky-700">After Tax Credit*:</span>
+                      <span className="font-medium text-sky-700">{formatCurrency(proposal.total_price * 0.7)}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">*Estimated price after applying the 30% federal tax credit. Eligibility requirements apply.</p>
+                  </div>
+
+                  {/* Estimated Lifetime Savings */}
+                  <div className="pt-3 mt-3 border-t border-gray-200 -mx-4 px-4 pb-3 rounded-b-lg relative overflow-hidden shadow-inner">
+                    <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-sky-100 to-blue-50 opacity-90"></div>
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sky-800">Estimated 25-Year Savings:</span>
+                        <span className="font-bold text-sky-800 text-lg">{formatCurrency(calculateLifetimeSavings())}</span>
+                      </div>
+                      <p className="text-xs text-sky-700 mt-1">
+                        Based on average utility costs and projected energy production.
+                      </p>
+                    </div>
+                    <div className="absolute -right-6 -bottom-10 w-32 h-32 bg-sky-200/30 rounded-full blur-2xl"></div>
+                    <div className="absolute -left-6 -top-10 w-24 h-24 bg-blue-100/20 rounded-full blur-xl"></div>
                   </div>
                 </div>
               </div>
@@ -687,22 +859,25 @@ export default function RegisterPage() {
           >
             <div className="flex items-center">
               <span className="font-medium text-gray-900 mr-2">Order Summary</span>
-              <ChevronUpIcon className={`h-5 w-5 text-gray-500 transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
+              <ChevronUpIcon className={`h-5 w-5 text-gray-500 transition-transform duration-500 ${summaryOpen ? 'rotate-180' : ''}`} />
             </div>
             {/* Show monthly payment instead of total on mobile toggle */}
-            {proposal.payment_type === 'finance' && proposal.monthly_payment ? (
+            {proposal.payment_type === 'finance' && (proposal as any)?.monthly_payment ? (
               <div className="flex flex-col items-end">
-                <span className="font-bold text-sky-600">{formatCurrency(proposal.monthly_payment)}/mo</span>
-                <span className="text-xs text-green-600">After Tax Credit: {formatCurrency(proposal.monthly_payment * 0.7)}/mo</span>
+                <div className="flex items-center">
+                  <span className="text-xs font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-gray-800 px-1.5 py-0.5 rounded mr-1 border border-orange-300">SOLAR ON US</span>
+                  <span className="font-bold text-orange-700">$0/mo</span>
+                </div>
+                <span className="text-xs text-orange-700">First 12 months (Save {formatCurrency(calculatePromotionSavings())})</span>
               </div>
             ) : (
               <span className="font-bold text-gray-900">{formatCurrency(proposal.total_price)}</span>
             )}
           </div>
 
-          {/* Sliding Summary Panel with bounce animation */}
+          {/* Sliding Summary Panel with enhanced animations */}
           <div
-            className={`fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 rounded-t-2xl shadow-xl transform transition-all duration-300 ease-bounce z-40 ${summaryOpen ? 'translate-y-0' : 'translate-y-full'
+            className={`fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 rounded-t-2xl shadow-xl transform transition-all duration-500 ease-reveal z-40 ${summaryOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-90'
               }`}
             style={{ maxHeight: '80vh', overflowY: 'auto' }}
           >
@@ -710,7 +885,7 @@ export default function RegisterPage() {
               <h2 className="text-lg font-medium text-gray-900">Order Summary</h2>
               <button
                 onClick={() => setSummaryOpen(false)}
-                className="p-1 rounded-full hover:bg-gray-100"
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
               >
                 <XMarkIcon className="h-6 w-6 text-gray-500" />
               </button>
@@ -718,23 +893,58 @@ export default function RegisterPage() {
             <div className="p-4 space-y-4">
               {/* Payment Information - Highlighted at the top for mobile with animation */}
               {proposal.payment_type === 'finance' && proposal.monthly_payment && (
-                <div className="bg-sky-50 rounded-lg border border-sky-100 p-4 relative overflow-hidden animate-pulse-subtle">
+                <div className={`bg-sky-50 rounded-lg border border-sky-100 p-4 relative overflow-hidden animate-pulse-subtle transition-all duration-500 delay-100 ${summaryOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                   <div className="absolute inset-0 bg-gradient-to-r from-sky-100/0 via-sky-100/50 to-sky-100/0 animate-shimmer"
                     style={{ backgroundSize: '200% 100%' }}></div>
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700 font-medium">Monthly Payment:</span>
-                      <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment)}/mo</span>
+
+                  {/* 12 Months Solar On Us - Badge Style for Mobile */}
+                  <div className="md:hidden mt-8 mx-auto mb-4 max-w-xs relative overflow-hidden rounded-xl shadow-sm border border-sky-200">
+                    <div className="bg-white">
+                      {/* Header */}
+                      <div className="bg-sky-600 text-white p-3">
+                        <h3 className="text-lg font-bold text-white text-center">12 MONTHS SOLAR ON US</h3>
+                        <div className="text-xs font-medium bg-white/20 rounded-full px-3 py-0.5 inline-block mt-1">
+                          Limited Time Offer - Ends April 12th
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        {/* Price and Savings */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <div className="text-xs text-sky-600 font-medium mb-1">For the first year</div>
+                            <div className="text-2xl text-sky-800 font-bold">$0<span className="text-sm">/mo</span></div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-gray-500 font-medium mb-1">Regular price</div>
+                            <div className="line-through text-gray-400">${Math.round((proposal as any)?.financing?.monthly_payment || (proposal.monthly_payment || 97))}/mo</div>
+                          </div>
+                        </div>
+
+                        {/* Savings Call-out */}
+                        <div className="bg-sky-50 rounded-lg p-3 mt-3 border border-sky-100">
+                          <p className="text-sm text-gray-700">We'll cover your first 12 monthly payments - that's</p>
+                          <p className="text-xl font-bold text-sky-800 mt-1">
+                            ${Math.round(calculatePromotionSavings())} in savings!
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-gray-700 text-sm">After Tax Credit:</span>
-                      <span className="text-green-600 font-medium">{formatCurrency(proposal.monthly_payment * 0.7)}/mo</span>
-                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700 font-medium">Regular Monthly Payment:</span>
+                    <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment || 97)}/mo</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-gray-700 text-sm">After Tax Credit:</span>
+                    <span className="text-sky-600 font-medium">{formatCurrency((proposal.monthly_payment || 97) * 0.7)}/mo</span>
                   </div>
                 </div>
               )}
 
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className={`bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-500 delay-200 ${summaryOpen ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-98'}`}>
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
                   <h3 className="font-medium text-gray-900">{proposal.package_type === 'premium' ? 'Premium' : 'Standard'} Solar Package</h3>
                 </div>
@@ -767,14 +977,30 @@ export default function RegisterPage() {
 
                   <div className="pt-3 mt-3 border-t border-gray-200">
                     <div className="flex justify-between">
-                      <span className="font-medium text-green-700">After Tax Credit*:</span>
-                      <span className="font-medium text-green-700">{formatCurrency(proposal.total_price * 0.7)}</span>
+                      <span className="font-medium text-sky-700">After Tax Credit*:</span>
+                      <span className="font-medium text-sky-700">{formatCurrency(proposal.total_price * 0.7)}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">*Estimated price after applying the 30% federal tax credit. Eligibility requirements apply.</p>
                   </div>
+
+                  {/* Estimated Lifetime Savings for Mobile */}
+                  <div className="pt-3 mt-3 border-t border-gray-200 -mx-4 px-4 pb-3 rounded-b-lg relative overflow-hidden shadow-inner">
+                    <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-sky-100 to-blue-50 opacity-90"></div>
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sky-800">Estimated 25-Year Savings:</span>
+                        <span className="font-bold text-sky-800 text-lg">{formatCurrency(calculateLifetimeSavings())}</span>
+                      </div>
+                      <p className="text-xs text-sky-700 mt-1">
+                        Based on average utility costs and projected energy production.
+                      </p>
+                    </div>
+                    <div className="absolute -right-6 -bottom-10 w-32 h-32 bg-sky-200/30 rounded-full blur-2xl"></div>
+                    <div className="absolute -left-6 -top-10 w-24 h-24 bg-blue-100/20 rounded-full blur-xl"></div>
+                  </div>
                 </div>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className={`p-4 bg-gray-50 rounded-lg border border-gray-200 transition-all duration-500 delay-300 ${summaryOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                 <p className="text-sm text-gray-600">
                   By creating an account, you'll be able to track your installation progress,
                   access your solar production data, and manage your system.
@@ -791,12 +1017,19 @@ export default function RegisterPage() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.97; }
         }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
         @keyframes shimmer {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
         .animate-pulse-subtle {
           animation: pulse-subtle 3s ease-in-out infinite;
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 2s ease-in-out infinite;
         }
         .animate-shimmer {
           animation: shimmer 6s infinite linear;
@@ -819,6 +1052,12 @@ export default function RegisterPage() {
         }
         .ease-bounce {
           transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .ease-reveal {
+          transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .scale-98 {
+          transform: scale(0.98);
         }
         /* Add animation for error messages */
         .error-message {

@@ -31,7 +31,7 @@ export function Testimonials() {
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="testimonial-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
             >
               <div className="aspect-[4/3] relative">
                 <Image
@@ -50,7 +50,7 @@ export function Testimonials() {
                   "{testimonial.quote}"
                 </blockquote>
                 <div className="text-sm text-gray-500">
-                  - {testimonial.name.split(' ')[0]}
+                  - <strong>{testimonial.name.split(' ')[0]}</strong>
                   <span className="text-xs text-gray-400 block mt-1">{testimonial.location}</span>
                 </div>
               </div>
