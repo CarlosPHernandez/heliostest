@@ -271,7 +271,7 @@ export default function HomePage() {
                       </div>
                       <div className="ml-3 flex-1">
                         <p className="text-sm sm:text-base font-medium text-green-800">{greeting}</p>
-                        <p className="mt-1 text-xs sm:text-sm font-bold text-green-600">Happy St. Patrick's Day from Helios Solar!</p>
+                        <p className="mt-1 text-sm sm:text-base font-bold text-green-600">Happy St. Patrick's Day from Helios Nexus!</p>
                       </div>
                     </div>
 
