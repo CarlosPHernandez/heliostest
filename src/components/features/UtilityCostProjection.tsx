@@ -31,7 +31,7 @@ export function UtilityCostProjection({ monthlyBill, utilityName }: UtilityCostP
   const totalCost = calculateTotalCost(monthlyBill)
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
           <TrendingUp className="w-6 h-6 text-red-500" />

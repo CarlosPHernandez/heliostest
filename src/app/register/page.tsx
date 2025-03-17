@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/types/database.types'
+import { LockClosedIcon, ChevronUpIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 
 const supabase = createClientComponentClient<Database>()
 
@@ -42,9 +43,150 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
   const [verificationEmail, setVerificationEmail] = useState('')
+  const [proposal, setProposal] = useState<ProposalInsert | null>(null)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordStrength, setPasswordStrength] = useState(0)
+
+  // Form validation states
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    terms?: string;
+  }>({})
+  const [touchedFields, setTouchedFields] = useState<{
+    name?: boolean;
+    email?: boolean;
+    password?: boolean;
+    terms?: boolean;
+  }>({})
+
+  // Calculate password strength
+  const calculatePasswordStrength = (pass: string) => {
+    let strength = 0
+
+    // Length check
+    if (pass.length >= 8) strength += 1
+    if (pass.length >= 12) strength += 1
+
+    // Character variety checks
+    if (/[A-Z]/.test(pass)) strength += 1 // Has uppercase
+    if (/[a-z]/.test(pass)) strength += 1 // Has lowercase
+    if (/[0-9]/.test(pass)) strength += 1 // Has number
+    if (/[^A-Za-z0-9]/.test(pass)) strength += 1 // Has special char
+
+    return Math.min(strength, 5) // Max strength of 5
+  }
+
+  // Handle field blur for validation
+  const handleFieldBlur = (field: string) => {
+    setTouchedFields({
+      ...touchedFields,
+      [field]: true
+    })
+    validateField(field)
+  }
+
+  // Validate a specific field
+  const validateField = (field: string) => {
+    const newErrors = { ...formErrors }
+
+    switch (field) {
+      case 'name':
+        const nameInput = document.getElementById('name') as HTMLInputElement
+        if (!nameInput?.value) {
+          newErrors.name = 'Please enter your full name'
+        } else {
+          delete newErrors.name
+        }
+        break
+      case 'email':
+        const emailInput = document.getElementById('email') as HTMLInputElement
+        if (!emailInput?.value) {
+          newErrors.email = 'Please enter your email address'
+        } else if (!/\S+@\S+\.\S+/.test(emailInput.value)) {
+          newErrors.email = 'Please enter a valid email address'
+        } else {
+          delete newErrors.email
+        }
+        break
+      case 'password':
+        if (!password) {
+          newErrors.password = 'Please create a password'
+        } else if (password.length < 8) {
+          newErrors.password = 'Password must be at least 8 characters'
+        } else {
+          delete newErrors.password
+        }
+        break
+      case 'terms':
+        const termsInput = document.getElementById('terms') as HTMLInputElement
+        if (!termsInput?.checked) {
+          newErrors.terms = 'You must agree to the terms'
+        } else {
+          delete newErrors.terms
+        }
+        break
+    }
+
+    setFormErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Handle password change
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value
+    setPassword(newPassword)
+    setPasswordStrength(calculatePasswordStrength(newPassword))
+
+    if (touchedFields.password) {
+      validateField('password')
+    }
+  }
+
+  useEffect(() => {
+    // Get proposal data from URL if it exists
+    const proposalParam = searchParams.get('proposal')
+    if (proposalParam) {
+      try {
+        const parsedProposal = JSON.parse(decodeURIComponent(proposalParam))
+        setProposal(parsedProposal)
+      } catch (error) {
+        console.error('Error parsing proposal data:', error)
+      }
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    // Mark all fields as touched
+    const allTouched = {
+      name: true,
+      email: true,
+      password: true,
+      terms: true
+    }
+    setTouchedFields(allTouched)
+
+    // Validate all fields
+    let isValid = true
+    ['name', 'email', 'password', 'terms'].forEach(field => {
+      if (!validateField(field)) {
+        isValid = false
+      }
+    })
+
+    if (!isValid) {
+      // Scroll to the first error
+      const firstErrorField = document.querySelector('.error-message')
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+
     setIsLoading(true)
 
     const formData = new FormData(e.currentTarget)
@@ -162,111 +304,488 @@ export default function RegisterPage() {
     }
   }
 
+  // Format currency for display
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  // Get strength label and color
+  const getStrengthInfo = () => {
+    const labels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very strong']
+    const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500', 'bg-green-600']
+
+    return {
+      label: labels[passwordStrength],
+      color: colors[passwordStrength]
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Create your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
-        </p>
+    <div className="min-h-screen bg-gray-50 flex flex-col relative">
+      {/* Enhanced background pattern */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Subtle dot pattern */}
+        <div className="absolute inset-0 bg-[size:20px_20px]"
+          style={{ backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.1) 1px, transparent 1px)' }} />
+
+        {/* Top-right solar-themed gradient */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-sky-100/30 via-sky-200/20 to-transparent rounded-full blur-3xl" />
+
+        {/* Bottom-left solar-themed gradient */}
+        <div className="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] bg-gradient-to-tr from-amber-100/20 via-amber-50/10 to-transparent rounded-full blur-3xl" />
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        {verificationSent ? (
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h3 className="text-lg font-medium text-blue-800">Verification Email Sent</h3>
-              <p className="mt-2 text-sm text-blue-600">
-                We've sent a verification email to <strong>{verificationEmail}</strong>.
-                Please check your inbox and click the verification link to activate your account.
+      {/* Secure Checkout Header */}
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 py-4 px-4 sm:px-6 lg:px-8 shadow-sm relative z-10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center">
+            <LockClosedIcon className="h-5 w-5 text-sky-600 mr-2" />
+            <span className="text-sm font-medium text-gray-900">Secure Checkout</span>
+          </div>
+          <div className="text-sm text-gray-600">
+            Step 4 of 4: Create Account
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-grow flex flex-col md:flex-row relative z-10">
+        {/* Main Content */}
+        <div className="flex-grow py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">Last Step: Place Your Order</h1>
+              <p className="mt-2 text-gray-600">
+                Create an account to complete your project and start your solar journey.
+                All system designs and quotes are not finalized until after the onboarding call and review.
               </p>
-              <p className="mt-2 text-sm text-blue-600">
-                If you don't see the email, please check your spam folder.
-              </p>
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">
-                  <strong>Testing Only:</strong> If you're having trouble with the email link, you can
-                  <Link href="/auth/verified" className="text-blue-600 hover:text-blue-500 ml-1">
-                    click here to view the verification page directly
-                  </Link>.
-                </p>
-              </div>
             </div>
-            <div className="mt-6 text-center">
-              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Return to Login
-              </Link>
+
+            {verificationSent ? (
+              <div className="bg-white/90 backdrop-blur-sm py-8 px-6 shadow-md rounded-xl border border-gray-100">
+                <div className="bg-sky-50 border border-sky-200 rounded-md p-4">
+                  <h3 className="text-lg font-medium text-sky-800">Verification Email Sent</h3>
+                  <p className="mt-2 text-sm text-sky-600">
+                    We've sent a verification email to <strong>{verificationEmail}</strong>.
+                    Please check your inbox and click the verification link to activate your account.
+                  </p>
+                  <p className="mt-2 text-sm text-sky-600">
+                    If you don't see the email, please check your spam folder.
+                  </p>
+                </div>
+                <div className="mt-6 text-center">
+                  <Link href="/login" className="font-medium text-sky-600 hover:text-sky-500">
+                    Return to Login
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/90 backdrop-blur-sm py-8 px-6 shadow-md rounded-xl border border-gray-100">
+                <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      Full Name
+                    </label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="John Smith"
+                        required
+                        onBlur={() => handleFieldBlur('name')}
+                        className={`block w-full appearance-none rounded-lg border ${formErrors.name ? 'border-red-300 pr-10 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-sky-500 focus:ring-sky-500'} px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none transition-all duration-200 hover:border-gray-400`}
+                      />
+                      {formErrors.name && (
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+                    {formErrors.name && touchedFields.name && (
+                      <p className="mt-2 text-sm text-red-600 error-message" id="name-error">
+                        {formErrors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email address
+                    </label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        required
+                        onBlur={() => handleFieldBlur('email')}
+                        className={`block w-full appearance-none rounded-lg border ${formErrors.email ? 'border-red-300 pr-10 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-sky-500 focus:ring-sky-500'} px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none transition-all duration-200 hover:border-gray-400`}
+                      />
+                      {formErrors.email && (
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+                    {formErrors.email && touchedFields.email && (
+                      <p className="mt-2 text-sm text-red-600 error-message" id="email-error">
+                        {formErrors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                        required
+                        value={password}
+                        onChange={handlePasswordChange}
+                        onBlur={() => handleFieldBlur('password')}
+                        className={`block w-full appearance-none rounded-lg border ${formErrors.password ? 'border-red-300 pr-10 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-sky-500 focus:ring-sky-500'} px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none transition-all duration-200 hover:border-gray-400`}
+                      />
+                      {formErrors.password && (
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ExclamationCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+                    {formErrors.password && touchedFields.password ? (
+                      <p className="mt-2 text-sm text-red-600 error-message" id="password-error">
+                        {formErrors.password}
+                      </p>
+                    ) : (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 mr-2">
+                            <div
+                              className={`h-1.5 rounded-full transition-all duration-300 ${getStrengthInfo().color}`}
+                              style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500 whitespace-nowrap">{getStrengthInfo().label}</span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Must be at least 8 characters. Strong passwords include uppercase, lowercase, numbers, and special characters.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start">
+                      <div className="flex items-center h-5">
+                        <input
+                          id="terms"
+                          name="terms"
+                          type="checkbox"
+                          required
+                          onBlur={() => handleFieldBlur('terms')}
+                          className={`h-5 w-5 rounded border-gray-300 text-sky-600 focus:ring-sky-500 transition-colors ${formErrors.terms ? 'border-red-300 focus:ring-red-500' : ''}`}
+                        />
+                      </div>
+                      <div className="ml-3 text-sm">
+                        <label htmlFor="terms" className={`${formErrors.terms ? 'text-red-600' : 'text-gray-600'}`}>
+                          I agree to the{' '}
+                          <a href="/terms" className="text-sky-600 font-medium hover:underline">Terms of Service</a>{' '}
+                          and{' '}
+                          <a href="/privacy" className="text-sky-600 font-medium hover:underline">Privacy Policy</a>
+                        </label>
+                      </div>
+                    </div>
+                    {formErrors.terms && touchedFields.terms && (
+                      <p className="text-sm text-red-600 error-message" id="terms-error">
+                        {formErrors.terms}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`flex w-full justify-center rounded-xl border border-transparent bg-gradient-to-r from-sky-600 to-sky-500 py-3 px-4 text-sm font-medium text-white shadow-md hover:from-sky-700 hover:to-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isLoading ? 'Creating account...' : 'Create account & complete order'}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="mt-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="bg-white px-2 text-gray-500">Already have an account?</span>
+                    </div>
+                  </div>
+                  <div className="mt-6 text-center">
+                    <Link href="/login" className="font-medium text-sky-600 hover:text-sky-800">
+                      Sign in instead
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Account Benefits - Redesigned to match page aesthetic */}
+            <div className="mt-8 bg-white/90 backdrop-blur-sm py-6 px-6 shadow-md rounded-xl border border-gray-100">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Your account benefits:</h3>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mr-3">
+                    <svg className="h-5 w-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">Track your installation progress</h4>
+                    <p className="text-xs text-gray-600 mt-1">Monitor your solar system installation in real-time</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mr-3">
+                    <svg className="h-5 w-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">Access real-time energy production data</h4>
+                    <p className="text-xs text-gray-600 mt-1">View your system's performance and energy generation</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mr-3">
+                    <svg className="h-5 w-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">Manage your solar investment</h4>
+                    <p className="text-xs text-gray-600 mt-1">Track savings and optimize your system's performance</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mr-3">
+                    <svg className="h-5 w-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">24/7 customer support access</h4>
+                    <p className="text-xs text-gray-600 mt-1">Get priority assistance whenever you need it</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  />
+        </div>
+
+        {/* Order Summary - Desktop */}
+        {proposal && (
+          <div className="hidden md:block w-96 bg-gray-50/95 backdrop-blur-sm border-l border-gray-200 p-6">
+            <div className="sticky top-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
+              <div className="bg-white backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="font-medium text-gray-900">{proposal.package_type === 'premium' ? 'Premium' : 'Standard'} Solar Package</h3>
+                </div>
+
+                {/* Payment Information - Highlighted at the top with animation */}
+                {proposal.payment_type === 'finance' && proposal.monthly_payment && (
+                  <div className="p-4 bg-sky-50 border-b border-gray-200 relative overflow-hidden animate-pulse-subtle">
+                    <div className="absolute inset-0 bg-gradient-to-r from-sky-100/0 via-sky-100/50 to-sky-100/0 animate-shimmer"
+                      style={{ backgroundSize: '200% 100%' }}></div>
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700 font-medium">Monthly Payment:</span>
+                        <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment)}/mo</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">System Size:</span>
+                    <span className="text-gray-900 font-medium">{proposal.system_size} kW</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Number of Panels:</span>
+                    <span className="text-gray-900 font-medium">{proposal.number_of_panels}</span>
+                  </div>
+                  {proposal.include_battery && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Battery:</span>
+                      <span className="text-gray-900 font-medium">
+                        {proposal.battery_type === 'franklin' ? 'Franklin' : 'QCell'}
+                        {proposal.battery_count && proposal.battery_count > 1 ? ` (${proposal.battery_count})` : ''}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Payment Method:</span>
+                    <span className="text-gray-900 font-medium">{proposal.payment_type === 'finance' ? 'Financing' : 'Cash'}</span>
+                  </div>
+
+                  <div className="pt-3 mt-3 border-t border-gray-200">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-900">Total System Cost:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(proposal.total_price)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email address
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                >
-                  {isLoading ? 'Creating account...' : 'Create account'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Mobile Order Summary Toggle */}
+      {proposal && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 shadow-lg z-10">
+          <div
+            className="p-4 flex justify-between items-center cursor-pointer"
+            onClick={() => setSummaryOpen(!summaryOpen)}
+          >
+            <div className="flex items-center">
+              <span className="font-medium text-gray-900 mr-2">Order Summary</span>
+              <ChevronUpIcon className={`h-5 w-5 text-gray-500 transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
+            </div>
+            {/* Show monthly payment instead of total on mobile toggle */}
+            {proposal.payment_type === 'finance' && proposal.monthly_payment ? (
+              <div className="flex flex-col items-end">
+                <span className="font-bold text-sky-600">{formatCurrency(proposal.monthly_payment)}/mo</span>
+                <span className="text-xs text-gray-500">Total: {formatCurrency(proposal.total_price)}</span>
+              </div>
+            ) : (
+              <span className="font-bold text-gray-900">{formatCurrency(proposal.total_price)}</span>
+            )}
+          </div>
+
+          {/* Sliding Summary Panel with bounce animation */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 rounded-t-2xl shadow-xl transform transition-all duration-300 ease-bounce ${summaryOpen ? 'translate-y-0' : 'translate-y-full'
+              }`}
+            style={{ maxHeight: '80vh', overflowY: 'auto' }}
+          >
+            <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">Order Summary</h2>
+              <button
+                onClick={() => setSummaryOpen(false)}
+                className="p-1 rounded-full hover:bg-gray-100"
+              >
+                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* Payment Information - Highlighted at the top for mobile with animation */}
+              {proposal.payment_type === 'finance' && proposal.monthly_payment && (
+                <div className="bg-sky-50 rounded-lg border border-sky-100 p-4 relative overflow-hidden animate-pulse-subtle">
+                  <div className="absolute inset-0 bg-gradient-to-r from-sky-100/0 via-sky-100/50 to-sky-100/0 animate-shimmer"
+                    style={{ backgroundSize: '200% 100%' }}></div>
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700 font-medium">Monthly Payment:</span>
+                      <span className="text-sky-700 font-bold text-xl">{formatCurrency(proposal.monthly_payment)}/mo</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="font-medium text-gray-900">{proposal.package_type === 'premium' ? 'Premium' : 'Standard'} Solar Package</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">System Size:</span>
+                    <span className="text-gray-900 font-medium">{proposal.system_size} kW</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Number of Panels:</span>
+                    <span className="text-gray-900 font-medium">{proposal.number_of_panels}</span>
+                  </div>
+                  {proposal.include_battery && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Battery:</span>
+                      <span className="text-gray-900 font-medium">
+                        {proposal.battery_type === 'franklin' ? 'Franklin' : 'QCell'}
+                        {proposal.battery_count && proposal.battery_count > 1 ? ` (${proposal.battery_count})` : ''}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Payment Method:</span>
+                    <span className="text-gray-900 font-medium">{proposal.payment_type === 'finance' ? 'Financing' : 'Cash'}</span>
+                  </div>
+
+                  <div className="pt-3 mt-3 border-t border-gray-200">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-900">Total System Cost:</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(proposal.total_price)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-600">
+                  By creating an account, you'll be able to track your installation progress,
+                  access your solar production data, and manage your system.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add CSS animations */}
+      <style jsx global>{`
+        @keyframes pulse-subtle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.97; }
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .animate-pulse-subtle {
+          animation: pulse-subtle 3s ease-in-out infinite;
+        }
+        .animate-shimmer {
+          animation: shimmer 6s infinite linear;
+        }
+        .ease-bounce {
+          transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        /* Add animation for error messages */
+        .error-message {
+          animation: errorFadeIn 0.3s ease-in-out;
+        }
+        @keyframes errorFadeIn {
+          from { opacity: 0; transform: translateY(-5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 } 

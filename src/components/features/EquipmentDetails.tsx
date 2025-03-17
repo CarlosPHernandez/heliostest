@@ -105,7 +105,7 @@ const backupGuide = {
   ]
 }
 
-export function EquipmentDetails({ 
+export function EquipmentDetails({
   packageType = 'standard',
   includeBattery,
   batteryCount,
@@ -115,7 +115,7 @@ export function EquipmentDetails({
   onBatteryTypeChange
 }: EquipmentDetailsProps) {
   const equipment = equipmentDetails[packageType] || equipmentDetails.standard
-  const [imageLoadError, setImageLoadError] = useState<{[key: string]: boolean}>({})
+  const [imageLoadError, setImageLoadError] = useState<{ [key: string]: boolean }>({})
   const [currentGuideSection, setCurrentGuideSection] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -123,10 +123,10 @@ export function EquipmentDetails({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -167,15 +167,15 @@ export function EquipmentDetails({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-8">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Equipment</h2>
-      
+
       {/* Battery Section */}
       <div className="mb-12 border-b pb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Battery className="w-6 h-6 text-blue-500" />
+            <div className="w-10 h-10 rounded-lg bg-sky-50 flex items-center justify-center">
+              <Battery className="w-6 h-6 text-sky-500" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Add Battery</h3>
@@ -190,7 +190,7 @@ export function EquipmentDetails({
                 checked={includeBattery}
                 onChange={(e) => onBatteryChange(e.target.checked)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
             </label>
           </div>
         </div>
@@ -240,7 +240,7 @@ export function EquipmentDetails({
 
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h4 className="font-medium text-gray-900 mb-4">Backup Guide</h4>
-              
+
               {/* Desktop View */}
               <div className="hidden md:grid md:grid-cols-3 gap-6">
                 {guideSections.map((section, index) => (
@@ -293,9 +293,8 @@ export function EquipmentDetails({
                       <button
                         key={index}
                         onClick={() => setCurrentGuideSection(index)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          currentGuideSection === index ? 'bg-blue-500' : 'bg-gray-300'
-                        }`}
+                        className={`w-2 h-2 rounded-full transition-colors ${currentGuideSection === index ? 'bg-blue-500' : 'bg-gray-300'
+                          }`}
                       />
                     ))}
                   </div>

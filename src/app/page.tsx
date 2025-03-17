@@ -160,10 +160,7 @@ export default function HomePage() {
                   style={{ boxShadow: '0 0 15px 2px rgba(125, 211, 252, 0.3), 0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                 >
                   <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
-                    <div className="w-full sm:w-64 relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">$</span>
-                      </div>
+                    <div className="w-full sm:w-80 relative">
                       <input
                         type="text"
                         id="monthlyBill"
@@ -173,7 +170,7 @@ export default function HomePage() {
                           setMonthlyBill(formatCurrency(e.target.value))
                         }}
                         placeholder="Average Monthly Bill"
-                        className="block w-full rounded-xl py-3 pl-7 pr-4 text-gray-700 ring-1 ring-inset ring-gray-200 placeholder:text-gray-500 focus:ring-2 focus:ring-sky-400 sm:text-sm sm:leading-6 bg-white shadow-sm transition-all duration-300 hover:ring-gray-300"
+                        className="block w-full rounded-xl py-3 px-4 text-gray-700 ring-1 ring-inset ring-gray-200 placeholder:text-gray-500 focus:ring-2 focus:ring-sky-400 sm:text-sm sm:leading-6 bg-white shadow-sm transition-all duration-300 hover:ring-gray-300"
                       />
                       {error && (
                         <p className="absolute left-0 top-full mt-1 text-sm text-red-400 bg-black/50 px-2 py-1 rounded">

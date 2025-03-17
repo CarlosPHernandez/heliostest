@@ -98,7 +98,17 @@ const config: Config = {
         'sun-rotate': {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' }
-        }
+        },
+        'slide-up': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(100%)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
       },
       animation: {
         'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
@@ -110,7 +120,8 @@ const config: Config = {
         'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
         'spin-slow': 'spin 12s linear infinite',
         'sun-fill': 'sun-fill 2.5s ease-out forwards',
-        'sun-rotate': 'sun-rotate 3s linear infinite'
+        'sun-rotate': 'sun-rotate 3s linear infinite',
+        'slide-up': 'slide-up 0.3s ease-out forwards'
       },
     },
   },
