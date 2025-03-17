@@ -73,6 +73,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
+  const [isSelecting, setIsSelecting] = useState(false)
   const swipeContainerRef = useRef<HTMLDivElement>(null)
 
   // Check if device is mobile
@@ -105,8 +106,22 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   }
 
   const handlePackageSelect = (packageType: 'standard' | 'premium') => {
+    // Prevent multiple rapid clicks
+    if (isSelecting) return
+
+    // Set selecting state to true to prevent double taps
+    setIsSelecting(true)
+
+    // Update UI immediately
     setSelectedPackage(packageType)
+
+    // Call the onSelect callback
     onSelect(packageType)
+
+    // Reset the selecting state after a short delay
+    setTimeout(() => {
+      setIsSelecting(false)
+    }, 1000)
   }
 
   const calculatePriceWithTaxCredit = (price: number) => {
@@ -325,8 +340,8 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
             <button
               onClick={() => setActivePackage('standard')}
               className={`px-4 py-1 rounded-full text-xs font-medium transition-all ${activePackage === 'standard'
-                  ? 'bg-sky-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-sky-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
             >
               Standard
@@ -334,8 +349,8 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
             <button
               onClick={() => setActivePackage('premium')}
               className={`px-4 py-1 rounded-full text-xs font-medium transition-all ${activePackage === 'premium'
-                  ? 'bg-sky-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-sky-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
             >
               Premium

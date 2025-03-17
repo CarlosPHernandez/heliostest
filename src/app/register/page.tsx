@@ -614,7 +614,7 @@ export default function RegisterPage() {
           <div className="hidden md:block w-96 bg-gray-50/95 backdrop-blur-sm border-l border-gray-200 p-6">
             <div className="sticky top-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
-              <div className="bg-white backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-white backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 overflow-hidden order-summary-glow">
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
                   <h3 className="font-medium text-gray-900">{proposal.package_type === 'premium' ? 'Premium' : 'Standard'} Solar Package</h3>
                 </div>
@@ -680,7 +680,7 @@ export default function RegisterPage() {
 
       {/* Mobile Order Summary Toggle */}
       {proposal && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 shadow-lg z-30">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white backdrop-blur-sm border-t border-gray-200 shadow-lg z-30 order-summary-glow-mobile">
           <div
             className="p-4 flex justify-between items-center cursor-pointer"
             onClick={() => setSummaryOpen(!summaryOpen)}
@@ -800,6 +800,22 @@ export default function RegisterPage() {
         }
         .animate-shimmer {
           animation: shimmer 6s infinite linear;
+        }
+        .order-summary-glow {
+          box-shadow: 0 0 5px rgba(56, 189, 248, 0.1), 0 0 10px rgba(56, 189, 248, 0.1);
+          animation: glow 3s ease-in-out infinite;
+        }
+        .order-summary-glow-mobile {
+          box-shadow: 0 -2px 10px rgba(56, 189, 248, 0.2);
+          animation: glow-mobile 3s ease-in-out infinite;
+        }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.1), 0 0 10px rgba(56, 189, 248, 0.1); }
+          50% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3), 0 0 20px rgba(56, 189, 248, 0.2); }
+        }
+        @keyframes glow-mobile {
+          0%, 100% { box-shadow: 0 -2px 10px rgba(56, 189, 248, 0.2); }
+          50% { box-shadow: 0 -2px 15px rgba(56, 189, 248, 0.4); }
         }
         .ease-bounce {
           transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
