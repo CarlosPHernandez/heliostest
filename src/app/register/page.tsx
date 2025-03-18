@@ -1035,20 +1035,34 @@ export default function RegisterPage() {
           animation: shimmer 6s infinite linear;
         }
         .order-summary-glow {
-          box-shadow: 0 0 5px rgba(56, 189, 248, 0.1), 0 0 10px rgba(56, 189, 248, 0.1);
-          animation: glow 3s ease-in-out infinite;
+          box-shadow: 0 0 15px rgba(56, 189, 248, 0.3), 0 0 25px rgba(56, 189, 248, 0.2), 0 0 40px rgba(56, 189, 248, 0.1);
+          animation: glow 2.5s ease-in-out infinite;
+          border: 1px solid rgba(56, 189, 248, 0.3);
         }
         .order-summary-glow-mobile {
-          box-shadow: 0 -2px 10px rgba(56, 189, 248, 0.2);
-          animation: glow-mobile 3s ease-in-out infinite;
+          box-shadow: 0 -5px 20px rgba(56, 189, 248, 0.3), 0 -2px 10px rgba(14, 165, 233, 0.4);
+          animation: glow-mobile 2.5s ease-in-out infinite;
+          border-top: 1px solid rgba(56, 189, 248, 0.3);
         }
         @keyframes glow {
-          0%, 100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.1), 0 0 10px rgba(56, 189, 248, 0.1); }
-          50% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.3), 0 0 20px rgba(56, 189, 248, 0.2); }
+          0%, 100% { 
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3), 0 0 25px rgba(56, 189, 248, 0.2), 0 0 40px rgba(56, 189, 248, 0.1);
+            border-color: rgba(56, 189, 248, 0.3);
+          }
+          50% { 
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5), 0 0 35px rgba(56, 189, 248, 0.4), 0 0 50px rgba(56, 189, 248, 0.2);
+            border-color: rgba(56, 189, 248, 0.6);
+          }
         }
         @keyframes glow-mobile {
-          0%, 100% { box-shadow: 0 -2px 10px rgba(56, 189, 248, 0.2); }
-          50% { box-shadow: 0 -2px 15px rgba(56, 189, 248, 0.4); }
+          0%, 100% { 
+            box-shadow: 0 -5px 15px rgba(56, 189, 248, 0.3), 0 -2px 10px rgba(14, 165, 233, 0.4);
+            border-top-color: rgba(56, 189, 248, 0.3);
+          }
+          50% { 
+            box-shadow: 0 -8px 25px rgba(56, 189, 248, 0.5), 0 -4px 15px rgba(14, 165, 233, 0.6);
+            border-top-color: rgba(56, 189, 248, 0.6);
+          }
         }
         .ease-bounce {
           transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
