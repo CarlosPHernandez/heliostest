@@ -74,6 +74,9 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
   const [isSelecting, setIsSelecting] = useState(false)
+  const [selectionConfirmed, setSelectionConfirmed] = useState(false)
+  const [swiping, setSwiping] = useState(false)
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const swipeContainerRef = useRef<HTMLDivElement>(null)
 
   // Check if device is mobile
@@ -84,6 +87,11 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
     checkMobile()
     window.addEventListener('resize', checkMobile)
+
+    // Force proper initial display on mobile
+    if (window.innerWidth < 768) {
+      setIsMobile(true)
+    }
 
     return () => {
       window.removeEventListener('resize', checkMobile)
@@ -106,14 +114,20 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   }
 
   const handlePackageSelect = (packageType: 'standard' | 'premium') => {
-    // Prevent multiple rapid clicks
-    if (isSelecting) return
+    // No need to return if already selecting - just prevent multiple callbacks
+    if (isSelecting) {
+      // Update UI immediately to give feedback, even if already in selecting state
+      setSelectedPackage(packageType)
+      setSelectionConfirmed(true)
+      return
+    }
 
-    // Set selecting state to true to prevent double taps
+    // Set selecting state to true to prevent multiple callbacks
     setIsSelecting(true)
 
     // Update UI immediately
     setSelectedPackage(packageType)
+    setSelectionConfirmed(true)
 
     // Call the onSelect callback
     onSelect(packageType)
@@ -121,7 +135,7 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
     // Reset the selecting state after a short delay
     setTimeout(() => {
       setIsSelecting(false)
-    }, 1000)
+    }, 500) // Reduced from 1000ms to 500ms for better responsiveness
   }
 
   const calculatePriceWithTaxCredit = (price: number) => {
@@ -132,27 +146,43 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX)
     setTouchEnd(e.targetTouches[0].clientX) // Initialize touchEnd with the same value
-    console.log('Touch start:', e.targetTouches[0].clientX)
+    setSwiping(true)
+    setSwipeDirection(null)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-    console.log('Touch move:', e.targetTouches[0].clientX)
+    const currentX = e.targetTouches[0].clientX
+    setTouchEnd(currentX)
+
+    // Determine swipe direction for visual feedback
+    if (currentX < touchStart - 10) {
+      setSwipeDirection('left')
+    } else if (currentX > touchStart + 10) {
+      setSwipeDirection('right')
+    } else {
+      setSwipeDirection(null)
+    }
   }
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
+    setSwiping(false)
+    setSwipeDirection(null)
+
     if (!isMobile) return
 
-    console.log('Touch end - start:', touchStart, 'end:', touchEnd, 'diff:', touchEnd - touchStart)
+    const minSwipeDistance = 30 // Reduced minimum swipe distance for better sensitivity
+    const swipeDifference = touchStart - touchEnd
 
-    const minSwipeDistance = 50
-    if (touchStart - touchEnd > minSwipeDistance) {
+    if (Math.abs(swipeDifference) < minSwipeDistance) {
+      // Not a significant swipe, ignore
+      return
+    }
+
+    if (swipeDifference > 0) {
       // Swiped left, go to premium
-      console.log('Swiped left, switching to premium')
       setActivePackage('premium')
-    } else if (touchEnd - touchStart > minSwipeDistance) {
+    } else {
       // Swiped right, go to standard
-      console.log('Swiped right, switching to standard')
       setActivePackage('standard')
     }
   }
@@ -161,9 +191,16 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
   const PackageCard = ({ type }: { type: 'standard' | 'premium' }) => {
     const isStandard = type === 'standard'
     const packageData = isStandard ? proposal.standard : proposal.premium
+    const isSelected = selectedPackage === type
+    const isVisible = !isMobile || type === activePackage
 
     return (
-      <div className={`bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border border-gray-100 transition-all duration-300 hover:shadow-xl ${isMobile && type !== activePackage ? 'hidden' : ''}`}>
+      <div
+        className={`bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col border 
+          ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'border-gray-100'} 
+          transition-all duration-300 hover:shadow-xl 
+          ${isMobile ? (isVisible ? 'opacity-100 max-h-[2000px]' : 'opacity-0 max-h-0 overflow-hidden md:opacity-100 md:max-h-[2000px]') : ''}`}
+      >
         {!isStandard && (
           <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
             <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium bg-sky-600 text-white shadow-sm">
@@ -285,16 +322,31 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
         <div className="p-5 sm:p-6 pt-0">
           <button
             onClick={() => handlePackageSelect(type)}
-            className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl text-center font-medium transition-all duration-300 shadow-md text-sm sm:text-base
-              ${selectedPackage === type
+            className={`w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl text-center font-medium transition-all duration-300 shadow-md text-sm sm:text-base relative
+              ${isSelected
                 ? 'bg-sky-600 text-white hover:bg-sky-700'
                 : type === 'standard'
-                  ? 'bg-gray-100 text-gray-900 hover:bg-gray-200 hover:-translate-y-1'
+                  ? 'bg-sky-100 text-sky-900 hover:bg-sky-200 hover:-translate-y-1'
                   : 'bg-gray-900 text-white hover:bg-black hover:shadow-lg hover:-translate-y-1'
               }`}
           >
-            Select {type === 'standard' ? 'Standard' : 'Premium'} Package
+            {isSelected ? (
+              <>
+                <span className="flex items-center justify-center">
+                  <Check className="h-4 w-4 mr-2" />
+                  {selectionConfirmed ? 'Selected!' : `Select ${type === 'standard' ? 'Standard' : 'Premium'} Package`}
+                </span>
+              </>
+            ) : (
+              `Select ${type === 'standard' ? 'Standard' : 'Premium'} Package`
+            )}
           </button>
+
+          {isSelected && selectionConfirmed && (
+            <p className="text-center text-sky-600 text-sm mt-2 animate-fade-in">
+              Package selected! Proceeding to next step...
+            </p>
+          )}
         </div>
       </div>
     )
@@ -302,6 +354,20 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
   return (
     <div>
+      {/* Add pointer events handling for mobile touch */}
+      {isMobile && (
+        <style jsx global>{`
+          @media (max-width: 767px) {
+            .swipe-container * {
+              pointer-events: none;
+            }
+            .swipe-container button {
+              pointer-events: auto;
+            }
+          }
+        `}</style>
+      )}
+
       {/* Price Display Toggle */}
       <div className="flex justify-center mb-6 sm:mb-8">
         <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
@@ -330,9 +396,9 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
       {isMobile && (
         <>
           <div className="text-center mb-2 text-xs text-gray-500 flex items-center justify-center">
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft className={`h-4 w-4 mr-1 ${swiping && swipeDirection === 'right' ? 'text-sky-600 scale-110' : ''} transition-all duration-150`} />
             <span>Swipe to compare packages</span>
-            <ChevronRight className="h-4 w-4 ml-1" />
+            <ChevronRight className={`h-4 w-4 ml-1 ${swiping && swipeDirection === 'left' ? 'text-sky-600 scale-110' : ''} transition-all duration-150`} />
           </div>
 
           {/* Manual navigation buttons */}
@@ -361,14 +427,28 @@ export function SolarProposal({ proposal, onSelect }: SolarProposalProps) {
 
       <div
         ref={swipeContainerRef}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 relative"
+        className={`touch-pan-x w-full relative overflow-hidden swipe-container ${swiping ? 'cursor-grabbing' : 'cursor-grab'}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        <PackageCard type="standard" />
-        <PackageCard type="premium" />
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 relative transition-transform duration-150 ${swiping && swipeDirection ? (swipeDirection === 'left' ? '-translate-x-2' : 'translate-x-2') : ''}`}>
+          <PackageCard type="standard" />
+          <PackageCard type="premium" />
+        </div>
+
+        {/* Swipe indicators */}
+        {isMobile && swiping && (
+          <>
+            <div className={`absolute top-1/2 -translate-y-1/2 left-2 h-12 w-12 rounded-full bg-sky-600/20 flex items-center justify-center transform transition-opacity duration-200 ${swipeDirection === 'right' ? 'opacity-70' : 'opacity-0'}`}>
+              <ChevronLeft className="h-6 w-6 text-sky-600" />
+            </div>
+            <div className={`absolute top-1/2 -translate-y-1/2 right-2 h-12 w-12 rounded-full bg-sky-600/20 flex items-center justify-center transform transition-opacity duration-200 ${swipeDirection === 'left' ? 'opacity-70' : 'opacity-0'}`}>
+              <ChevronRight className="h-6 w-6 text-sky-600" />
+            </div>
+          </>
+        )}
       </div>
 
       {showTaxCredit && (
