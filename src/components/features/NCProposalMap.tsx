@@ -266,7 +266,8 @@ const NCProposalMap = () => {
           <p className="text-sm text-gray-500">Google Maps → Mapbox migration in progress</p>
         </div>
       </div>
-      {/* 
+      
+      {/* Commented out Google Maps code for future migration
       <GoogleMap
         mapContainerStyle={mapStyles}
         zoom={INITIAL_ZOOM}
@@ -413,12 +414,23 @@ const NCProposalMap = () => {
           </InfoWindow>
         )}
       </GoogleMap>
-      */
+      
       {locations.length === 0 && (
         <div className="text-center mt-4 p-4 bg-gray-800 rounded-lg text-gray-200">
           <p className="text-gray-200">No locations found on the map.</p>
           <p className="text-sm text-gray-400 mt-1">
             Try geocoding your proposals first.
+          </p>
+        </div>
+      )}
+      */}
+      
+      {/* Temporarily show locations count for debugging */}
+      {locations.length === 0 && (
+        <div className="text-center mt-4 p-4 bg-gray-100 rounded-lg text-gray-600">
+          <p className="text-gray-600">No proposal locations loaded.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Map functionality will be restored after Mapbox migration.
           </p>
         </div>
       )}
