@@ -142,36 +142,53 @@ export default function ProposalPage() {
         )
         setFinancingOptions(options)
 
-        // Generate Google Maps Static API URL for aerial view
+        // Generate Mapbox Static API URL for aerial view
         const encodedAddress = encodeURIComponent(storedAddress)
         console.log('Stored address:', storedAddress)
         console.log('Encoded address:', encodedAddress)
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-        console.log('API Key available:', !!apiKey)
+        const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+        console.log('Mapbox Access Token available:', !!accessToken)
 
-        if (!apiKey) {
-          throw new Error('Google Maps API key is not configured')
+        if (!accessToken) {
+          throw new Error('Mapbox access token is not configured')
         }
 
-        // Construct the Static Maps API URL with proper parameters
-        const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?`
-          + `center=${encodedAddress}`
-          + `&zoom=20`
-          + `&size=800x400`
-          + `&scale=2`  // For higher resolution
-          + `&maptype=satellite`
-          + `&key=${apiKey}`
-
-        console.log('Map URL:', mapUrl)
-
-        // Verify the URL is valid
+        // First, geocode the address to get coordinates
         try {
+          const geocodeResponse = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?` +
+            `access_token=${accessToken}&` +
+            `country=US&` +
+            `types=address&` +
+            `limit=1`
+          )
+
+          if (!geocodeResponse.ok) {
+            throw new Error(`Geocoding failed: ${geocodeResponse.status}`)
+          }
+
+          const geocodeData = await geocodeResponse.json()
+          
+          if (!geocodeData.features || geocodeData.features.length === 0) {
+            throw new Error('Address not found')
+          }
+
+          const [lng, lat] = geocodeData.features[0].center
+
+          // Construct the Mapbox Static API URL with proper parameters
+          const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/` +
+            `${lng},${lat},20,0/800x400@2x?` +
+            `access_token=${accessToken}`
+
+          console.log('Map URL:', mapUrl)
+
+          // Verify the URL is valid
           new URL(mapUrl)
           setMapUrl(mapUrl)
           setMapError(null)
         } catch (err) {
-          console.error('Invalid map URL:', err)
-          setMapError('Invalid map URL configuration')
+          console.error('Error generating map URL:', err)
+          setMapError(err instanceof Error ? err.message : 'Failed to generate map')
         }
       } catch (err) {
         console.error('Error loading proposal data:', err)
