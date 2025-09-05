@@ -33,7 +33,7 @@ const config: Config = {
         'secondary-text': '#4f4f4f',
       },
       fontFamily: {
-        sans: ["var(--font-roboto)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

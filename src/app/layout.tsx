@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/Header";
-import { Roboto } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { Footer } from '@/components/layout/Footer'
 import Script from 'next/script'
 import { Suspense } from 'react'
@@ -11,11 +11,11 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
-const roboto = Roboto({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '700'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
-  variable: '--font-roboto',
+  variable: '--font-inter',
 })
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={roboto.variable}>
+    <html lang="en" className={inter.variable}>
       <head>
         {/* Remove the duplicate Google Maps script */}
       </head>

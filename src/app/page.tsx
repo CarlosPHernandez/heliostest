@@ -163,7 +163,7 @@ export default function HomePage() {
               {/* Monthly Bill Form */}
               <div className="mt-12 sm:mt-16 w-full max-w-xl mx-auto">
                 <div
-                  className="bg-white/85 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-xl shadow-lg border border-white/50 form-container"
+                  className="bg-white/85 backdrop-blur-md p-4 sm:p-6 md:p-7 rounded-xl shadow-lg border border-white/50 form-container"
                   style={{ boxShadow: '0 0 15px 2px rgba(125, 211, 252, 0.3), 0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                 >
                   <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
@@ -187,7 +187,7 @@ export default function HomePage() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full sm:w-auto flex items-center justify-center px-6 py-3 sm:px-8 text-sm font-semibold text-black bg-white hover:bg-gray-100 rounded-xl shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-300 border border-gray-200"
+                      className="w-full sm:w-auto flex items-center justify-center px-6 py-3 sm:px-8 text-sm font-semibold text-black bg-white hover:bg-gray-100 rounded-xl shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all duration-300 border border-gray-200 whitespace-nowrap"
                     >
                       Get Quote
                       <ArrowRight className="ml-2 h-4 w-4" />

@@ -3,7 +3,7 @@ import { CookiePreferences } from '@/components/features/CookiePreferences'
 
 export function Footer() {
   return (
-    <footer className="bg-[#1C1C1C] text-white pt-16 pb-8">
+    <footer className="bg-[#171717] text-white pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="mb-16">
