@@ -89,7 +89,7 @@ export default function AddressPage() {
   return (
     <>
       <MapboxScript />
-      <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
+      <div className="min-h-screen" style={{ backgroundColor: '#ECECEC' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 relative z-10">
           <button
             onClick={() => router.back()}
@@ -107,7 +107,7 @@ export default function AddressPage() {
                 <div className="text-xs text-gray-500">Progress</div>
                 <div className="text-xs text-gray-500">Step 1 of 2</div>
               </div>
-              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-white rounded-full overflow-hidden">
                 <div className="h-full bg-sky-600 rounded-full" style={{ width: '50%' }}></div>
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function AddressPage() {
                 <div className="text-xs text-gray-500">Progress</div>
                 <div className="text-xs text-gray-500">Step 1 of 2</div>
               </div>
-              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-white rounded-full overflow-hidden">
                 <div className="h-full bg-sky-600 rounded-full" style={{ width: '50%' }}></div>
               </div>
             </div>
@@ -249,8 +249,8 @@ export default function AddressPage() {
                 <div className="hidden lg:flex flex-col items-center justify-between h-full">
                   <div className="relative w-full max-w-lg">
                     <img
-                      src="/images/herosection/woman2home.png"
-                      alt="Happy woman with solar panels on her home"
+                      src="/images/herosection/mansolarhome.png"
+                      alt="Man with solar panels on his home"
                       className="w-full h-auto object-cover rounded-2xl shadow-lg"
                     />
                   </div>
