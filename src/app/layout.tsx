@@ -21,6 +21,28 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Helios Nexus",
   description: "Empowering the future of energy",
+  icons: {
+    icon: [
+      {
+        url: '/icon',
+        type: 'image/svg+xml',
+        sizes: '32x32',
+      },
+    ],
+    shortcut: [
+      {
+        url: '/icon',
+        type: 'image/svg+xml',
+      },
+    ],
+    apple: [
+      {
+        url: '/icon',
+        type: 'image/svg+xml',
+        sizes: '180x180',
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

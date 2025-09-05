@@ -35,7 +35,7 @@ const nextConfig = {
   // Disable static optimization for pages using useSearchParams
   experimental: {
     // This setting helps with the useSearchParams error during build
-    missingSuspenseWithCSRBailout: false,
+    // missingSuspenseWithCSRBailout: false,
   },
 }
 
