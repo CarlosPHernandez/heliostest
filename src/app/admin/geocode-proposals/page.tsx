@@ -13,34 +13,9 @@ export default function GeocodeProposals() {
   const [error, setError] = useState<string | null>(null)
 
   const geocodeAddress = async (address: string) => {
-    try {
-      console.log('Geocoding address:', address)
-      const encodedAddress = encodeURIComponent(address)
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`
-
-      console.log('Fetching from URL:', url)
-      const response = await fetch(url)
-      const data = await response.json()
-
-      console.log('Geocoding API response:', data)
-
-      if (data.status === 'OK' && data.results[0]) {
-        const { lat, lng } = data.results[0].geometry.location
-        console.log('Successfully geocoded:', { lat, lng })
-        return { latitude: lat, longitude: lng }
-      } else {
-        console.error('Geocoding failed:', {
-          status: data.status,
-          error_message: data.error_message,
-          results: data.results
-        })
-        return null
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error)
-      return null
-    }
+    // TODO: Replace with Mapbox Geocoding API
+    console.log('Geocoding disabled during Google Maps removal:', address)
+    return null
   }
 
   const updateProposals = async () => {

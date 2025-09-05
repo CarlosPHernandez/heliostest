@@ -27,22 +27,9 @@ interface AdminStats {
 
 // Add geocoding function
 const geocodeAddress = async (address: string) => {
-  try {
-    const encodedAddress = encodeURIComponent(address)
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`
-    const response = await fetch(url)
-    const data = await response.json()
-
-    if (data.status === 'OK' && data.results[0]) {
-      const { lat, lng } = data.results[0].geometry.location
-      return { latitude: lat, longitude: lng }
-    }
-    return null
-  } catch (error) {
-    console.error('Geocoding error:', error)
-    return null
-  }
+  // TODO: Replace with Mapbox Geocoding API
+  console.log('Geocoding disabled during Google Maps removal:', address)
+  return null
 }
 
 export default function AdminDashboard() {

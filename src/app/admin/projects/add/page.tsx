@@ -6,11 +6,6 @@ import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-declare global {
-  interface Window {
-    google: any
-  }
-}
 
 interface ProjectFormData {
   customer_name: string
@@ -33,7 +28,6 @@ interface ProjectFormData {
 export default function AddProjectPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [autocomplete, setAutocomplete] = useState<any>(null)
   const [formData, setFormData] = useState<ProjectFormData>({
     customer_name: '',
     email: '',
