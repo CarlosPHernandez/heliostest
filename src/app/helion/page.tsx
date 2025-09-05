@@ -26,7 +26,7 @@ const customColors = {
 
 export default function B2BSaaSLanding() {
   return (
-    <div className="w-full h-screen fixed inset-0 overflow-hidden" style={{ backgroundColor: '#1c1c1c' }}>
+    <div className="w-full h-screen fixed inset-0 overflow-auto md:overflow-hidden" style={{ backgroundColor: '#1c1c1c' }}>
       {/* Landing Page Header */}
       <LandingPageHeader />
       
@@ -34,7 +34,7 @@ export default function B2BSaaSLanding() {
 
 
       {/* Main Dashboard Preview - Using SVG */}
-      <div className="w-full max-w-6xl left-1/2 transform -translate-x-1/2 bottom-0 absolute px-2 sm:px-4 md:px-8 lg:px-16">
+      <div className="w-full max-w-6xl left-1/2 transform -translate-x-1/2 top-[60%] sm:top-[65%] md:bottom-0 absolute px-2 sm:px-4 md:px-8 lg:px-16">
         <div className="w-full aspect-[1008/435] max-h-[320px] sm:max-h-[380px] md:max-h-[420px] lg:max-h-[480px]">
           <Image
             src="/images/landingpage/mockupwithdash.svg"
@@ -45,6 +45,64 @@ export default function B2BSaaSLanding() {
             priority
           />
         </div>
+        
+        {/* Divider Line - Only visible on mobile */}
+        <div className="block md:hidden w-full h-px bg-gray-600"></div>
+      </div>
+      
+      {/* Mobile Features Section - Only visible on mobile */}
+      <div className="block md:hidden w-full mt-[800px] pt-16 pb-12 px-4" style={{ backgroundColor: '#1c1c1c' }}>
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-md mb-8">
+            <h2 className="text-white text-2xl font-bold mb-2">Track Your Success in Real-Time</h2>
+            <p className="text-gray-300 text-sm mb-6">Monitor your sales performance with our intuitive monthly sales widget. Get instant insights into your revenue trends, conversion rates, and growth metrics all in one place.</p>
+            
+            {/* Monthly Sales Widget */}
+            <Image
+              src="/images/landingpage/MonthlySalesWidget.svg"
+              alt="Monthly Sales Analytics"
+              width={468}
+              height={233}
+              className="w-full h-auto rounded-lg"
+            />
+          </div>
+          
+          {/* Feature bullets */}
+          <div className="w-full max-w-md">
+            <ul className="space-y-4">
+              <li className="flex items-start">
+                <div className="mt-1 mr-3 flex-shrink-0">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                </div>
+                <p className="text-white text-sm">Real-time sales tracking and analytics</p>
+              </li>
+              <li className="flex items-start">
+                <div className="mt-1 mr-3 flex-shrink-0">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                </div>
+                <p className="text-white text-sm">Visual performance metrics and trends</p>
+              </li>
+              <li className="flex items-start">
+                <div className="mt-1 mr-3 flex-shrink-0">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                </div>
+                <p className="text-white text-sm">Customizable reporting dashboard</p>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Book Demo Button */}
+          <div className="w-full max-w-md mt-10 flex justify-center">
+            <a 
+              href="https://cal.com/carlo-heliosnexus/15min" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="h-12 px-8 bg-white rounded-md inline-flex justify-center items-center gap-2 hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <div className="text-center text-gray-900 text-base font-medium font-inter leading-tight">Book Your Demo</div>
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Background image */}
@@ -53,7 +111,7 @@ export default function B2BSaaSLanding() {
       </div>
 
       {/* Hero content */}
-      <div className="w-full max-w-7xl left-1/2 transform -translate-x-1/2 top-[25%] sm:top-[28%] md:top-[25%] lg:top-[22%] xl:top-[20%] absolute px-4 sm:px-6 md:px-8 lg:px-16 flex flex-col justify-center items-center gap-3 sm:gap-4 md:gap-6">
+      <div className="w-full max-w-7xl left-1/2 transform -translate-x-1/2 top-[15%] sm:top-[18%] md:top-[20%] lg:top-[18%] xl:top-[15%] absolute px-4 sm:px-6 md:px-8 lg:px-16 flex flex-col justify-center items-center gap-3 sm:gap-4 md:gap-6">
         <div className="w-full flex flex-col justify-center items-center gap-2 sm:gap-3">
           <div className="w-full text-center text-white text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-4xl font-bold font-inter leading-tight whitespace-nowrap">
             Your solar business. Supercharged.
@@ -74,6 +132,27 @@ export default function B2BSaaSLanding() {
         >
           <div className="text-center text-gray-900 text-sm sm:text-base font-medium font-inter leading-tight">Book Your Demo</div>
         </a>
+        
+        {/* Animated Chevron */}
+        <div className="mt-12 sm:mt-16 md:mt-20 flex justify-center">
+          <div className="animate-bounce p-2">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-8 w-8 text-gray-400" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M19 9l-7 7-7-7" 
+              />
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
   )
