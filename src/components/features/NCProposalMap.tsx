@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+// import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Sun, Battery, Zap, Calendar } from 'lucide-react';
 
@@ -259,6 +259,14 @@ const NCProposalMap = () => {
 
   return (
     <div>
+      {/* Temporarily disabled Google Maps - needs migration to Mapbox */}
+      <div className="flex justify-center items-center h-[400px] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+        <div className="text-center">
+          <p className="text-gray-600 mb-2">Map temporarily disabled</p>
+          <p className="text-sm text-gray-500">Google Maps → Mapbox migration in progress</p>
+        </div>
+      </div>
+      {/* 
       <GoogleMap
         mapContainerStyle={mapStyles}
         zoom={INITIAL_ZOOM}
@@ -405,6 +413,7 @@ const NCProposalMap = () => {
           </InfoWindow>
         )}
       </GoogleMap>
+      */
       {locations.length === 0 && (
         <div className="text-center mt-4 p-4 bg-gray-800 rounded-lg text-gray-200">
           <p className="text-gray-200">No locations found on the map.</p>

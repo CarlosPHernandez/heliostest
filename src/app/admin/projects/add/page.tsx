@@ -50,52 +50,9 @@ export default function AddProjectPage() {
   })
 
   useEffect(() => {
-    // Initialize Google Places Autocomplete when the script is loaded
-    const initAutocomplete = () => {
-      if (!window.google?.maps?.places) {
-        console.error('Google Places API not available')
-        toast.error('Address autocomplete is not available')
-        return
-      }
-
-      try {
-        const autocompleteInstance = new window.google.maps.places.Autocomplete(
-          document.getElementById('address-input'),
-          {
-            componentRestrictions: { country: 'us' },
-            types: ['address'],
-            fields: ['formatted_address', 'geometry']
-          }
-        )
-
-        autocompleteInstance.addListener('place_changed', () => {
-          const place = autocompleteInstance.getPlace()
-          if (place.formatted_address) {
-            setFormData(prev => ({
-              ...prev,
-              address: place.formatted_address
-            }))
-          }
-        })
-
-        setAutocomplete(autocompleteInstance)
-      } catch (error) {
-        console.error('Error initializing Places Autocomplete:', error)
-        toast.error('Failed to initialize address autocomplete')
-      }
-    }
-
-    // If Google Maps is already loaded, initialize autocomplete
-    if (window.google?.maps?.places) {
-      initAutocomplete()
-    }
-
-    // Cleanup
-    return () => {
-      if (autocomplete) {
-        window.google.maps.event.clearInstanceListeners(autocomplete)
-      }
-    }
+    // Temporarily disabled Google Maps autocomplete - needs migration to Mapbox
+    // TODO: Replace with MapboxAddressInput component
+    console.log('Google Maps autocomplete temporarily disabled during Mapbox migration')
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
